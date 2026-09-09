@@ -1,0 +1,35 @@
+"use client";
+
+import { useState } from "react";
+import { createCaptions } from "../../lib/social-content.mjs";
+
+type Platform = "instagram" | "facebook";
+type Details = { name: string; headline: string; subline: string; eventName: string; time: string };
+
+export default function SocialCaptions({ details }: { details: Details }) {
+  const generated = createCaptions(details);
+  const [edits, setEdits] = useState<Partial<Record<Platform, string>>>({});
+  const [notice, setNotice] = useState("");
+  async function copy(platform: Platform) {
+    try {
+      await navigator.clipboard.writeText(edits[platform] ?? generated[platform]);
+      setNotice(`${platform === "instagram" ? "Instagram" : "Facebook"} caption copied.`);
+    } catch {
+      const field = document.getElementById(`caption-${platform}`) as HTMLTextAreaElement;
+      field?.focus();
+      field?.select();
+      setNotice("Copy is unavailable here. The caption is selected—use your device’s Copy command.");
+    }
+  }
+  return <section className="social-captions" aria-labelledby="caption-title">
+    <div className="caption-heading"><div><span className="studio-kicker">READY TO POST</span><h2 id="caption-title">Your post, written.</h2></div><button type="button" onClick={() => { setEdits({}); setNotice("Captions regenerated from the current swimmer details."); }}>Regenerate captions</button></div>
+    <p>Drafts use the swimmer details above. Edit before sharing, then copy and paste alongside your downloaded image. Nothing is posted automatically.</p>
+    {Object.keys(edits).length > 0 && <p className="caption-edited">Your edits are kept when card details change. Regenerate to replace them with updated drafts.</p>}
+    <div className="caption-grid">{(["instagram", "facebook"] as const).map(platform => <div className="caption-card" key={platform}>
+      <label htmlFor={`caption-${platform}`}>{platform === "instagram" ? "Instagram" : "Facebook"} caption</label>
+      <textarea id={`caption-${platform}`} value={edits[platform] ?? generated[platform]} maxLength={platform === "instagram" ? 2200 : 5000} rows={9} onChange={event => { setEdits(current => ({ ...current, [platform]: event.target.value })); setNotice(""); }} />
+      <div className="caption-actions"><span>{(edits[platform] ?? generated[platform]).length} characters</span><button type="button" onClick={() => copy(platform)}>Copy caption</button></div>
+    </div>)}</div>
+    <p role="status" className="caption-status">{notice}</p>
+  </section>;
+}

@@ -9,8 +9,8 @@ test("build includes the JTSC achievement card studio", async () => {
     readFile(new URL("../app/components/CardStudio.tsx", import.meta.url), "utf8"),
     readdir(new URL("../dist/client/assets/", import.meta.url)),
   ]);
-  assert.match(page, /CardStudio/);
-  assert.match(layout, /JTSC Achievement Card Studio/);
+  assert.match(page, /ClubHub/);
+  assert.match(layout, /JTSC Team Hub/);
   assert.match(studio, /Choose a photo/);
   assert.match(studio, /Futures/);
   assert.match(studio, /Zones/);
@@ -25,7 +25,7 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /JTSC Signature/);
   assert.match(studio, /Classic PNG/);
   assert.match(studio, /Signature PNG/);
-  assert.ok(assets.some((name) => name.startsWith("CardStudio-") && name.endsWith(".js")));
+  assert.ok(assets.some((name) => name.startsWith("ClubHub-") && name.endsWith(".js")));
   assert.doesNotMatch(`${page}${layout}`, /codex-preview|react-loading-skeleton|Starter Project/);
 });
 

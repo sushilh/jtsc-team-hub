@@ -7,11 +7,11 @@ const archivoNarrow = Archivo_Narrow({ variable: "--font-display", subsets: ["la
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://jtsc-achievement-card-studio.lion-sushilh.chatgpt.site"),
-  title: { default: "JTSC Achievement Card Studio", template: "%s · Jenks Trojan Swim Club" },
-  description: "Create share-ready swimmer achievement graphics for Jenks Trojan Swim Club.",
+  title: { default: "JTSC Team Hub", template: "%s · Jenks Trojan Swim Club" },
+  description: "Volunteer check-in, meet administration, and swimmer achievement cards in one JTSC team hub.",
   openGraph: {
-    title: "JTSC Achievement Card Studio",
-    description: "Make their moment look legendary.",
+    title: "JTSC Team Hub",
+    description: "Volunteer together. Celebrate every achievement.",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "JTSC Achievement Card Studio" }],
   },
   twitter: { card: "summary_large_image", images: ["/og.png"] },

@@ -1,6 +1,8 @@
 "use client";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import SocialCaptions from "./SocialCaptions";
+import { imageFilename, socialFormats } from "../../lib/social-content.mjs";
 
 type CardFormat = "portrait" | "square";
 type CardTemplate = "classic" | "signature";
@@ -182,7 +184,7 @@ function drawCard(
   state: CardDrawingState,
 ) {
   const width = 1080;
-  const height = state.format === "portrait" ? 1350 : 1080;
+  const height = socialFormats[state.format].height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   canvas.width = width;
@@ -335,6 +337,8 @@ export default function CardStudio() {
   const [horizontalPosition, setHorizontalPosition] = useState(0);
   const [verticalPosition, setVerticalPosition] = useState(0);
   const [exporting, setExporting] = useState<CardTemplate | null>(null);
+  const [exportNotice, setExportNotice] = useState("");
+  const [photoError, setPhotoError] = useState("");
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -358,6 +362,15 @@ export default function CardStudio() {
   async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    setPhotoError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPhotoError("Please choose a JPG, PNG, or WebP photo.");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setPhotoError("Please choose a photo smaller than 20 MB.");
+      return;
+    }
     if (photoUrl) URL.revokeObjectURL(photoUrl);
     const url = URL.createObjectURL(file);
     setPhotoUrl(url);
@@ -368,6 +381,7 @@ export default function CardStudio() {
       setPhoto(await loadImage(url));
     } catch {
       setPhoto(null);
+      setPhotoError("This photo could not be opened. Please choose another JPG, PNG, or WebP image.");
     }
   }
 
@@ -375,16 +389,25 @@ export default function CardStudio() {
     const exportCanvas = document.createElement("canvas");
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
     setExporting(targetTemplate);
+    setExportNotice("");
+    try {
     drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
     exportCanvas.toBlob((blob) => {
-      if (!blob) { setExporting(null); return; }
+      if (!blob) { setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");
-      link.download = `${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "jtsc-swimmer"}-${targetTemplate}-${format}.png`;
+      link.download = imageFilename(name, targetTemplate, format);
       link.href = URL.createObjectURL(blob);
+      document.body.appendChild(link);
       link.click();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(link.href), 30000);
+      setExportNotice(`${targetTemplate === "classic" ? "Classic" : "Signature"} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
       setExporting(null);
     }, "image/png");
+    } catch {
+      setExporting(null);
+      setExportNotice("The image could not be exported. Please reload your photo and try again.");
+    }
   }
 
   return (
@@ -417,6 +440,8 @@ export default function CardStudio() {
               <span><b>{photo ? "Replace photo" : "Choose a photo"}</b><small>{photo ? "Photo ready • click to change" : "Portrait photos work best"}</small></span>
               <b className="button-arrow">→</b>
             </button>
+            <small className="device-note">Photos stay on this device · up to 20 MB</small>
+            {photoError && <p role="alert">{photoError}</p>}
             {photo && (
               <div className="photo-sliders">
                 <label><span>Zoom</span><input aria-label="Photo zoom" type="range" min="1" max="2" step="0.02" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} /></label>
@@ -456,8 +481,8 @@ export default function CardStudio() {
           <div className="preview-toolbar">
             <div><span>LIVE PREVIEW</span><small>{format === "portrait" ? "1080 × 1350 PX" : "1080 × 1080 PX"}</small></div>
             <div className="format-toggle" role="group" aria-label="Card format">
-              <button type="button" className={format === "portrait" ? "active" : ""} onClick={() => setFormat("portrait")}><i className="portrait-icon" /> Portrait</button>
-              <button type="button" className={format === "square" ? "active" : ""} onClick={() => setFormat("square")}><i className="square-icon" /> Square</button>
+              <button type="button" aria-pressed={format === "portrait"} className={format === "portrait" ? "active" : ""} onClick={() => setFormat("portrait")}><i className="portrait-icon" /> Instagram · 4:5</button>
+              <button type="button" aria-pressed={format === "square"} className={format === "square" ? "active" : ""} onClick={() => setFormat("square")}><i className="square-icon" /> Facebook · 1:1</button>
             </div>
           </div>
           <div className="template-picker" role="group" aria-label="Card template">
@@ -472,14 +497,18 @@ export default function CardStudio() {
             <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
           </div>
           <div className="export-row">
-            <div><b>Download either design</b><span>One photo and details • two high-resolution PNGs</span></div>
+            <div><b>Download either design</b><span>{socialFormats[format].label} · 1080 × {socialFormats[format].height} · PNG</span></div>
             <div className="download-options">
               <button type="button" className="secondary-download" onClick={() => downloadCard("classic")} disabled={exporting !== null}><span>↓</span>{exporting === "classic" ? "Preparing…" : "Classic PNG"}</button>
               <button type="button" onClick={() => downloadCard("signature")} disabled={exporting !== null}><span>↓</span>{exporting === "signature" ? "Preparing…" : "Signature PNG"}</button>
             </div>
           </div>
+          <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic or Signature. Profile-grid previews may crop differently.</p>
+          <p className="export-status" role="status">{exportNotice}</p>
         </div>
       </section>
+
+      <SocialCaptions details={{ name, headline, subline, eventName, time }} />
 
       <footer className="studio-footer"><span>JTSC • JENKS, OKLAHOMA</span><b>Built for every breakthrough.</b><span>RISE TOGETHER</span></footer>
     </main>
