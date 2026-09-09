@@ -3,6 +3,22 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 type CardFormat = "portrait" | "square";
+type CardTemplate = "classic" | "signature";
+
+type CardDrawingState = {
+  name: string;
+  classYear: string;
+  headline: string;
+  subline: string;
+  eventLine: string;
+  format: CardFormat;
+  template: CardTemplate;
+  image: HTMLImageElement | null;
+  brandMark: HTMLImageElement | null;
+  zoom: number;
+  horizontalPosition: number;
+  verticalPosition: number;
+};
 
 const achievements = [
   { label: "Futures", headline: "FUTURES QUALIFIER", subline: "USA SWIMMING FUTURES CHAMPIONSHIPS" },
@@ -72,21 +88,98 @@ function drawCenteredTrackedText(
   }
 }
 
+function drawClassicCard(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: CardDrawingState,
+) {
+  const maroon = "#781D42";
+  const maroonDark = "#2B0817";
+  const aqua = "#54C7DB";
+  const cream = "#F5F0E6";
+  const portrait = state.format === "portrait";
+  const bandY = portrait ? height - 390 : height - 342;
+  const bandHeight = portrait ? 244 : 218;
+
+  const backdrop = ctx.createLinearGradient(0, 0, width, height);
+  backdrop.addColorStop(0, "#BAC4C4");
+  backdrop.addColorStop(1, "#4E777F");
+  ctx.fillStyle = backdrop;
+  ctx.fillRect(0, 0, width, height);
+  if (state.image) {
+    ctx.save();
+    ctx.filter = "saturate(.88) contrast(1.04)";
+    drawCoverImage(ctx, state.image, 0, 0, width, height, state.zoom, state.horizontalPosition, state.verticalPosition);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = "rgba(43,8,23,.18)";
+    ctx.beginPath();
+    ctx.arc(540, height * .35, 105, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(540, height * .65, 235, 310, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.textAlign = "center";
+    ctx.font = '800 20px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText("UPLOAD A SWIMMER PHOTO", width / 2, height * .52);
+  }
+
+  ctx.strokeStyle = maroon;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
+
+  // The original banner format: full photograph plus a bold information band.
+  ctx.fillStyle = "rgba(255,255,255,.97)";
+  ctx.fillRect(0, bandY, width, bandHeight);
+  ctx.fillStyle = maroonDark;
+  ctx.fillRect(0, bandY + bandHeight * .52, width, 4);
+  ctx.fillRect(0, bandY + bandHeight - 5, width, 5);
+
+  const logoWidth = portrait ? 72 : 62;
+  const logoHeight = portrait ? 85 : 73;
+  if (state.brandMark) ctx.drawImage(state.brandMark, width / 2 - logoWidth / 2, bandY + 13, logoWidth, logoHeight);
+  ctx.fillStyle = maroon;
+  ctx.textAlign = "center";
+  ctx.font = `900 ${portrait ? 18 : 16}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText("JENKS TROJANS", width / 2, bandY + (portrait ? 116 : 99));
+
+  const safeName = (state.name || "SWIMMER NAME").toUpperCase();
+  const nameSize = fitText(ctx, safeName, 355, portrait ? 39 : 34, 900);
+  ctx.fillStyle = maroon;
+  ctx.textAlign = "left";
+  ctx.font = `900 ${nameSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText(safeName, 52, bandY + bandHeight * .76);
+
+  const event = (state.eventLine || "EVENT • TIME").toUpperCase();
+  const eventSize = fitText(ctx, event, 355, portrait ? 36 : 31, 900);
+  ctx.textAlign = "right";
+  ctx.font = `900 ${eventSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText(event, width - 52, bandY + bandHeight * .76);
+
+  const achievement = (state.headline || "ACHIEVEMENT").toUpperCase();
+  const achievementSize = fitText(ctx, achievement, 260, portrait ? 25 : 21, 900);
+  ctx.fillStyle = maroon;
+  ctx.textAlign = "center";
+  ctx.font = `900 ${achievementSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText(achievement, width / 2, bandY + bandHeight * .72);
+  ctx.fillStyle = "#6D6267";
+  ctx.font = `700 ${portrait ? 11 : 10}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(state.classYear.toUpperCase(), width / 2, bandY + bandHeight * .84);
+
+  ctx.fillStyle = "rgba(43,8,23,.78)";
+  ctx.fillRect(0, bandY + bandHeight, width, height - bandY - bandHeight);
+  ctx.fillStyle = cream;
+  ctx.font = `800 ${portrait ? 16 : 14}px "Helvetica Neue", Arial, sans-serif`;
+  drawCenteredTrackedText(ctx, "JENKS TROJAN SWIM CLUB", width / 2, height - 48, 5);
+  ctx.fillStyle = aqua;
+  ctx.fillRect(width / 2 - 52, height - 28, 104, 4);
+}
+
 function drawCard(
   canvas: HTMLCanvasElement,
-  state: {
-    name: string;
-    classYear: string;
-    headline: string;
-    subline: string;
-    eventLine: string;
-    format: CardFormat;
-    image: HTMLImageElement | null;
-    brandMark: HTMLImageElement | null;
-    zoom: number;
-    horizontalPosition: number;
-    verticalPosition: number;
-  },
+  state: CardDrawingState,
 ) {
   const width = 1080;
   const height = state.format === "portrait" ? 1350 : 1080;
@@ -94,6 +187,11 @@ function drawCard(
   if (!ctx) return;
   canvas.width = width;
   canvas.height = height;
+
+  if (state.template === "classic") {
+    drawClassicCard(ctx, width, height, state);
+    return;
+  }
 
   const maroon = "#781D42";
   const maroonDark = "#2B0817";
@@ -275,19 +373,20 @@ export default function CardStudio() {
   const [eventName, setEventName] = useState("100Y Butterfly");
   const [time, setTime] = useState("55.42");
   const [format, setFormat] = useState<CardFormat>("portrait");
+  const [template, setTemplate] = useState<CardTemplate>("signature");
   const [photoUrl, setPhotoUrl] = useState("");
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [brandMark, setBrandMark] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
   const [verticalPosition, setVerticalPosition] = useState(0);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<CardTemplate | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
-  }, [name, classYear, headline, subline, eventName, time, format, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+  }, [name, classYear, headline, subline, eventName, time, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
 
   useEffect(() => {
     loadImage("/jenks-trojan-logo.png").then(setBrandMark).catch(() => setBrandMark(null));
@@ -318,18 +417,19 @@ export default function CardStudio() {
     }
   }
 
-  function downloadCard() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    setExporting(true);
-    canvas.toBlob((blob) => {
-      if (!blob) { setExporting(false); return; }
+  function downloadCard(targetTemplate: CardTemplate) {
+    const exportCanvas = document.createElement("canvas");
+    const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
+    setExporting(targetTemplate);
+    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    exportCanvas.toBlob((blob) => {
+      if (!blob) { setExporting(null); return; }
       const link = document.createElement("a");
-      link.download = `${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "jtsc-swimmer"}-${format}.png`;
+      link.download = `${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "jtsc-swimmer"}-${targetTemplate}-${format}.png`;
       link.href = URL.createObjectURL(blob);
       link.click();
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      setExporting(false);
+      setExporting(null);
     }, "image/png");
   }
 
@@ -406,12 +506,23 @@ export default function CardStudio() {
               <button type="button" className={format === "square" ? "active" : ""} onClick={() => setFormat("square")}><i className="square-icon" /> Square</button>
             </div>
           </div>
+          <div className="template-picker" role="group" aria-label="Card template">
+            <button type="button" className={template === "classic" ? "active" : ""} onClick={() => setTemplate("classic")}>
+              <span>01</span><div><b>Classic Zone</b><small>Original banner format</small></div><i>Current</i>
+            </button>
+            <button type="button" className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
+              <span>02</span><div><b>JTSC Signature</b><small>Refined face-safe format</small></div><i>New</i>
+            </button>
+          </div>
           <div className={`canvas-stage ${format}`}>
             <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
           </div>
           <div className="export-row">
-            <div><b>Ready to celebrate?</b><span>High-resolution PNG • Instagram & Facebook ready</span></div>
-            <button type="button" onClick={downloadCard} disabled={exporting}><span>↓</span>{exporting ? "Preparing…" : "Download PNG"}</button>
+            <div><b>Download either design</b><span>One photo and details • two high-resolution PNGs</span></div>
+            <div className="download-options">
+              <button type="button" className="secondary-download" onClick={() => downloadCard("classic")} disabled={exporting !== null}><span>↓</span>{exporting === "classic" ? "Preparing…" : "Classic PNG"}</button>
+              <button type="button" onClick={() => downloadCard("signature")} disabled={exporting !== null}><span>↓</span>{exporting === "signature" ? "Preparing…" : "Signature PNG"}</button>
+            </div>
           </div>
         </div>
       </section>
