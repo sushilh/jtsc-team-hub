@@ -286,7 +286,7 @@ a { color: inherit; text-decoration: none; }
 .achievement-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #ddd5d1; }
 .achievement-grid button { min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 0; border-right: 1px solid #ddd5d1; border-bottom: 1px solid #ddd5d1; background: white; color: #544a4f; text-align: left; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
 .achievement-grid button:nth-child(2n) { border-right: 0; }
-.achievement-grid button:nth-child(n+3) { border-bottom: 0; }
+.achievement-grid button:nth-child(n+5) { border-bottom: 0; }
 .achievement-grid button span { color: #a99fa3; font-family: var(--font-display), sans-serif; font-size: 8px; }
 .achievement-grid button:hover { background: #fbf5f7; }
 .achievement-grid button.active { background: var(--studio-maroon); color: white; }

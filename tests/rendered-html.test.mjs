@@ -12,7 +12,10 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(page, /CardStudio/);
   assert.match(layout, /JTSC Achievement Card Studio/);
   assert.match(studio, /Choose a photo/);
-  assert.match(studio, /Junior Nationals/);
+  assert.match(studio, /Futures/);
+  assert.match(studio, /Zones/);
+  assert.match(studio, /Achievement name/);
+  assert.match(studio, /<span>Time<\/span>/);
   assert.match(studio, /Download PNG/);
   assert.match(studio, /canvas\.toBlob/);
   assert.ok(assets.some((name) => name.startsWith("CardStudio-") && name.endsWith(".js")));

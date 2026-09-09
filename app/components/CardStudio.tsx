@@ -5,10 +5,12 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 type CardFormat = "portrait" | "square";
 
 const achievements = [
-  { label: "Made State", headline: "STATE\nQUALIFIER", subline: "2026 OSSAA STATE CHAMPIONSHIPS" },
-  { label: "Sectionals", headline: "SECTIONALS\nBOUND", subline: "2026 CENTRAL ZONE SECTIONALS" },
-  { label: "Junior Nationals", headline: "JUNIOR\nNATIONALS", subline: "QUALIFIED • UNITED WE SWIM" },
-  { label: "National Team", headline: "NATIONAL\nTEAM", subline: "SELECTED • TEAM USA PATHWAY" },
+  { label: "Futures", headline: "FUTURES QUALIFIER", subline: "USA SWIMMING FUTURES CHAMPIONSHIPS" },
+  { label: "Sectionals", headline: "SECTIONALS QUALIFIER", subline: "CENTRAL ZONE SECTIONALS" },
+  { label: "Zones", headline: "ZONES QUALIFIER", subline: "CENTRAL ZONE CHAMPIONSHIPS" },
+  { label: "Made State", headline: "STATE QUALIFIER", subline: "OSSAA STATE CHAMPIONSHIPS" },
+  { label: "Junior Nationals", headline: "JUNIOR NATIONAL QUALIFIER", subline: "USA SWIMMING JUNIOR NATIONALS" },
+  { label: "National Team", headline: "NATIONAL TEAM", subline: "SELECTED • TEAM USA PATHWAY" },
 ] as const;
 
 const initialAchievement = achievements[0];
@@ -180,7 +182,14 @@ function drawCard(
   ctx.fillText("BUILT FOR THE NEXT LEVEL", 74, 328);
   ctx.letterSpacing = "0px";
 
-  const lines = state.headline.toUpperCase().split("\n").slice(0, 3);
+  const headlineWords = state.headline.toUpperCase().trim().split(/\s+/).filter(Boolean);
+  const lines = headlineWords.length <= 1
+    ? [headlineWords[0] || "ACHIEVEMENT"]
+    : headlineWords.length === 2
+      ? headlineWords
+      : headlineWords.length === 3
+        ? headlineWords
+        : [headlineWords.slice(0, 2).join(" "), headlineWords.slice(2).join(" ")];
   ctx.fillStyle = "#FFFFFF";
   ctx.textAlign = "left";
   lines.forEach((line, index) => {
@@ -238,7 +247,8 @@ export default function CardStudio() {
   const [achievementIndex, setAchievementIndex] = useState(0);
   const [headline, setHeadline] = useState<string>(initialAchievement.headline);
   const [subline, setSubline] = useState<string>(initialAchievement.subline);
-  const [eventLine, setEventLine] = useState("100Y Butterfly • 55.42");
+  const [eventName, setEventName] = useState("100Y Butterfly");
+  const [time, setTime] = useState("55.42");
   const [format, setFormat] = useState<CardFormat>("portrait");
   const [photoUrl, setPhotoUrl] = useState("");
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
@@ -248,8 +258,9 @@ export default function CardStudio() {
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
     drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, zoom, verticalPosition });
-  }, [name, classYear, headline, subline, eventLine, format, photo, zoom, verticalPosition]);
+  }, [name, classYear, headline, subline, eventName, time, format, photo, zoom, verticalPosition]);
 
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
@@ -344,11 +355,12 @@ export default function CardStudio() {
             <span className="section-number">03</span>
             <div className="section-heading"><h2>Personalize the card</h2><span>Edits update live</span></div>
             <label className="studio-field"><span>Swimmer name</span><input value={name} maxLength={32} onChange={(e) => setName(e.target.value)} /></label>
+            <label className="studio-field"><span>Achievement name</span><input value={headline.replaceAll("\n", " ")} maxLength={34} onChange={(e) => { setHeadline(e.target.value.toUpperCase()); setAchievementIndex(-1); }} /></label>
             <div className="field-row">
               <label className="studio-field"><span>Class / team</span><input value={classYear} maxLength={24} onChange={(e) => setClassYear(e.target.value)} /></label>
-              <label className="studio-field"><span>Event / time</span><input value={eventLine} maxLength={34} onChange={(e) => setEventLine(e.target.value)} /></label>
+              <label className="studio-field"><span>Event</span><input value={eventName} maxLength={24} onChange={(e) => setEventName(e.target.value)} /></label>
             </div>
-            <label className="studio-field"><span>Achievement headline</span><input value={headline.replace("\n", " ")} maxLength={28} onChange={(e) => setHeadline(e.target.value.toUpperCase().replace(" ", "\n"))} /></label>
+            <label className="studio-field"><span>Time</span><input value={time} maxLength={16} inputMode="decimal" placeholder="e.g. 55.42" onChange={(e) => setTime(e.target.value)} /></label>
             <label className="studio-field"><span>Supporting line</span><input value={subline} maxLength={48} onChange={(e) => setSubline(e.target.value)} /></label>
           </div>
         </aside>
