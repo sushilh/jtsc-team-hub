@@ -152,13 +152,9 @@ function VolunteerApp() {
           children: [
             jsxs("span", {
               className: "eyebrow",
-              children: [jsx("i", {}), " VOLUNTEER CREW"]
+              children: ["03 / VOLUNTEER CREW"]
             }),
-            jsxs("h1", { children: [
-              "Ready to make",
-              jsx("br", {}),
-              jsx("em", { children: "a splash?" })
-            ] }),
+            jsx("h1", { children: "Volunteer check-in" }),
             jsx("p", { children: "Check in for your shift. We\u2019ll handle the timekeeping." })
           ]
         }), jsxs("div", {
@@ -381,7 +377,7 @@ function VolunteerApp() {
         className: "public-footer page-width",
         children: [
           jsx(Brand, { compact: true }),
-          jsx("p", { children: "Every shift makes a splash." }),
+          jsx("p", { children: "Jenks Trojan Swim Club" }),
           jsx("span", { children: "JENKS, OKLAHOMA" })
         ]
       })

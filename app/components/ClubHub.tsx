@@ -54,7 +54,7 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
           event.preventDefault();
           selectTab(tabs[next].id);
           document.getElementById(`tab-${tabs[next].id}`)?.focus();
-        }}>{tab.label}</button>)}
+        }}><span className="nav-lane" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>{tab.label}</button>)}
       </nav>
     </header>
     <section id="panel-studio" role="tabpanel" aria-labelledby="tab-studio" hidden={active !== "studio"}>{visited.includes("studio") && <CardStudio />}</section>

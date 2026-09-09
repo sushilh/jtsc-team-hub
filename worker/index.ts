@@ -72,6 +72,10 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // Vite serves development assets itself; the Cloudflare binding exists
+    // only in the deployed worker. Do not rewrite Vite's development URLs.
+    if (!env.ASSETS) return handler.fetch(request, env, ctx);
+
     if (url.pathname.startsWith(PUBLIC_ASSET_PREFIX)) {
       const assetPath = `/assets/${url.pathname.slice(PUBLIC_ASSET_PREFIX.length)}`;
       return fetchAsset(request, env, assetPath);

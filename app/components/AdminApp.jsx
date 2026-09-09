@@ -182,9 +182,9 @@ function AdminApp() {
           children: "ADMINISTRATION"
         }),
         jsxs("h1", { children: [
-          "Welcome",
+          "Volunteer",
           jsx("br", {}),
-          "back."
+          "admin"
         ] }),
         jsx("p", { children: "Manage sessions, swimmers, volunteer hours, and meet reports." }),
         jsxs("form", {

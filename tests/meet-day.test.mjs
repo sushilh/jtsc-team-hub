@@ -13,6 +13,45 @@ const model = await moduleFrom("lib/meet-day.ts");
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");
 const { drawMeetPoster } = await moduleFrom("lib/meet-renderer.ts");
 const { createMeetCaptions, meetExportSize, fitMeetPoster } = await moduleFrom("lib/meet-social.ts");
+const { normalizeHex, resolveMeetTheme, colorContrast } = await moduleFrom("lib/meet-colors.ts");
+
+test("custom global colors normalize safely and reset to the original preset", () => {
+  assert.equal(normalizeHex(" #AbC "), "#aabbcc");
+  assert.equal(normalizeHex("006B5E"), "#006b5e");
+  assert.equal(normalizeHex("#12"), null);
+  assert.equal(normalizeHex("nothex"), null);
+  for (const id of Object.keys(model.meetThemes)) {
+    const reset = resolveMeetTheme(id, null);
+    for (const key of ["primary", "dark", "paper", "ink", "accent"]) assert.equal(reset[key], model.meetThemes[id][key]);
+    assert.equal(resolveMeetTheme(id, "#006B5E").primary, "#006b5e");
+    assert.equal(resolveMeetTheme(id, "bad input").primary, model.meetThemes[id].primary);
+  }
+});
+
+test("custom light and dark primary colors retain contrasting theme text", () => {
+  for (const value of ["#ffffff", "#ffff00", "#00ff00", "#006b5e", "#000000", "#777777"]) {
+    const theme = resolveMeetTheme("trojan", value);
+    assert.ok(colorContrast(theme.primary, theme.onPrimary) >= 4.5);
+    assert.ok(colorContrast(theme.primary, theme.accentOnPrimary) >= 4.5);
+    assert.ok(colorContrast(theme.paper, theme.primaryText) >= 4.5);
+  }
+});
+
+test("global color reaches preview and exports without changing QR images or block overrides", () => {
+  for (const size of [{ width: 1080, height: 1620 }, { width: 2160, height: 2700 }]) {
+    const styles = [], calls = [];
+    const ctx = new Proxy({}, { get: (o, p) => p in o ? o[p] : (...args) => calls.push([p, ...args]), set: (o, p, v) => { o[p] = v; if (p === "fillStyle") styles.push(v); return true; } });
+    const canvas = { getContext: () => ctx };
+    const image = { naturalWidth: 240, naturalHeight: 240 };
+    const blocks = model.initialMeetBlocks().map(b => b.id === "title" ? { ...b, color: "#ff00ff" } : b);
+    drawMeetPoster(canvas, blocks, "trojan", { qr: image }, undefined, size, "#006b5e");
+    assert.ok(styles.includes("#006b5e"));
+    assert.ok(!styles.includes(model.meetThemes.trojan.primary));
+    assert.ok(styles.includes("#ff00ff"));
+    assert.ok(styles.includes("#ffffff"));
+    assert.ok(calls.some(c => c[0] === "drawImage" && c[1] === image));
+  }
+});
 
 test("social exports fit every poster edge and render directly at high resolution", () => {
   for (const [format, baseHeight] of [["instagram", 1350], ["facebook", 1080], ["poster", 1620]]) {

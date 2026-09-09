@@ -472,10 +472,10 @@ export default function CardStudio() {
 
       <section className="studio-intro" id="top">
         <div>
-          <span className="studio-kicker"><i /> CELEBRATE THE NEXT LEVEL</span>
-          <h1>Make their moment<br /><em>look legendary.</em></h1>
+          <span className="studio-kicker">01 / TEAM GRAPHICS</span>
+          <h1>Achievement studio</h1>
         </div>
-        <p>Create a polished, team-ready achievement graphic in minutes. Add the swimmer, choose the milestone, then download a high-resolution PNG.</p>
+        <p>Add a swimmer and their result. Download a team graphic and captions for Instagram or Facebook. Photos stay on this device.</p>
       </section>
 
       <section className="studio-workspace" aria-label="Achievement card maker">
@@ -565,7 +565,7 @@ export default function CardStudio() {
 
       <SocialCaptions details={{ name, headline, subline, eventName, time, meetName, meetDate }} />
 
-      <footer className="studio-footer"><span>JTSC • JENKS, OKLAHOMA</span><b>Built for every breakthrough.</b><span>RISE TOGETHER</span></footer>
+      <footer className="studio-footer"><span>JENKS TROJAN SWIM CLUB</span><span>JENKS, OKLAHOMA</span></footer>
     </main>
   );
 }

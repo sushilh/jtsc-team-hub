@@ -7,11 +7,15 @@ import MeetBookImport from "./MeetBookImport";
 import type { BookSession } from "../../lib/meet-book";
 import SocialCaptions from "./SocialCaptions";
 import { createMeetCaptions, meetExportFormats, meetExportSize, type MeetExportFormat } from "../../lib/meet-social";
+import { normalizeHex, resolveMeetTheme } from "../../lib/meet-colors";
 
 export default function MeetDayStudio() {
   const [blocks, setBlocks] = useState<MeetBlock[]>(initialMeetBlocks);
   const [selectedId, setSelectedId] = useState("title");
   const [theme, setTheme] = useState<ThemeId>("trojan");
+  const [customColor, setCustomColor] = useState<string | null>(null);
+  const [hexInput, setHexInput] = useState(meetThemes.trojan.primary);
+  const activeTheme = resolveMeetTheme(theme, customColor);
   const [images, setImages] = useState<Record<string, HTMLImageElement>>({});
   const [past, setPast] = useState<MeetBlock[][]>([]);
   const [future, setFuture] = useState<MeetBlock[][]>([]);
@@ -33,17 +37,17 @@ export default function MeetDayStudio() {
     return () => { logo.onload = null; };
   }, []);
   useEffect(() => {
-    if (canvas.current) drawMeetPoster(canvas.current, blocks, theme, images, selectedId);
-  }, [blocks, theme, images, selectedId]);
+    if (canvas.current) drawMeetPoster(canvas.current, blocks, theme, images, selectedId, undefined, customColor);
+  }, [blocks, theme, images, selectedId, customColor]);
   useEffect(() => {
     let active = true;
     const draw = () => {
-      if (active && exportPreview.current) drawMeetPoster(exportPreview.current, blocks, theme, images, undefined, meetExportSize(exportFormat, 1));
+      if (active && exportPreview.current) drawMeetPoster(exportPreview.current, blocks, theme, images, undefined, meetExportSize(exportFormat, 1), customColor);
     };
     draw();
     void document.fonts.ready.then(draw);
     return () => { active = false; };
-  }, [blocks, theme, images, exportFormat]);
+  }, [blocks, theme, images, exportFormat, customColor]);
 
   function checkpoint() { setPast(current => [...current.slice(-39), blocks]); setFuture([]); }
   function update(id: string, patch: Partial<MeetBlock>, remember = true) {
@@ -100,7 +104,7 @@ export default function MeetDayStudio() {
     setExporting(true); setNotice("");
     try {
       await document.fonts.ready;
-      const output = document.createElement("canvas"); drawMeetPoster(output, blocks, theme, images, undefined, exportSize);
+      const output = document.createElement("canvas"); drawMeetPoster(output, blocks, theme, images, undefined, exportSize, customColor);
       const blob = await new Promise<Blob | null>(resolve => output.toBlob(resolve, "image/png"));
       if (!blob) throw new Error();
       const url = URL.createObjectURL(blob), link = document.createElement("a");
@@ -112,12 +116,21 @@ export default function MeetDayStudio() {
   }
 
   return <main className="meet-studio">
-    <header className="meet-heading"><div><span>JTSC DESIGN DESK</span><h1>Meet Day Studio</h1><p>Edit the sample schedule, select a block, and drag it anywhere on the poster.</p></div><a className="meet-download-link" href="#meet-download">Download & captions ↓</a></header>
-    <div className="meet-toolbar"><div className="meet-themes" role="group" aria-label="Poster color theme">{Object.entries(meetThemes).map(([id, value]) => <button key={id} aria-pressed={theme === id} onClick={() => setTheme(id as ThemeId)}><i style={{ background: value.primary, borderColor: value.accent }} />{value.label}</button>)}</div><div><button onClick={undo} disabled={!past.length}>Undo layout</button><button onClick={redo} disabled={!future.length}>Redo layout</button></div></div>
+    <header className="meet-heading"><div><span>02 / MEET COMMUNICATIONS</span><h1>Meet Day Studio</h1><p>Edit sessions, times and meet details. Select any component to move it on the poster.</p></div><a className="meet-download-link" href="#meet-download">Download & captions ↓</a></header>
+    <div className="meet-toolbar"><div className="meet-themes" role="group" aria-label="Poster color theme">{Object.entries(meetThemes).map(([id, value]) => <button key={id} aria-pressed={!customColor && theme === id} onClick={() => { setTheme(id as ThemeId); setCustomColor(null); setHexInput(value.primary); }}><i style={{ background: value.primary, borderColor: value.accent }} />{value.label}</button>)}</div><div><button onClick={undo} disabled={!past.length}>Undo layout</button><button onClick={redo} disabled={!future.length}>Redo layout</button></div></div>
     <p className="meet-status" role="status">{notice || "Sample July 2026 schedule — replace with your meet details. Photos and edits stay in this browser tab."}</p>
-    <MeetBookImport onImport={importBook} />
     <div className="meet-workspace">
       <aside className="meet-inspector">
+    <section className="meet-global-color" aria-labelledby="global-color-title">
+      <div><h2 id="global-color-title">Global primary color</h2><p>Change all theme-colored areas, including the exported PNG.</p></div>
+      <div className="global-color-controls">
+        <label>Color<input type="color" aria-label="Global primary color" value={activeTheme.primary} onChange={e => { setCustomColor(e.target.value); setHexInput(e.target.value); }} /></label>
+        <label>Hex color<input value={hexInput} maxLength={7} spellCheck={false} autoComplete="off" aria-invalid={!normalizeHex(hexInput)} aria-describedby="global-color-help" onChange={e => { setHexInput(e.target.value); const color = normalizeHex(e.target.value); if (color) setCustomColor(color); }} onBlur={() => { const color = normalizeHex(hexInput); if (color) setHexInput(color); }} /></label>
+        <button onClick={() => { setCustomColor(null); setHexInput(meetThemes[theme].primary); }}>Reset to theme</button>
+      </div>
+      <p id="global-color-help">{normalizeHex(hexInput) ? "Photos, logos, QR images, and individual block-color overrides stay unchanged. Choosing a preset resets the global color." : "Enter a valid hex color, such as #006B5E or #ABC. The last valid color is still applied."}</p>
+    </section>
+        <MeetBookImport onImport={importBook} />
         <section><h2>Poster components</h2><div className="meet-add"><button onClick={() => add("session")}>+ Session</button><button onClick={() => add("text")}>+ Text</button><button onClick={() => add("image")}>+ Image</button><button onClick={() => add("qr")}>+ QR</button></div>
           <label>Choose a component<select value={selectedId} onChange={event => setSelectedId(event.target.value)}>{blocks.map(b => <option key={b.id} value={b.id}>{b.label}{b.hidden ? " (hidden)" : ""}</option>)}</select></label>
         </section>
@@ -135,9 +148,9 @@ export default function MeetDayStudio() {
             {selected.kind === "image" && <><label>Photo fit<select value={selected.fit || "contain"} onChange={e => update(selected.id, { fit: e.target.value as "contain" | "cover" })}><option value="contain">Fit entire image</option><option value="cover">Fill / crop</option></select></label><label>Opacity<input type="range" min="0.1" max="1" step="0.05" value={selected.opacity ?? 1} onChange={e => update(selected.id, { opacity: Number(e.target.value) })} /></label></>}
           </>}
           <div className="meet-fields">{(["x", "y", "w", "h"] as const).map(key => <label key={key}>{({ x: "Left", y: "Top", w: "Width", h: "Height" })[key]}<input type="number" value={Math.round(selected[key])} disabled={key === "h" && selected.kind === "qr"} onChange={e => update(selected.id, { [key]: Number(e.target.value) })} /></label>)}</div>
-          {(selected.kind === "text" || selected.kind === "session") && <><label>Font size<input type="range" min="12" max="160" value={selected.fontSize} onChange={e => update(selected.id, { fontSize: Number(e.target.value) })} /></label><label>Text color<input type="color" value={selected.color || (selected.tone === "ink" || selected.kind === "session" ? meetThemes[theme].ink : selected.tone === "accent" ? meetThemes[theme].accent : "#ffffff")} onChange={e => update(selected.id, { color: e.target.value })} /></label></>}
+          {(selected.kind === "text" || selected.kind === "session") && <><label>Font size<input type="range" min="12" max="160" value={selected.fontSize} onChange={e => update(selected.id, { fontSize: Number(e.target.value) })} /></label><label>Text color<input type="color" value={selected.color || (selected.tone === "ink" || selected.kind === "session" ? activeTheme.ink : selected.tone === "accent" ? activeTheme.accent : "#ffffff")} onChange={e => update(selected.id, { color: e.target.value })} /></label></>}
           {selected.kind === "text" && <label>Alignment<select value={selected.align || "left"} onChange={e => update(selected.id, { align: e.target.value as MeetBlock["align"] })}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>}
-          {selected.kind !== "qr" && <><label>Block background<input type="color" value={selected.background || meetThemes[theme].primary} onChange={e => update(selected.id, { background: e.target.value })} /></label><button onClick={() => update(selected.id, { color: undefined, background: undefined })}>Use theme colors</button></>}
+          {selected.kind !== "qr" && <><label>Block background<input type="color" value={selected.background || activeTheme.primary} onChange={e => update(selected.id, { background: e.target.value })} /></label><button onClick={() => update(selected.id, { color: undefined, background: undefined })}>Use theme colors</button></>}
           <div className="meet-add"><button onClick={() => update(selected.id, { hidden: !selected.hidden })}>{selected.hidden ? "Show" : "Hide"}</button><button onClick={() => { checkpoint(); setBlocks(current => [...current.filter(b => b.id !== selected.id), selected]); }}>Bring to front</button><button onClick={() => { checkpoint(); setBlocks(current => [selected, ...current.filter(b => b.id !== selected.id)]); }}>Send to back</button><button onClick={() => { const id = crypto.randomUUID(); checkpoint(); setBlocks(current => [...current, clampBlock({ ...selected, id, label: `${selected.label} copy`, x: selected.x + 24, y: selected.y + 24 })]); if (images[selected.id]) setImages(current => ({ ...current, [id]: current[selected.id] })); setSelectedId(id); }}>Duplicate</button><button onClick={() => { checkpoint(); setBlocks(current => current.filter(b => b.id !== selected.id)); setSelectedId(blocks.find(b => b.id !== selected.id)?.id || ""); }}>Delete</button></div>
         </section>}
       </aside>
@@ -147,7 +160,7 @@ export default function MeetDayStudio() {
       </section>
     </div>
     <section id="meet-download" className="meet-publish" aria-labelledby="meet-publish-title">
-      <div><span className="studio-kicker">FINISHED EDITING?</span><h2 id="meet-publish-title">Download your post</h2>
+      <div><span className="studio-kicker">EXPORT / PNG</span><h2 id="meet-publish-title">Download your post</h2>
         <p>Download the PNG, then copy your caption below and upload it in Instagram or Facebook. The full poster fits inside the selected shape with matching side margins—nothing is cropped.</p>
         <div className="meet-fields"><label>Image format<select value={exportFormat} onChange={e => setExportFormat(e.target.value as MeetExportFormat)}>{Object.entries(meetExportFormats).map(([id, format]) => <option key={id} value={id}>{format.label} · {format.width === format.height ? "1:1" : id === "instagram" ? "4:5" : "2:3"}</option>)}</select></label>
         <label>Resolution<select value={quality} onChange={e => setQuality(Number(e.target.value) as 1 | 2)}><option value={2}>High quality · 2×</option><option value={1}>Standard · 1080px wide</option></select></label></div>

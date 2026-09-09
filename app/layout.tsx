@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Archivo_Narrow } from "next/font/google";
 import "./globals.css";
+import "./site-design.css";
 
 const archivo = Archivo({ variable: "--font-body", subsets: ["latin"] });
 const archivoNarrow = Archivo_Narrow({ variable: "--font-display", subsets: ["latin"] });

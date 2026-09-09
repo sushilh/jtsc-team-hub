@@ -26,7 +26,7 @@ export default function SocialCaptions(props: Props) {
     }
   }
   return <section className="social-captions" aria-labelledby={`${instance}-caption-title`}>
-    <div className="caption-heading"><div><span className="studio-kicker">READY TO POST</span><h2 id={`${instance}-caption-title`}>Your post, written.</h2></div><button type="button" onClick={() => { setEdits({}); setNotice(`Captions regenerated from the current ${subject} details.`); }}>Regenerate captions</button></div>
+    <div className="caption-heading"><div><span className="studio-kicker">SOCIAL COPY</span><h2 id={`${instance}-caption-title`}>Post captions</h2></div><button type="button" onClick={() => { setEdits({}); setNotice(`Captions regenerated from the current ${subject} details.`); }}>Regenerate captions</button></div>
     <p>Drafts use the {subject} details above. Edit before sharing, then copy and paste alongside your downloaded image. Nothing is posted automatically.</p>
     {Object.keys(edits).length > 0 && <p className="caption-edited">Your edits are kept when card details change. Regenerate to replace them with updated drafts.</p>}
     <div className="caption-grid">{(["instagram", "facebook"] as const).map(platform => <div className="caption-card" key={platform}>
