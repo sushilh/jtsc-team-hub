@@ -32,6 +32,7 @@ function drawCoverImage(
   width: number,
   height: number,
   zoom: number,
+  horizontalPosition: number,
   verticalPosition: number,
 ) {
   const coverScale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * zoom;
@@ -39,7 +40,7 @@ function drawCoverImage(
   const sourceHeight = height / coverScale;
   const maxX = Math.max(0, image.naturalWidth - sourceWidth);
   const maxY = Math.max(0, image.naturalHeight - sourceHeight);
-  const sourceX = maxX / 2;
+  const sourceX = Math.min(maxX, Math.max(0, maxX / 2 + (horizontalPosition / 100) * maxX));
   const sourceY = Math.min(maxY, Math.max(0, maxY / 2 + (verticalPosition / 100) * maxY));
   ctx.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, x, y, width, height);
 }
@@ -51,22 +52,6 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
     if (ctx.measureText(text).width <= maxWidth) return size;
     size -= 2;
   } while (size > 24);
-  return size;
-}
-
-function fitDisplayText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  startSize: number,
-  font: string,
-) {
-  let size = startSize;
-  do {
-    ctx.font = font.replace("{size}", String(size));
-    if (ctx.measureText(text).width <= maxWidth) return size;
-    size -= 2;
-  } while (size > 28);
   return size;
 }
 
@@ -99,6 +84,7 @@ function drawCard(
     image: HTMLImageElement | null;
     brandMark: HTMLImageElement | null;
     zoom: number;
+    horizontalPosition: number;
     verticalPosition: number;
   },
 ) {
@@ -113,160 +99,167 @@ function drawCard(
   const maroonDark = "#2B0817";
   const aqua = "#54C7DB";
 
-  // Full-bleed photography and a cool editorial color grade.
-  const baseGradient = ctx.createLinearGradient(0, 0, width, height);
-  baseGradient.addColorStop(0, "#DDE7E8");
-  baseGradient.addColorStop(.45, "#5EC8D4");
-  baseGradient.addColorStop(1, "#075E7B");
+  const portrait = state.format === "portrait";
+  const panelTop = portrait ? 720 : 540;
+  const footerY = portrait ? 1218 : 962;
+
+  // Full-bleed photography stays intentionally clear of the typography panel.
+  const baseGradient = ctx.createLinearGradient(0, 0, width, panelTop);
+  baseGradient.addColorStop(0, "#D7D9D7");
+  baseGradient.addColorStop(.62, "#9FA7A7");
+  baseGradient.addColorStop(1, "#61696B");
   ctx.fillStyle = baseGradient;
   ctx.fillRect(0, 0, width, height);
 
   if (state.image) {
     ctx.save();
-    ctx.filter = "saturate(.72) contrast(1.08)";
-    drawCoverImage(ctx, state.image, 0, 0, width, height, state.zoom, state.verticalPosition);
+    ctx.filter = "saturate(.82) contrast(1.06)";
+    drawCoverImage(ctx, state.image, 0, 0, width, height, state.zoom, state.horizontalPosition, state.verticalPosition);
     ctx.restore();
   } else {
     ctx.fillStyle = "rgba(255,255,255,.12)";
     for (let y = 155; y < height; y += 142) ctx.fillRect(0, y, width, 3);
-    ctx.fillStyle = "rgba(43,8,23,.22)";
+    ctx.fillStyle = "rgba(43,8,23,.18)";
     ctx.beginPath();
-    ctx.arc(540, height * .4, 118, 0, Math.PI * 2);
+    ctx.arc(540, panelTop * .38, 105, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(540, height * .68, 250, 330, 0, 0, Math.PI * 2);
+    ctx.ellipse(540, panelTop * .82, 235, 290, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  const topGlow = ctx.createLinearGradient(0, 0, 0, height * .52);
-  topGlow.addColorStop(0, "rgba(248,250,248,.92)");
-  topGlow.addColorStop(.48, "rgba(230,247,249,.4)");
-  topGlow.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = topGlow;
-  ctx.fillRect(0, 0, width, height * .58);
-
-  ctx.fillStyle = "rgba(20,190,214,.17)";
-  ctx.fillRect(0, 0, width, height);
-
-  const lowerShade = ctx.createLinearGradient(0, height * .38, 0, height);
-  lowerShade.addColorStop(0, "rgba(43,8,23,0)");
-  lowerShade.addColorStop(.56, "rgba(43,8,23,.18)");
-  lowerShade.addColorStop(1, "rgba(43,8,23,.9)");
-  ctx.fillStyle = lowerShade;
-  ctx.fillRect(0, height * .38, width, height * .62);
-
+  // A restrained brand grade: warm neutral photo, maroon edges, aqua details.
+  const topWash = ctx.createLinearGradient(0, 0, 0, panelTop * .58);
+  topWash.addColorStop(0, "rgba(245,240,230,.24)");
+  topWash.addColorStop(1, "rgba(245,240,230,0)");
+  ctx.fillStyle = topWash;
+  ctx.fillRect(0, 0, width, panelTop * .58);
   const edgeShade = ctx.createLinearGradient(0, 0, width, 0);
-  edgeShade.addColorStop(0, "rgba(120,29,66,.34)");
-  edgeShade.addColorStop(.28, "rgba(120,29,66,0)");
-  edgeShade.addColorStop(.75, "rgba(43,8,23,0)");
-  edgeShade.addColorStop(1, "rgba(43,8,23,.32)");
+  edgeShade.addColorStop(0, "rgba(43,8,23,.24)");
+  edgeShade.addColorStop(.18, "rgba(43,8,23,0)");
+  edgeShade.addColorStop(.82, "rgba(43,8,23,0)");
+  edgeShade.addColorStop(1, "rgba(43,8,23,.24)");
   ctx.fillStyle = edgeShade;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, width, panelTop);
 
-  // Loose lane lines and orbit strokes keep the composition in motion.
-  ctx.strokeStyle = "rgba(255,255,255,.5)";
-  ctx.lineWidth = 12;
-  ctx.beginPath();
-  ctx.ellipse(515, height * .46, 425, height * .18, -.16, 0, Math.PI * 1.82);
-  ctx.stroke();
+  // Edge-only motion marks preserve the swimmer's face as the visual focal point.
   ctx.strokeStyle = "rgba(84,199,219,.8)";
-  ctx.lineWidth = 18;
+  ctx.lineWidth = 9;
   ctx.beginPath();
-  ctx.ellipse(540, height * .47, 470, height * .2, -.1, .08, Math.PI * 1.18);
+  ctx.arc(1010, panelTop * .34, 230, Math.PI * .56, Math.PI * 1.46);
   ctx.stroke();
+  ctx.strokeStyle = "rgba(245,240,230,.76)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(1005, panelTop * .34, 207, Math.PI * .58, Math.PI * 1.43);
+  ctx.stroke();
+  ctx.fillStyle = aqua;
+  ctx.fillRect(0, 0, width, 9);
+  ctx.fillStyle = maroon;
+  ctx.fillRect(width - 14, 0, 14, panelTop);
 
-  ctx.strokeStyle = "rgba(255,255,255,.2)";
-  ctx.lineWidth = 2;
-  for (let y = height * .7; y < height - 150; y += 62) {
-    ctx.beginPath();
-    ctx.moveTo(55, y);
-    ctx.bezierCurveTo(280, y - 35, 630, y + 40, 1025, y - 8);
-    ctx.stroke();
+  // A crisp editorial label replaces the thin, overly spaced heading.
+  ctx.fillStyle = "rgba(245,240,230,.94)";
+  ctx.beginPath();
+  ctx.roundRect(54, 50, 410, 58, 29);
+  ctx.fill();
+  ctx.fillStyle = maroon;
+  ctx.beginPath();
+  ctx.arc(86, 79, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '800 19px "Helvetica Neue", Arial, sans-serif';
+  drawCenteredTrackedText(ctx, "CONGRATULATIONS", 285, 86, 5);
+  ctx.fillStyle = "rgba(245,240,230,.94)";
+  ctx.textAlign = "right";
+  ctx.font = '800 16px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText("JENKS TROJAN SWIM CLUB", 1016, 83);
+
+  if (!state.image) {
+    ctx.fillStyle = "rgba(245,240,230,.9)";
+    ctx.textAlign = "center";
+    ctx.font = '800 20px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText("UPLOAD A SWIMMER PHOTO", width / 2, panelTop * .5);
   }
 
-  // Slim, widely tracked celebration line from the reference direction.
-  ctx.fillStyle = maroon;
-  ctx.textAlign = "center";
-  ctx.font = `500 ${state.format === "portrait" ? 31 : 27}px "Arial Narrow", "Helvetica Neue", sans-serif`;
-  drawCenteredTrackedText(ctx, "CONGRATULATIONS", width / 2, state.format === "portrait" ? 102 : 82, 17);
+  // The dedicated maroon panel guarantees both face visibility and name clarity.
+  const panelFade = ctx.createLinearGradient(0, panelTop - 110, 0, panelTop + 48);
+  panelFade.addColorStop(0, "rgba(43,8,23,0)");
+  panelFade.addColorStop(.64, "rgba(43,8,23,.92)");
+  panelFade.addColorStop(1, maroonDark);
+  ctx.fillStyle = panelFade;
+  ctx.fillRect(0, panelTop - 110, width, 160);
+  const panelGradient = ctx.createLinearGradient(0, panelTop, width, footerY);
+  panelGradient.addColorStop(0, "#2B0817");
+  panelGradient.addColorStop(.55, "#52102E");
+  panelGradient.addColorStop(1, "#381020");
+  ctx.fillStyle = panelGradient;
+  ctx.fillRect(0, panelTop, width, footerY - panelTop);
+
+  ctx.fillStyle = "rgba(245,240,230,.62)";
+  ctx.font = `800 ${portrait ? 16 : 14}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("SWIMMER SPOTLIGHT", 70, panelTop + (portrait ? 34 : 28));
+  ctx.fillStyle = aqua;
+  ctx.fillRect(70, panelTop + (portrait ? 48 : 40), 54, 5);
 
   const nameParts = (state.name.trim() || "SWIMMER NAME").split(/\s+/);
   const firstName = nameParts.shift() || "SWIMMER";
   const lastName = nameParts.join(" ") || "TROJAN";
-  const bigNameY = state.format === "portrait" ? 490 : 405;
-  const firstSize = fitDisplayText(ctx, firstName.toUpperCase(), 950, state.format === "portrait" ? 270 : 225, '900 {size}px "Arial Narrow", Impact, sans-serif');
-  const nameGradient = ctx.createLinearGradient(90, bigNameY - firstSize, 900, bigNameY);
-  nameGradient.addColorStop(0, "#16D3E1");
-  nameGradient.addColorStop(.55, "#42C8DD");
-  nameGradient.addColorStop(1, "#067BA2");
-  ctx.textAlign = "center";
-  ctx.font = `900 ${firstSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(255,255,255,.64)";
-  ctx.strokeText(firstName.toUpperCase(), width / 2, bigNameY);
-  ctx.fillStyle = nameGradient;
-  ctx.globalAlpha = .88;
-  ctx.fillText(firstName.toUpperCase(), width / 2, bigNameY);
-  ctx.globalAlpha = 1;
-
-  const scriptY = state.format === "portrait" ? 685 : 565;
-  const scriptSize = fitDisplayText(ctx, lastName, 860, state.format === "portrait" ? 178 : 145, '500 {size}px "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive');
-  ctx.font = `500 ${scriptSize}px "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive`;
-  ctx.fillStyle = "#FFFFFF";
-  ctx.shadowColor = "rgba(43,8,23,.36)";
-  ctx.shadowBlur = 16;
-  ctx.fillText(lastName, width / 2, scriptY);
-  ctx.shadowBlur = 0;
-
-  if (!state.image) {
-    ctx.fillStyle = "rgba(255,255,255,.82)";
-    ctx.font = '700 20px "Helvetica Neue", Arial, sans-serif';
-    drawCenteredTrackedText(ctx, "UPLOAD A SWIMMER PHOTO", width / 2, scriptY + 62, 4);
-  }
-
-  const detailTop = state.format === "portrait" ? height - 455 : height - 390;
+  const firstY = panelTop + (portrait ? 108 : 91);
+  const lastY = panelTop + (portrait ? 194 : 159);
+  const firstSize = fitText(ctx, firstName.toUpperCase(), 900, portrait ? 58 : 48, 800);
+  ctx.fillStyle = "#F5F0E6";
+  ctx.font = `800 ${firstSize}px "Arial Narrow", "Helvetica Neue", sans-serif`;
+  ctx.fillText(firstName.toUpperCase(), 70, firstY);
+  const lastSize = fitText(ctx, lastName.toUpperCase(), 920, portrait ? 102 : 82, 900);
   ctx.fillStyle = aqua;
-  ctx.font = '800 18px "Helvetica Neue", Arial, sans-serif';
-  drawCenteredTrackedText(ctx, "ACHIEVEMENT UNLOCKED", width / 2, detailTop, 7);
-  ctx.fillStyle = "rgba(255,255,255,.94)";
-  const achievement = (state.headline || "ACHIEVEMENT").toUpperCase();
-  const achievementSize = fitText(ctx, achievement, 930, 66, 900);
-  ctx.font = `900 ${achievementSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(achievement, width / 2, detailTop + 78);
-  ctx.fillStyle = "rgba(255,255,255,.8)";
-  ctx.font = '700 19px "Helvetica Neue", Arial, sans-serif';
-  drawCenteredTrackedText(ctx, state.subline.toUpperCase(), width / 2, detailTop + 126, 3);
+  ctx.font = `900 ${lastSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText(lastName.toUpperCase(), 70, lastY);
 
-  ctx.fillStyle = "rgba(245,240,230,.92)";
+  const detailY = panelTop + (portrait ? 235 : 196);
+  ctx.fillStyle = "rgba(245,240,230,.25)";
+  ctx.fillRect(70, detailY, 940, 1);
+  ctx.fillStyle = aqua;
+  ctx.font = `800 ${portrait ? 15 : 13}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText("ACHIEVEMENT", 70, detailY + (portrait ? 30 : 24));
+  const achievement = (state.headline || "ACHIEVEMENT").toUpperCase();
+  const achievementSize = fitText(ctx, achievement, 940, portrait ? 50 : 40, 900);
+  ctx.fillStyle = "#F5F0E6";
+  ctx.font = `900 ${achievementSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText(achievement, 70, detailY + (portrait ? 84 : 66));
+  ctx.fillStyle = "rgba(245,240,230,.72)";
+  ctx.font = `700 ${portrait ? 17 : 14}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(state.subline.toUpperCase(), 70, detailY + (portrait ? 117 : 91));
+
+  const eventY = detailY + (portrait ? 145 : 112);
+  ctx.fillStyle = "#F5F0E6";
   ctx.beginPath();
-  ctx.roundRect(135, detailTop + 166, 810, 68, 34);
+  ctx.roundRect(70, eventY, 940, portrait ? 62 : 52, 8);
   ctx.fill();
   ctx.fillStyle = maroonDark;
-  ctx.font = '800 24px "Helvetica Neue", Arial, sans-serif';
-  drawCenteredTrackedText(ctx, (state.eventLine || "EVENT • TIME").toUpperCase(), width / 2, detailTop + 210, 4);
+  ctx.font = `800 ${portrait ? 21 : 18}px "Helvetica Neue", Arial, sans-serif`;
+  drawCenteredTrackedText(ctx, (state.eventLine || "EVENT • TIME").toUpperCase(), width / 2, eventY + (portrait ? 40 : 34), 4);
 
   // Official mark and compact team signature.
-  const footerY = height - 135;
-  ctx.fillStyle = "rgba(245,240,230,.94)";
-  ctx.fillRect(0, footerY, width, 135);
-  if (state.brandMark) ctx.drawImage(state.brandMark, 58, footerY + 17, 77, 91);
+  ctx.fillStyle = "#F5F0E6";
+  ctx.fillRect(0, footerY, width, height - footerY);
+  if (state.brandMark) ctx.drawImage(state.brandMark, 58, footerY + 14, portrait ? 77 : 64, portrait ? 91 : 75);
   ctx.fillStyle = maroonDark;
   ctx.textAlign = "left";
-  ctx.font = '900 25px "Arial Narrow", Impact, sans-serif';
-  ctx.fillText("JENKS TROJANS", 162, footerY + 56);
+  ctx.font = `900 ${portrait ? 25 : 21}px "Arial Narrow", Impact, sans-serif`;
+  ctx.fillText("JENKS TROJANS", portrait ? 162 : 146, footerY + (portrait ? 56 : 49));
   ctx.fillStyle = maroon;
-  ctx.font = '800 14px "Helvetica Neue", Arial, sans-serif';
-  drawCenteredTrackedText(ctx, "SWIM CLUB", 227, footerY + 85, 4);
+  ctx.font = `800 ${portrait ? 14 : 12}px "Helvetica Neue", Arial, sans-serif`;
+  drawCenteredTrackedText(ctx, "SWIM CLUB", portrait ? 227 : 203, footerY + (portrait ? 85 : 72), 4);
   ctx.fillStyle = aqua;
-  ctx.fillRect(419, footerY + 28, 3, 76);
+  ctx.fillRect(419, footerY + 25, 3, portrait ? 76 : 66);
   ctx.fillStyle = maroon;
   ctx.textAlign = "right";
-  ctx.font = '800 20px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText((state.classYear || "CLASS OF 2027").toUpperCase(), 1017, footerY + 58);
+  ctx.font = `800 ${portrait ? 20 : 17}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText((state.classYear || "CLASS OF 2027").toUpperCase(), 1017, footerY + (portrait ? 58 : 49));
   ctx.fillStyle = "#6D6267";
-  ctx.font = '700 14px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText("BUILT FOR THE NEXT LEVEL", 1017, footerY + 87);
+  ctx.font = `700 ${portrait ? 14 : 12}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText("BUILT FOR THE NEXT LEVEL", 1017, footerY + (portrait ? 87 : 74));
   ctx.fillStyle = maroon;
   ctx.fillRect(0, height - 8, width, 8);
 }
@@ -286,14 +279,15 @@ export default function CardStudio() {
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [brandMark, setBrandMark] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [horizontalPosition, setHorizontalPosition] = useState(0);
   const [verticalPosition, setVerticalPosition] = useState(0);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, brandMark, zoom, verticalPosition });
-  }, [name, classYear, headline, subline, eventName, time, format, photo, brandMark, zoom, verticalPosition]);
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+  }, [name, classYear, headline, subline, eventName, time, format, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
 
   useEffect(() => {
     loadImage("/jenks-trojan-logo.png").then(setBrandMark).catch(() => setBrandMark(null));
@@ -315,6 +309,7 @@ export default function CardStudio() {
     const url = URL.createObjectURL(file);
     setPhotoUrl(url);
     setZoom(1);
+    setHorizontalPosition(0);
     setVerticalPosition(0);
     try {
       setPhoto(await loadImage(url));
@@ -371,7 +366,8 @@ export default function CardStudio() {
             {photo && (
               <div className="photo-sliders">
                 <label><span>Zoom</span><input aria-label="Photo zoom" type="range" min="1" max="2" step="0.02" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} /></label>
-                <label><span>Position</span><input aria-label="Photo vertical position" type="range" min="-50" max="50" step="1" value={verticalPosition} onChange={(e) => setVerticalPosition(Number(e.target.value))} /></label>
+                <label><span>Left / right</span><input aria-label="Photo horizontal focus" type="range" min="-50" max="50" step="1" value={horizontalPosition} onChange={(e) => setHorizontalPosition(Number(e.target.value))} /></label>
+                <label><span>Up / down</span><input aria-label="Photo vertical focus" type="range" min="-50" max="50" step="1" value={verticalPosition} onChange={(e) => setVerticalPosition(Number(e.target.value))} /></label>
               </div>
             )}
           </div>
