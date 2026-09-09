@@ -2,10 +2,10 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import SocialCaptions from "./SocialCaptions";
-import { imageFilename, socialFormats } from "../../lib/social-content.mjs";
+import { imageFilename, socialFormats, meetDetails } from "../../lib/social-content.mjs";
 
 type CardFormat = "portrait" | "square";
-type CardTemplate = "classic" | "signature";
+type CardTemplate = "classic" | "signature" | "race";
 
 type CardDrawingState = {
   name: string;
@@ -13,6 +13,10 @@ type CardDrawingState = {
   headline: string;
   subline: string;
   eventLine: string;
+  eventName: string;
+  time: string;
+  meetName: string;
+  meetDate: string;
   format: CardFormat;
   template: CardTemplate;
   image: HTMLImageElement | null;
@@ -29,6 +33,7 @@ const achievements = [
   { label: "Made State", headline: "STATE QUALIFIER", subline: "OSSAA STATE CHAMPIONSHIPS" },
   { label: "Junior Nationals", headline: "JUNIOR NATIONAL QUALIFIER", subline: "USA SWIMMING JUNIOR NATIONALS" },
   { label: "National Team", headline: "NATIONAL TEAM", subline: "SELECTED • TEAM USA PATHWAY" },
+  { label: "Season Best", headline: "SEASON BEST", subline: "" },
 ] as const;
 
 const initialAchievement = achievements[0];
@@ -173,10 +178,42 @@ function drawClassicCard(
   ctx.fillStyle = "rgba(43,8,23,.78)";
   ctx.fillRect(0, bandY + bandHeight, width, height - bandY - bandHeight);
   ctx.fillStyle = cream;
+  const meet = meetDetails(state.meetName, state.meetDate);
+  if (meet) {
+    ctx.textAlign = "center";
+    ctx.font = '600 22px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(meet.toUpperCase(), width / 2, height - 88, width - 96);
+  }
   ctx.font = `800 ${portrait ? 16 : 14}px "Helvetica Neue", Arial, sans-serif`;
   drawCenteredTrackedText(ctx, "JENKS TROJAN SWIM CLUB", width / 2, height - 48, 5);
   ctx.fillStyle = aqua;
   ctx.fillRect(width / 2 - 52, height - 28, 104, 4);
+}
+
+function drawRaceCard(ctx: CanvasRenderingContext2D, width: number, height: number, state: CardDrawingState) {
+  const top = height - 330;
+  ctx.fillStyle = "#17090f"; ctx.fillRect(0, 0, width, height);
+  if (state.image) {
+    ctx.save(); ctx.filter = "blur(24px) brightness(.5)";
+    drawCoverImage(ctx, state.image, 0, 0, width, top, 1, 0, 0); ctx.restore();
+    const areaHeight = top - 92;
+    const scale = Math.min(width / state.image.naturalWidth, areaHeight / state.image.naturalHeight) * state.zoom;
+    const w = state.image.naturalWidth * scale, h = state.image.naturalHeight * scale;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 92, width, areaHeight); ctx.clip();
+    ctx.drawImage(state.image, (width - w) / 2 + state.horizontalPosition / 100 * Math.abs(width - w), 92 + (areaHeight - h) / 2 + state.verticalPosition / 100 * Math.abs(areaHeight - h), w, h); ctx.restore();
+  }
+  ctx.fillStyle = "#781D42"; ctx.fillRect(0, 0, width, 92); ctx.fillRect(0, top, width, 118);
+  ctx.fillStyle = "#f0c347"; ctx.textAlign = "left";
+  fitText(ctx, state.headline.toUpperCase(), 930, 31); ctx.fillText(state.headline.toUpperCase(), 50, 57, 930);
+  ctx.fillStyle = "#ffffff"; fitText(ctx, state.time || "TIME", 620, 110, 900); ctx.fillText(state.time || "TIME", 48, top + 102, 620);
+  ctx.fillStyle = "#f0c347"; ctx.fillRect(727, top + 23, 4, 75);
+  ctx.font = '600 20px Arial, sans-serif'; ctx.fillText("EVENT", 757, top + 45);
+  ctx.fillStyle = "#ffffff"; fitText(ctx, state.eventName.toUpperCase() || "EVENT", 275, 28, 800); ctx.fillText(state.eventName.toUpperCase() || "EVENT", 757, top + 84, 275);
+  fitText(ctx, state.name.toUpperCase() || "SWIMMER NAME", 980, 65, 900); ctx.fillText(state.name.toUpperCase() || "SWIMMER NAME", 48, top + 185, 980);
+  ctx.fillStyle = "#e0c9d2"; ctx.font = '600 22px Arial, sans-serif'; ctx.fillText(meetDetails(state.meetName, state.meetDate).toUpperCase(), 50, top + 229, 960);
+  ctx.font = '500 18px Arial, sans-serif'; ctx.fillText(state.subline.toUpperCase(), 50, top + 260, 960);
+  ctx.fillStyle = "#f0c347"; ctx.font = '700 18px Arial, sans-serif'; ctx.fillText(`JTSC  /  ${state.classYear.toUpperCase()}`, 50, top + 301, 880);
+  if (state.brandMark) ctx.drawImage(state.brandMark, 980, top + 267, 35, 42);
 }
 
 function drawCard(
@@ -192,6 +229,10 @@ function drawCard(
 
   if (state.template === "classic") {
     drawClassicCard(ctx, width, height, state);
+    return;
+  }
+  if (state.template === "race") {
+    drawRaceCard(ctx, width, height, state);
     return;
   }
 
@@ -274,18 +315,24 @@ function drawCard(
   ctx.roundRect(panelX + 1, panelTop + 1, panelWidth - 2, panelHeight - 2, 27);
   ctx.stroke();
 
+  const meet = meetDetails(state.meetName, state.meetDate);
   const name = (state.name.trim() || "SWIMMER NAME").toUpperCase();
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffffff";
   fitText(ctx, name, 900, 64, 800);
-  ctx.fillText(name, 62, panelTop + 76, 900);
+  ctx.fillText(name, 62, panelTop + (meet ? 65 : 76), 900);
 
   ctx.fillStyle = "#efdbe4";
   fitText(ctx, (state.headline || "ACHIEVEMENT").toUpperCase(), 900, 32, 700);
-  ctx.fillText((state.headline || "ACHIEVEMENT").toUpperCase(), 64, panelTop + 125, 900);
+  ctx.fillText((state.headline || "ACHIEVEMENT").toUpperCase(), 64, panelTop + (meet ? 108 : 125), 900);
   ctx.fillStyle = "#d6bdc9";
   ctx.font = '500 18px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(state.subline.toUpperCase(), 64, panelTop + 157, 900);
+  ctx.fillText(state.subline.toUpperCase(), 64, panelTop + (meet ? 134 : 157), 900);
+  if (meet) {
+    ctx.fillStyle = "#ffffff";
+    ctx.font = '600 18px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(meet.toUpperCase(), 64, panelTop + 161, 900);
+  }
 
   ctx.fillStyle = "rgba(255,255,255,.10)";
   ctx.beginPath();
@@ -328,6 +375,8 @@ export default function CardStudio() {
   const [subline, setSubline] = useState<string>(initialAchievement.subline);
   const [eventName, setEventName] = useState("100Y Butterfly");
   const [time, setTime] = useState("55.42");
+  const [meetName, setMeetName] = useState("");
+  const [meetDate, setMeetDate] = useState("");
   const [format, setFormat] = useState<CardFormat>("portrait");
   const [template, setTemplate] = useState<CardTemplate>("signature");
   const [photoUrl, setPhotoUrl] = useState("");
@@ -343,8 +392,8 @@ export default function CardStudio() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
-  }, [name, classYear, headline, subline, eventName, time, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+  }, [name, classYear, headline, subline, eventName, time, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
 
   useEffect(() => {
     loadImage("/jenks-trojan-logo.png").then(setBrandMark).catch(() => setBrandMark(null));
@@ -391,7 +440,7 @@ export default function CardStudio() {
     setExporting(targetTemplate);
     setExportNotice("");
     try {
-    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
     exportCanvas.toBlob((blob) => {
       if (!blob) { setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");
@@ -401,7 +450,7 @@ export default function CardStudio() {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(link.href), 30000);
-      setExportNotice(`${targetTemplate === "classic" ? "Classic" : "Signature"} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
+      setExportNotice(`${targetTemplate === "classic" ? "Classic" : targetTemplate === "race" ? "Race Result" : "Signature"} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
       setExporting(null);
     }, "image/png");
     } catch {
@@ -453,7 +502,7 @@ export default function CardStudio() {
 
           <div className="control-section">
             <span className="section-number">02</span>
-            <div className="section-heading"><h2>Choose the milestone</h2><span>Six team presets</span></div>
+            <div className="section-heading"><h2>Choose the milestone</h2><span>Seven team presets</span></div>
             <div className="achievement-grid" role="group" aria-label="Achievement preset">
               {achievements.map((item, index) => (
                 <button key={item.label} type="button" className={achievementIndex === index ? "active" : ""} onClick={() => chooseAchievement(index)}>
@@ -474,6 +523,8 @@ export default function CardStudio() {
             </div>
             <label className="studio-field"><span>Time</span><input value={time} maxLength={16} inputMode="decimal" placeholder="e.g. 55.42" onChange={(e) => setTime(e.target.value)} /></label>
             <label className="studio-field"><span>Supporting line</span><input value={subline} maxLength={48} onChange={(e) => setSubline(e.target.value)} /></label>
+            <label className="studio-field"><span>Meet name (optional)</span><input value={meetName} maxLength={60} placeholder="e.g. Central Zone Championships" onChange={(e) => setMeetName(e.target.value)} /></label>
+            <label className="studio-field"><span>Meet date (optional)</span><input type="date" value={meetDate} min="1900-01-01" max="9999-12-31" onChange={(e) => setMeetDate(e.target.value)} /></label>
           </div>
         </aside>
 
@@ -492,23 +543,27 @@ export default function CardStudio() {
             <button type="button" className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
               <span>02</span><div><b>JTSC Signature</b><small>Compact frosted glass</small></div><i>New</i>
             </button>
+            <button type="button" aria-pressed={template === "race"} className={template === "race" ? "active" : ""} onClick={() => setTemplate("race")}>
+              <span>03</span><div><b>Race Result</b><small>Bold time-first layout</small></div><i>New</i>
+            </button>
           </div>
           <div className={`canvas-stage ${format}`}>
             <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
           </div>
           <div className="export-row">
-            <div><b>Download either design</b><span>{socialFormats[format].label} · 1080 × {socialFormats[format].height} · PNG</span></div>
+            <div><b>Download any design</b><span>{socialFormats[format].label} · 1080 × {socialFormats[format].height} · PNG</span></div>
             <div className="download-options">
               <button type="button" className="secondary-download" onClick={() => downloadCard("classic")} disabled={exporting !== null}><span>↓</span>{exporting === "classic" ? "Preparing…" : "Classic PNG"}</button>
               <button type="button" onClick={() => downloadCard("signature")} disabled={exporting !== null}><span>↓</span>{exporting === "signature" ? "Preparing…" : "Signature PNG"}</button>
+              <button type="button" onClick={() => downloadCard("race")} disabled={exporting !== null}><span>↓</span>{exporting === "race" ? "Preparing…" : "Race Result PNG"}</button>
             </div>
           </div>
-          <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic or Signature. Profile-grid previews may crop differently.</p>
+          <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic, Signature, or Race Result. Profile-grid previews may crop differently.</p>
           <p className="export-status" role="status">{exportNotice}</p>
         </div>
       </section>
 
-      <SocialCaptions details={{ name, headline, subline, eventName, time }} />
+      <SocialCaptions details={{ name, headline, subline, eventName, time, meetName, meetDate }} />
 
       <footer className="studio-footer"><span>JTSC • JENKS, OKLAHOMA</span><b>Built for every breakthrough.</b><span>RISE TOGETHER</span></footer>
     </main>

@@ -21,6 +21,13 @@ This starter does not use `wrangler.jsonc`.
 
 ## Product features
 
+- Meet Day Studio: draggable/resizable text, sessions, photo, logo, QR, and panel blocks; editable dates, ages, warm-ups, and start times
+- Three live color themes, layer order controls, hide/delete/duplicate, layout undo/redo, and 1080×1620 PNG poster export
+- Meet-book PDF/TXT upload, local text extraction, and reviewable session/event suggestions (15 MB / 60 pages; no OCR)
+- Optional meet name and calendar date on all achievement designs and captions; time-first Race Result template
+
+Meet books are parsed heuristically in the browser using PDF.js. Review all detected values before importing. Select up to seven sessions and eight events for a single poster; scanned/password-protected PDFs need a readable copy or pasted text. Files are not uploaded to a server. QR codes are uploaded images, not generated from URLs; a square white-margin container avoids stretching, but users must scan the final export to verify the supplied code. Drafts and images are held in memory and reset on page reload. Layout undo/redo covers component edits, not image replacements or theme changes.
+
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
 - existing sessions, roster, check-ins, hour adjustments, and CSV reports
 - Classic and Signature card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets

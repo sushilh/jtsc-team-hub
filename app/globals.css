@@ -1,5 +1,48 @@
 @import "tailwindcss";
 
+.meet-studio { padding: 30px max(24px, calc((100% - 1440px) / 2)) 60px; background: #f5f2f4; }
+.meet-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.meet-heading span { color: #7d2248; font-size: 12px; font-weight: 800; letter-spacing: .14em; }
+.meet-heading h1 { margin: 8px 0; font-size: clamp(30px, 4vw, 48px); color: #401229; font-weight: 800; }
+.meet-heading p, .meet-preview p { font-size: 14px; color: #72606b; line-height: 1.6; }
+.meet-studio button { border: 1px solid #d8c9d1; border-radius: 8px; background: #fff; padding: 10px 13px; color: #53132e; font-size: 14px; font-weight: 600; }
+.meet-studio button.meet-primary { background: #651b3c; color: #fff; border-color: #651b3c; }
+.meet-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.meet-toolbar > div { display: flex; gap: 8px; flex-wrap: wrap; }
+.meet-themes button { display: flex; align-items: center; gap: 8px; }
+.meet-themes i { width: 19px; height: 19px; border-radius: 50%; border: 3px solid; }
+.meet-themes button[aria-pressed="true"] { outline: 2px solid #7d2248; outline-offset: 2px; }
+.meet-status { min-height: 24px; font-size: 14px; line-height: 1.6; color: #634152; margin: 20px 0; }
+.meet-workspace { display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 24px; align-items: start; }
+.meet-inspector { display: grid; gap: 16px; }
+.meet-inspector section { padding: 22px; background: #fff; border: 1px solid #e2d7de; border-radius: 12px; }
+.meet-studio h2 { margin: 0 0 18px; font-size: 19px; font-weight: 750; color: #401229; }
+.meet-inspector label, .meet-book label { display: grid; gap: 7px; font-size: 14px; color: #654855; margin-top: 16px; }
+.meet-studio input:not([type="file"]), .meet-studio textarea, .meet-studio select { width: 100%; border: 1px solid #d8c9d1; border-radius: 6px; padding: 10px; font: inherit; font-size: 16px; color: #33222c; background: white; min-width: 0; }
+.meet-studio input[type="color"] { height: 42px; padding: 4px; }
+.meet-studio input[type="range"] { accent-color: #7d2248; }
+.meet-studio :focus-visible { outline: 3px solid #1d85cb; outline-offset: 2px; }
+.meet-studio textarea { resize: vertical; }
+.meet-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.meet-add { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.meet-properties > button { margin-top: 16px; }
+.meet-properties small { display: block; margin-top: 10px; font-size: 12px; line-height: 1.6; color: #72606b; }
+.meet-preview { padding: 24px; border-radius: 12px; background: #251720; }
+.meet-preview canvas { width: 100%; height: auto; display: block; aspect-ratio: 2 / 3; touch-action: none; cursor: move; box-shadow: 0 18px 36px #0005; }
+.meet-canvas-label { display: flex; justify-content: space-between; gap: 16px; color: #d6bdca; font-size: 12px; margin-bottom: 16px; }
+.meet-preview p { color: #c7b4bf; margin-bottom: 0; }
+.meet-book { background: white; border: 1px solid #dfd0d9; border-radius: 12px; padding: 22px; margin: 22px 0; }
+.meet-book summary { cursor: pointer; color: #53132e; font-weight: 750; font-size: 18px; }
+.meet-book p { font-size: 14px; line-height: 1.6; color: #725764; }
+.meet-book input[type="checkbox"] { width: auto; }
+.meet-book .book-option { display: flex; align-items: start; gap: 12px; margin: 12px 0; }
+.book-option div { flex: 1; min-width: 0; }
+.book-option small { display: block; font-size: 13px; line-height: 1.6; }
+.book-review { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.book-review section { min-width: 0; }
+@media (max-width: 1100px) { .club-header { flex-wrap: wrap; } .club-header nav { flex-wrap: wrap; } .meet-workspace { grid-template-columns: 310px minmax(0, 1fr); gap: 16px; } }
+@media (max-width: 800px) { .meet-studio { padding: 24px 14px; } .meet-heading, .meet-toolbar { flex-direction: column; align-items: stretch; } .meet-workspace { display: flex; flex-direction: column-reverse; } .meet-preview, .meet-inspector { width: 100%; } .meet-preview { padding: 14px; } .book-review { grid-template-columns: 1fr; } }
+
 .social-captions { width: min(1360px, calc(100% - 64px)); margin: 42px auto 0; padding: 32px; border: 1px solid #dfd2d9; background: #fff; border-radius: 18px; }
 .caption-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .caption-heading h2 { margin: 8px 0 0; color: #53132e; font-size: 30px; }
@@ -374,7 +417,7 @@ a { color: inherit; text-decoration: none; }
 .export-row button { min-width: 180px; height: 47px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; background: var(--studio-maroon); color: white; text-transform: uppercase; letter-spacing: .09em; font-size: 9px; font-weight: 800; box-shadow: 0 8px 18px rgba(120,29,66,.2); }
 .export-row button:hover:not(:disabled) { background: var(--studio-deep); }
 .export-row button span { color: var(--studio-aqua); font-size: 18px; }
-.download-options { display: flex; gap: 8px; }
+.download-options { display: flex; gap: 8px; flex-wrap: wrap; }
 .download-options .secondary-download { background: white; color: var(--studio-maroon); border: 1px solid #d1c5ca; box-shadow: none; }
 .download-options .secondary-download:hover:not(:disabled) { background: #f8f2f4; }
 .download-options .secondary-download span { color: var(--studio-maroon); }

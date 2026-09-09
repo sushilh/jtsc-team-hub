@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createCaptions } from "../../lib/social-content.mjs";
 
 type Platform = "instagram" | "facebook";
-type Details = { name: string; headline: string; subline: string; eventName: string; time: string };
+type Details = { name: string; headline: string; subline: string; eventName: string; time: string; meetName: string; meetDate: string };
 
 export default function SocialCaptions({ details }: { details: Details }) {
   const generated = createCaptions(details);

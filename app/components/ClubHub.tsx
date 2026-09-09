@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import CardStudio from "./CardStudio";
+import MeetDayStudio from "./MeetDayStudio";
 import VolunteerApp from "./VolunteerApp";
 import AdminApp from "./AdminApp";
 
 const tabs = [
   { id: "studio", label: "Achievement studio" },
+  { id: "meet-day", label: "Meet Day Studio" },
   { id: "volunteers", label: "Volunteer check-in" },
   { id: "admin", label: "Volunteer admin" },
 ] as const;
@@ -56,6 +58,7 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
       </nav>
     </header>
     <section id="panel-studio" role="tabpanel" aria-labelledby="tab-studio" hidden={active !== "studio"}>{visited.includes("studio") && <CardStudio />}</section>
+    <section id="panel-meet-day" role="tabpanel" aria-labelledby="tab-meet-day" hidden={active !== "meet-day"}>{visited.includes("meet-day") && <MeetDayStudio />}</section>
     <section id="panel-volunteers" role="tabpanel" aria-labelledby="tab-volunteers" hidden={active !== "volunteers"}>{visited.includes("volunteers") && <VolunteerApp />}</section>
     <section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" hidden={active !== "admin"}>{active === "admin" && <AdminApp />}</section>
   </div>;
