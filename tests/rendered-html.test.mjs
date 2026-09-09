@@ -21,7 +21,6 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /jenks-trojan-logo\.png/);
   assert.match(studio, /CONGRATULATIONS/);
   assert.match(studio, /Photo horizontal focus/);
-  assert.match(studio, /SWIMMER SPOTLIGHT/);
   assert.match(studio, /Classic Zone/);
   assert.match(studio, /JTSC Signature/);
   assert.match(studio, /Classic PNG/);

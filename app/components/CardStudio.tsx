@@ -194,172 +194,126 @@ function drawCard(
   }
 
   const maroon = "#781D42";
-  const maroonDark = "#2B0817";
-  const aqua = "#54C7DB";
+  const panelHeight = 318;
+  const panelTop = height - panelHeight - 28;
+  const photoTop = 108;
+  const photoBottom = panelTop - 20;
+  const panelX = 28;
+  const panelWidth = width - 56;
 
-  const portrait = state.format === "portrait";
-  const panelTop = portrait ? 720 : 540;
-  const footerY = portrait ? 1218 : 962;
-
-  // Full-bleed photography stays intentionally clear of the typography panel.
-  const baseGradient = ctx.createLinearGradient(0, 0, width, panelTop);
-  baseGradient.addColorStop(0, "#D7D9D7");
-  baseGradient.addColorStop(.62, "#9FA7A7");
-  baseGradient.addColorStop(1, "#61696B");
-  ctx.fillStyle = baseGradient;
+  ctx.fillStyle = "#24131d";
   ctx.fillRect(0, 0, width, height);
-
   if (state.image) {
+    // An ambient background fills the card; the foreground photo fits entirely
+    // above the information panel at the default zoom, including its lower edge.
     ctx.save();
-    ctx.filter = "saturate(.82) contrast(1.06)";
-    drawCoverImage(ctx, state.image, 0, 0, width, height, state.zoom, state.horizontalPosition, state.verticalPosition);
+    ctx.filter = "blur(30px) brightness(.55)";
+    drawCoverImage(ctx, state.image, -50, -50, width + 100, height + 100, 1, 0, 0);
+    ctx.restore();
+
+    const photoWidth = width - 56;
+    const photoHeight = photoBottom - photoTop;
+    const scale = Math.min(photoWidth / state.image.naturalWidth, photoHeight / state.image.naturalHeight) * state.zoom;
+    const dw = state.image.naturalWidth * scale;
+    const dh = state.image.naturalHeight * scale;
+    const dx = 28 + (photoWidth - dw) / 2 + state.horizontalPosition / 100 * Math.abs(photoWidth - dw);
+    const dy = photoTop + (photoHeight - dh) / 2 + state.verticalPosition / 100 * Math.abs(photoHeight - dh);
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(28, photoTop, photoWidth, photoHeight, 22);
+    ctx.clip();
+    ctx.drawImage(state.image, dx, dy, dw, dh);
     ctx.restore();
   } else {
-    ctx.fillStyle = "rgba(255,255,255,.12)";
-    for (let y = 155; y < height; y += 142) ctx.fillRect(0, y, width, 3);
-    ctx.fillStyle = "rgba(43,8,23,.18)";
-    ctx.beginPath();
-    ctx.arc(540, panelTop * .38, 105, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(540, panelTop * .82, 235, 290, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // A restrained brand grade: warm neutral photo, maroon edges, aqua details.
-  const topWash = ctx.createLinearGradient(0, 0, 0, panelTop * .58);
-  topWash.addColorStop(0, "rgba(245,240,230,.24)");
-  topWash.addColorStop(1, "rgba(245,240,230,0)");
-  ctx.fillStyle = topWash;
-  ctx.fillRect(0, 0, width, panelTop * .58);
-  const edgeShade = ctx.createLinearGradient(0, 0, width, 0);
-  edgeShade.addColorStop(0, "rgba(43,8,23,.24)");
-  edgeShade.addColorStop(.18, "rgba(43,8,23,0)");
-  edgeShade.addColorStop(.82, "rgba(43,8,23,0)");
-  edgeShade.addColorStop(1, "rgba(43,8,23,.24)");
-  ctx.fillStyle = edgeShade;
-  ctx.fillRect(0, 0, width, panelTop);
-
-  // Edge-only motion marks preserve the swimmer's face as the visual focal point.
-  ctx.strokeStyle = "rgba(84,199,219,.8)";
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.arc(1010, panelTop * .34, 230, Math.PI * .56, Math.PI * 1.46);
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(245,240,230,.76)";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(1005, panelTop * .34, 207, Math.PI * .58, Math.PI * 1.43);
-  ctx.stroke();
-  ctx.fillStyle = aqua;
-  ctx.fillRect(0, 0, width, 9);
-  ctx.fillStyle = maroon;
-  ctx.fillRect(width - 14, 0, 14, panelTop);
-
-  // A crisp editorial label replaces the thin, overly spaced heading.
-  ctx.fillStyle = "rgba(245,240,230,.94)";
-  ctx.beginPath();
-  ctx.roundRect(54, 50, 410, 58, 29);
-  ctx.fill();
-  ctx.fillStyle = maroon;
-  ctx.beginPath();
-  ctx.arc(86, 79, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.font = '800 19px "Helvetica Neue", Arial, sans-serif';
-  drawCenteredTrackedText(ctx, "CONGRATULATIONS", 285, 86, 5);
-  ctx.fillStyle = "rgba(245,240,230,.94)";
-  ctx.textAlign = "right";
-  ctx.font = '800 16px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText("JENKS TROJAN SWIM CLUB", 1016, 83);
-
-  if (!state.image) {
-    ctx.fillStyle = "rgba(245,240,230,.9)";
+    ctx.fillStyle = "#eadfe5";
     ctx.textAlign = "center";
-    ctx.font = '800 20px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText("UPLOAD A SWIMMER PHOTO", width / 2, panelTop * .5);
+    ctx.font = '600 28px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText("Add your swimmer photo", width / 2, (photoTop + photoBottom) / 2);
   }
 
-  // The dedicated maroon panel guarantees both face visibility and name clarity.
-  const panelFade = ctx.createLinearGradient(0, panelTop - 110, 0, panelTop + 48);
-  panelFade.addColorStop(0, "rgba(43,8,23,0)");
-  panelFade.addColorStop(.64, "rgba(43,8,23,.92)");
-  panelFade.addColorStop(1, maroonDark);
-  ctx.fillStyle = panelFade;
-  ctx.fillRect(0, panelTop - 110, width, 160);
-  const panelGradient = ctx.createLinearGradient(0, panelTop, width, footerY);
-  panelGradient.addColorStop(0, "#2B0817");
-  panelGradient.addColorStop(.55, "#52102E");
-  panelGradient.addColorStop(1, "#381020");
-  ctx.fillStyle = panelGradient;
-  ctx.fillRect(0, panelTop, width, footerY - panelTop);
-
-  ctx.fillStyle = "rgba(245,240,230,.62)";
-  ctx.font = `800 ${portrait ? 16 : 14}px "Helvetica Neue", Arial, sans-serif`;
+  // A quiet header occupies its own space instead of covering the portrait.
+  ctx.fillStyle = "#ffffff";
   ctx.textAlign = "left";
-  ctx.fillText("SWIMMER SPOTLIGHT", 70, panelTop + (portrait ? 34 : 28));
-  ctx.fillStyle = aqua;
-  ctx.fillRect(70, panelTop + (portrait ? 48 : 40), 54, 5);
-
-  const nameParts = (state.name.trim() || "SWIMMER NAME").split(/\s+/);
-  const firstName = nameParts.shift() || "SWIMMER";
-  const lastName = nameParts.join(" ") || "TROJAN";
-  const firstY = panelTop + (portrait ? 108 : 91);
-  const lastY = panelTop + (portrait ? 194 : 159);
-  const firstSize = fitText(ctx, firstName.toUpperCase(), 900, portrait ? 58 : 48, 800);
-  ctx.fillStyle = "#F5F0E6";
-  ctx.font = `800 ${firstSize}px "Arial Narrow", "Helvetica Neue", sans-serif`;
-  ctx.fillText(firstName.toUpperCase(), 70, firstY);
-  const lastSize = fitText(ctx, lastName.toUpperCase(), 920, portrait ? 102 : 82, 900);
-  ctx.fillStyle = aqua;
-  ctx.font = `900 ${lastSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText(lastName.toUpperCase(), 70, lastY);
-
-  const detailY = panelTop + (portrait ? 235 : 196);
-  ctx.fillStyle = "rgba(245,240,230,.25)";
-  ctx.fillRect(70, detailY, 940, 1);
-  ctx.fillStyle = aqua;
-  ctx.font = `800 ${portrait ? 15 : 13}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText("ACHIEVEMENT", 70, detailY + (portrait ? 30 : 24));
-  const achievement = (state.headline || "ACHIEVEMENT").toUpperCase();
-  const achievementSize = fitText(ctx, achievement, 940, portrait ? 50 : 40, 900);
-  ctx.fillStyle = "#F5F0E6";
-  ctx.font = `900 ${achievementSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText(achievement, 70, detailY + (portrait ? 84 : 66));
-  ctx.fillStyle = "rgba(245,240,230,.72)";
-  ctx.font = `700 ${portrait ? 17 : 14}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText(state.subline.toUpperCase(), 70, detailY + (portrait ? 117 : 91));
-
-  const eventY = detailY + (portrait ? 145 : 112);
-  ctx.fillStyle = "#F5F0E6";
-  ctx.beginPath();
-  ctx.roundRect(70, eventY, 940, portrait ? 62 : 52, 8);
-  ctx.fill();
-  ctx.fillStyle = maroonDark;
-  ctx.font = `800 ${portrait ? 21 : 18}px "Helvetica Neue", Arial, sans-serif`;
-  drawCenteredTrackedText(ctx, (state.eventLine || "EVENT • TIME").toUpperCase(), width / 2, eventY + (portrait ? 40 : 34), 4);
-
-  // Official mark and compact team signature.
-  ctx.fillStyle = "#F5F0E6";
-  ctx.fillRect(0, footerY, width, height - footerY);
-  if (state.brandMark) ctx.drawImage(state.brandMark, 58, footerY + 14, portrait ? 77 : 64, portrait ? 91 : 75);
-  ctx.fillStyle = maroonDark;
-  ctx.textAlign = "left";
-  ctx.font = `900 ${portrait ? 25 : 21}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText("JENKS TROJANS", portrait ? 162 : 146, footerY + (portrait ? 56 : 49));
-  ctx.fillStyle = maroon;
-  ctx.font = `800 ${portrait ? 14 : 12}px "Helvetica Neue", Arial, sans-serif`;
-  drawCenteredTrackedText(ctx, "SWIM CLUB", portrait ? 227 : 203, footerY + (portrait ? 85 : 72), 4);
-  ctx.fillStyle = aqua;
-  ctx.fillRect(419, footerY + 25, 3, portrait ? 76 : 66);
-  ctx.fillStyle = maroon;
+  ctx.font = '700 26px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText("CONGRATULATIONS", 46, 66);
+  ctx.fillStyle = "#d9bac9";
   ctx.textAlign = "right";
-  ctx.font = `800 ${portrait ? 20 : 17}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText((state.classYear || "CLASS OF 2027").toUpperCase(), 1017, footerY + (portrait ? 58 : 49));
-  ctx.fillStyle = "#6D6267";
-  ctx.font = `700 ${portrait ? 14 : 12}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText("BUILT FOR THE NEXT LEVEL", 1017, footerY + (portrait ? 87 : 74));
+  ctx.font = '600 18px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText("JENKS TROJAN SWIM CLUB", 1034, 64);
+
+  // Rasterized backdrop blur is part of the exported PNG, not just CSS.
+  const backdrop = document.createElement("canvas");
+  backdrop.width = width;
+  backdrop.height = height;
+  backdrop.getContext("2d")?.drawImage(canvas, 0, 0);
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(panelX, panelTop, panelWidth, panelHeight, 28);
+  ctx.clip();
+  ctx.filter = "blur(22px)";
+  ctx.drawImage(backdrop, 0, 0);
+  ctx.filter = "none";
+  const glass = ctx.createLinearGradient(panelX, panelTop, width, height);
+  glass.addColorStop(0, "rgba(120,29,66,.78)");
+  glass.addColorStop(.55, "rgba(69,18,41,.86)");
+  glass.addColorStop(1, "rgba(39,16,29,.9)");
+  ctx.fillStyle = glass;
+  ctx.fillRect(panelX, panelTop, panelWidth, panelHeight);
+  const sheen = ctx.createLinearGradient(0, panelTop, 0, panelTop + panelHeight);
+  sheen.addColorStop(0, "rgba(255,255,255,.16)");
+  sheen.addColorStop(.45, "rgba(255,255,255,.015)");
+  sheen.addColorStop(1, "rgba(255,255,255,.04)");
+  ctx.fillStyle = sheen;
+  ctx.fillRect(panelX, panelTop, panelWidth, panelHeight);
+  ctx.restore();
+  ctx.strokeStyle = "rgba(255,255,255,.35)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(panelX + 1, panelTop + 1, panelWidth - 2, panelHeight - 2, 27);
+  ctx.stroke();
+
+  const name = (state.name.trim() || "SWIMMER NAME").toUpperCase();
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffffff";
+  fitText(ctx, name, 900, 64, 800);
+  ctx.fillText(name, 62, panelTop + 76, 900);
+
+  ctx.fillStyle = "#efdbe4";
+  fitText(ctx, (state.headline || "ACHIEVEMENT").toUpperCase(), 900, 32, 700);
+  ctx.fillText((state.headline || "ACHIEVEMENT").toUpperCase(), 64, panelTop + 125, 900);
+  ctx.fillStyle = "#d6bdc9";
+  ctx.font = '500 18px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(state.subline.toUpperCase(), 64, panelTop + 157, 900);
+
+  ctx.fillStyle = "rgba(255,255,255,.10)";
+  ctx.beginPath();
+  ctx.roundRect(62, panelTop + 178, 956, 49, 12);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.17)";
+  ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = '700 23px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText((state.eventLine || "EVENT • TIME").toUpperCase(), 80, panelTop + 210, 920);
+
+  ctx.fillStyle = "rgba(255,255,255,.2)";
+  ctx.fillRect(62, panelTop + 244, 956, 1);
+  if (state.brandMark) {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.roundRect(62, panelTop + 257, 43, 47, 9);
+    ctx.fill();
+    ctx.drawImage(state.brandMark, 67, panelTop + 260, 32, 38);
+  }
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = '700 18px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText("JENKS TROJANS", 120, panelTop + 284);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#e7d1dc";
+  ctx.font = '600 17px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(state.classYear.toUpperCase(), 1018, panelTop + 284, 500);
   ctx.fillStyle = maroon;
-  ctx.fillRect(0, height - 8, width, 8);
+  ctx.fillRect(0, height - 4, width, 4);
 }
 
 export default function CardStudio() {
@@ -511,7 +465,7 @@ export default function CardStudio() {
               <span>01</span><div><b>Classic Zone</b><small>Original banner format</small></div><i>Current</i>
             </button>
             <button type="button" className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
-              <span>02</span><div><b>JTSC Signature</b><small>Refined face-safe format</small></div><i>New</i>
+              <span>02</span><div><b>JTSC Signature</b><small>Compact frosted glass</small></div><i>New</i>
             </button>
           </div>
           <div className={`canvas-stage ${format}`}>
