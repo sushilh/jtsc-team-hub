@@ -12,6 +12,44 @@ async function moduleFrom(entry) {
 const model = await moduleFrom("lib/meet-day.ts");
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");
 const { drawMeetPoster } = await moduleFrom("lib/meet-renderer.ts");
+const { createMeetCaptions, meetExportSize, fitMeetPoster } = await moduleFrom("lib/meet-social.ts");
+
+test("social exports fit every poster edge and render directly at high resolution", () => {
+  for (const [format, baseHeight] of [["instagram", 1350], ["facebook", 1080], ["poster", 1620]]) {
+    for (const quality of [1, 2]) {
+      const size = meetExportSize(format, quality);
+      assert.deepEqual(size, { width: 1080 * quality, height: baseHeight * quality });
+      const fit = fitMeetPoster(size.width, size.height);
+      assert.ok(fit.x >= 0 && fit.y >= 0);
+      assert.ok(fit.x + 1080 * fit.scale <= size.width + .001);
+      assert.ok(fit.y + 1620 * fit.scale <= size.height + .001);
+      const calls = [];
+      const ctx = new Proxy({}, { get: (o, p) => p in o ? o[p] : (...args) => calls.push([p, ...args]), set: (o, p, v) => { o[p] = v; return true; } });
+      const canvas = { getContext: () => ctx };
+      drawMeetPoster(canvas, model.initialMeetBlocks(), "trojan", {}, undefined, size);
+      assert.equal(canvas.width, size.width); assert.equal(canvas.height, size.height);
+      assert.ok(calls.some(c => c[0] === "scale" && c[1] === fit.scale && c[2] === fit.scale));
+      assert.ok(calls.some(c => c[0] === "fillText" && c[1] === "2026 OKS"));
+      assert.ok(!calls.some(c => c[0] === "strokeRect"));
+    }
+  }
+});
+
+test("meet captions follow edited visible blocks and omit removed sessions and unavailable QR", () => {
+  const blocks = model.initialMeetBlocks().map(b => b.id === "title" ? { ...b, text: "Fall Invitational" } : b.id === "session-0" ? { ...b, text: "Updated final", start: "6:15 PM" } : b.kind === "session" ? { ...b, hidden: true } : b);
+  const captions = createMeetCaptions(blocks, false);
+  for (const value of Object.values(captions)) {
+    assert.match(value, /Fall Invitational/);
+    assert.match(value, /Updated final/);
+    assert.match(value, /6:15 PM/);
+    assert.doesNotMatch(value, /PRELIMS|9:00 AM|Scan the QR/);
+  }
+  assert.match(createMeetCaptions(blocks, true).instagram, /Scan the QR code/);
+  const lengthy = blocks.map(b => b.kind === "text" ? { ...b, text: "Long meet information ".repeat(100) } : b);
+  assert.ok(createMeetCaptions(lengthy, true).instagram.length <= 2200);
+  assert.ok(createMeetCaptions(lengthy, true).facebook.length <= 5000);
+  assert.match(createMeetCaptions(lengthy, true).instagram, /See the full schedule/);
+});
 
 test("meet date is calendar-stable, optional, and included in both captions", () => {
   assert.equal(formatMeetDate("2026-07-23"), "Jul 23, 2026");

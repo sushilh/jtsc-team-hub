@@ -5,6 +5,8 @@ import { initialMeetBlocks, clampBlock, hitTest, meetThemes, POSTER_WIDTH, POSTE
 import { drawMeetPoster } from "../../lib/meet-renderer";
 import MeetBookImport from "./MeetBookImport";
 import type { BookSession } from "../../lib/meet-book";
+import SocialCaptions from "./SocialCaptions";
+import { createMeetCaptions, meetExportFormats, meetExportSize, type MeetExportFormat } from "../../lib/meet-social";
 
 export default function MeetDayStudio() {
   const [blocks, setBlocks] = useState<MeetBlock[]>(initialMeetBlocks);
@@ -15,6 +17,10 @@ export default function MeetDayStudio() {
   const [future, setFuture] = useState<MeetBlock[][]>([]);
   const [notice, setNotice] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<MeetExportFormat>("instagram");
+  const [quality, setQuality] = useState<1 | 2>(2);
+  const exportPreview = useRef<HTMLCanvasElement>(null);
+  const exportSize = meetExportSize(exportFormat, quality);
   const canvas = useRef<HTMLCanvasElement>(null);
   const upload = useRef<HTMLInputElement>(null);
   const drag = useRef<{ id: string; x: number; y: number; bx: number; by: number } | null>(null);
@@ -29,6 +35,15 @@ export default function MeetDayStudio() {
   useEffect(() => {
     if (canvas.current) drawMeetPoster(canvas.current, blocks, theme, images, selectedId);
   }, [blocks, theme, images, selectedId]);
+  useEffect(() => {
+    let active = true;
+    const draw = () => {
+      if (active && exportPreview.current) drawMeetPoster(exportPreview.current, blocks, theme, images, undefined, meetExportSize(exportFormat, 1));
+    };
+    draw();
+    void document.fonts.ready.then(draw);
+    return () => { active = false; };
+  }, [blocks, theme, images, exportFormat]);
 
   function checkpoint() { setPast(current => [...current.slice(-39), blocks]); setFuture([]); }
   function update(id: string, patch: Partial<MeetBlock>, remember = true) {
@@ -85,19 +100,19 @@ export default function MeetDayStudio() {
     setExporting(true); setNotice("");
     try {
       await document.fonts.ready;
-      const output = document.createElement("canvas"); drawMeetPoster(output, blocks, theme, images);
+      const output = document.createElement("canvas"); drawMeetPoster(output, blocks, theme, images, undefined, exportSize);
       const blob = await new Promise<Blob | null>(resolve => output.toBlob(resolve, "image/png"));
       if (!blob) throw new Error();
       const url = URL.createObjectURL(blob), link = document.createElement("a");
-      link.href = url; link.download = `jtsc-meet-day-${theme}-1080x1620.png`; document.body.appendChild(link); link.click(); link.remove();
+      link.href = url; link.download = `jtsc-meet-day-${exportFormat}-${theme}-${exportSize.width}x${exportSize.height}.png`; document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
-      setNotice("Poster PNG prepared. Review the schedule and scan the exported QR before posting.");
+      setNotice(`${meetExportFormats[exportFormat].label} PNG prepared at ${exportSize.width} × ${exportSize.height}. Copy the caption below and upload both in your social app. Scan the exported QR before sharing.`);
     } catch { setNotice("Could not download the poster. Please try again."); }
     finally { setExporting(false); }
   }
 
   return <main className="meet-studio">
-    <header className="meet-heading"><div><span>JTSC DESIGN DESK</span><h1>Meet Day Studio</h1><p>Edit the sample schedule, select a block, and drag it anywhere on the poster.</p></div><button className="meet-primary" onClick={download} disabled={exporting}>{exporting ? "Preparing…" : "Download poster PNG"}</button></header>
+    <header className="meet-heading"><div><span>JTSC DESIGN DESK</span><h1>Meet Day Studio</h1><p>Edit the sample schedule, select a block, and drag it anywhere on the poster.</p></div><a className="meet-download-link" href="#meet-download">Download & captions ↓</a></header>
     <div className="meet-toolbar"><div className="meet-themes" role="group" aria-label="Poster color theme">{Object.entries(meetThemes).map(([id, value]) => <button key={id} aria-pressed={theme === id} onClick={() => setTheme(id as ThemeId)}><i style={{ background: value.primary, borderColor: value.accent }} />{value.label}</button>)}</div><div><button onClick={undo} disabled={!past.length}>Undo layout</button><button onClick={redo} disabled={!future.length}>Redo layout</button></div></div>
     <p className="meet-status" role="status">{notice || "Sample July 2026 schedule — replace with your meet details. Photos and edits stay in this browser tab."}</p>
     <MeetBookImport onImport={importBook} />
@@ -131,5 +146,17 @@ export default function MeetDayStudio() {
         <p>Selection outlines are not included in the download. The QR block stays square with a white margin for scanning. Changes survive switching tabs, but not reloading this page.</p>
       </section>
     </div>
+    <section id="meet-download" className="meet-publish" aria-labelledby="meet-publish-title">
+      <div><span className="studio-kicker">FINISHED EDITING?</span><h2 id="meet-publish-title">Download your post</h2>
+        <p>Download the PNG, then copy your caption below and upload it in Instagram or Facebook. The full poster fits inside the selected shape with matching side margins—nothing is cropped.</p>
+        <div className="meet-fields"><label>Image format<select value={exportFormat} onChange={e => setExportFormat(e.target.value as MeetExportFormat)}>{Object.entries(meetExportFormats).map(([id, format]) => <option key={id} value={id}>{format.label} · {format.width === format.height ? "1:1" : id === "instagram" ? "4:5" : "2:3"}</option>)}</select></label>
+        <label>Resolution<select value={quality} onChange={e => setQuality(Number(e.target.value) as 1 | 2)}><option value={2}>High quality · 2×</option><option value={1}>Standard · 1080px wide</option></select></label></div>
+        <p><b>{exportSize.width} × {exportSize.height} pixels · lossless PNG</b><br />Text is drawn at the chosen resolution. Use clear original photos and QR images for the best result.</p>
+        <button className="meet-primary" onClick={download} disabled={exporting}>{exporting ? "Preparing…" : `Download ${meetExportFormats[exportFormat].label} PNG`}</button>
+        <p role="status">{notice}</p>
+      </div>
+      <div className="meet-export-thumbnail"><span>EXPORT PREVIEW</span><canvas ref={exportPreview} aria-label="Preview of the complete social image without editing handles" /></div>
+    </section>
+    <SocialCaptions subject="meet" captions={createMeetCaptions(blocks, blocks.some(b => b.kind === "qr" && !b.hidden && Boolean(images[b.id])))} />
   </main>;
 }

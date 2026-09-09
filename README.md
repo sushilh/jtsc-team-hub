@@ -23,6 +23,8 @@ This starter does not use `wrangler.jsonc`.
 
 - Meet Day Studio: draggable/resizable text, sessions, photo, logo, QR, and panel blocks; editable dates, ages, warm-ups, and start times
 - Three live color themes, layer order controls, hide/delete/duplicate, layout undo/redo, and 1080×1620 PNG poster export
+- Meet Day social exports: Instagram 4:5, Facebook 1:1, and original 2:3; standard or 2× resolution (up to 2160×3240), with direct high-resolution canvas rendering and no cropping
+- Editable meet captions generated from visible, current poster blocks; independent copy buttons and unique IDs keep both studios usable in the same page
 - Meet-book PDF/TXT upload, local text extraction, and reviewable session/event suggestions (15 MB / 60 pages; no OCR)
 - Optional meet name and calendar date on all achievement designs and captions; time-first Race Result template
 

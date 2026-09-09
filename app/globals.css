@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+.meet-download-link { display: inline-block; padding: 14px 20px; background: #651b3c; color: white; border-radius: 8px; font-size: 16px; font-weight: 700; }
+.meet-publish { margin-top: 32px; padding: 28px; background: white; border: 1px solid #dfd0d9; border-radius: 12px; display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 36px; scroll-margin-top: 24px; }
+.meet-publish h2 { margin-top: 12px; font-size: 28px; }
+.meet-publish p { font-size: 14px; color: #69515e; line-height: 1.7; }
+.meet-publish label { display: grid; gap: 8px; font-size: 14px; color: #654855; }
+.meet-export-thumbnail { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 16px; background: #251720; border-radius: 10px; align-self: start; }
+.meet-export-thumbnail span { font-size: 12px; letter-spacing: .1em; color: #dacbd2; }
+.meet-export-thumbnail canvas { width: 100%; height: auto; }
+.meet-studio > .social-captions { width: 100%; }
+@media (max-width: 750px) { .meet-publish { grid-template-columns: 1fr; gap: 20px; padding: 20px; } .meet-export-thumbnail { width: min(100%, 280px); margin: auto; } }
+
 .meet-studio { padding: 30px max(24px, calc((100% - 1440px) / 2)) 60px; background: #f5f2f4; }
 .meet-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .meet-heading span { color: #7d2248; font-size: 12px; font-weight: 800; letter-spacing: .14em; }

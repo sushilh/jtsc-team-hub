@@ -1,12 +1,16 @@
 import { POSTER_WIDTH, POSTER_HEIGHT, meetThemes, sessionDate, type MeetBlock, type ThemeId } from "./meet-day";
+import { fitMeetPoster } from "./meet-social";
 
-export function drawMeetPoster(canvas: HTMLCanvasElement, blocks: MeetBlock[], themeId: ThemeId, images: Record<string, HTMLImageElement>, selectedId?: string) {
-  canvas.width = POSTER_WIDTH; canvas.height = POSTER_HEIGHT;
+export function drawMeetPoster(canvas: HTMLCanvasElement, blocks: MeetBlock[], themeId: ThemeId, images: Record<string, HTMLImageElement>, selectedId?: string, outputSize = { width: POSTER_WIDTH, height: POSTER_HEIGHT }) {
+  canvas.width = outputSize.width; canvas.height = outputSize.height;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Your browser could not create the poster canvas.");
   const ctx = context;
   const theme = meetThemes[themeId];
   const family = typeof document === "undefined" ? '"Arial Narrow", Arial, sans-serif' : getComputedStyle(document.body).getPropertyValue("--font-display") || '"Arial Narrow", Arial, sans-serif';
+  const fit = fitMeetPoster(canvas.width, canvas.height);
+  ctx.fillStyle = theme.dark; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.save(); ctx.translate(fit.x, fit.y); ctx.scale(fit.scale, fit.scale);
   ctx.fillStyle = theme.paper; ctx.fillRect(0, 0, POSTER_WIDTH, POSTER_HEIGHT);
   ctx.fillStyle = theme.dark; ctx.fillRect(0, 0, POSTER_WIDTH, 340); ctx.fillRect(0, 1495, POSTER_WIDTH, 125);
   ctx.fillStyle = theme.primary; ctx.fillRect(0, 340, POSTER_WIDTH, 118);
@@ -64,4 +68,5 @@ export function drawMeetPoster(canvas: HTMLCanvasElement, blocks: MeetBlock[], t
     ctx.strokeStyle = "#168eea"; ctx.lineWidth = 3; ctx.setLineDash([10, 6]);
     ctx.strokeRect(selected.x, selected.y, selected.w, selected.h); ctx.setLineDash([]);
   }
+  ctx.restore();
 }
