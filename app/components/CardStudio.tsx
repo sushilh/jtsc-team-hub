@@ -54,6 +54,39 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
   return size;
 }
 
+function fitDisplayText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  startSize: number,
+  font: string,
+) {
+  let size = startSize;
+  do {
+    ctx.font = font.replace("{size}", String(size));
+    if (ctx.measureText(text).width <= maxWidth) return size;
+    size -= 2;
+  } while (size > 28);
+  return size;
+}
+
+function drawCenteredTrackedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  y: number,
+  tracking: number,
+) {
+  const characters = [...text];
+  const width = characters.reduce((sum, character) => sum + ctx.measureText(character).width, 0) + tracking * (characters.length - 1);
+  let x = centerX - width / 2;
+  ctx.textAlign = "left";
+  for (const character of characters) {
+    ctx.fillText(character, x, y);
+    x += ctx.measureText(character).width + tracking;
+  }
+}
+
 function drawCard(
   canvas: HTMLCanvasElement,
   state: {
@@ -64,6 +97,7 @@ function drawCard(
     eventLine: string;
     format: CardFormat;
     image: HTMLImageElement | null;
+    brandMark: HTMLImageElement | null;
     zoom: number;
     verticalPosition: number;
   },
@@ -76,167 +110,165 @@ function drawCard(
   canvas.height = height;
 
   const maroon = "#781D42";
-  const maroonDark = "#35101F";
+  const maroonDark = "#2B0817";
   const aqua = "#54C7DB";
-  const cream = "#F5F0E6";
-  const photoBottom = height - 242;
 
-  ctx.fillStyle = cream;
+  // Full-bleed photography and a cool editorial color grade.
+  const baseGradient = ctx.createLinearGradient(0, 0, width, height);
+  baseGradient.addColorStop(0, "#DDE7E8");
+  baseGradient.addColorStop(.45, "#5EC8D4");
+  baseGradient.addColorStop(1, "#075E7B");
+  ctx.fillStyle = baseGradient;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(302, 0, width - 302, photoBottom);
-  ctx.clip();
   if (state.image) {
-    drawCoverImage(ctx, state.image, 302, 0, width - 302, photoBottom, state.zoom, state.verticalPosition);
-    const photoWash = ctx.createLinearGradient(302, 0, width, photoBottom);
-    photoWash.addColorStop(0, "rgba(53,16,31,.48)");
-    photoWash.addColorStop(.35, "rgba(53,16,31,.06)");
-    photoWash.addColorStop(1, "rgba(53,16,31,.18)");
-    ctx.fillStyle = photoWash;
-    ctx.fillRect(302, 0, width - 302, photoBottom);
+    ctx.save();
+    ctx.filter = "saturate(.72) contrast(1.08)";
+    drawCoverImage(ctx, state.image, 0, 0, width, height, state.zoom, state.verticalPosition);
+    ctx.restore();
   } else {
-    const placeholder = ctx.createLinearGradient(302, 0, width, photoBottom);
-    placeholder.addColorStop(0, "#D9D4CD");
-    placeholder.addColorStop(1, "#A7A3A0");
-    ctx.fillStyle = placeholder;
-    ctx.fillRect(302, 0, width - 302, photoBottom);
-    ctx.fillStyle = "rgba(255,255,255,.2)";
-    for (let y = 100; y < photoBottom; y += 122) ctx.fillRect(302, y, width - 302, 4);
-    ctx.fillStyle = "rgba(53,16,31,.24)";
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    for (let y = 155; y < height; y += 142) ctx.fillRect(0, y, width, 3);
+    ctx.fillStyle = "rgba(43,8,23,.22)";
     ctx.beginPath();
-    ctx.arc(734, Math.min(440, photoBottom * .42), 112, 0, Math.PI * 2);
+    ctx.arc(540, height * .4, 118, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(734, Math.min(810, photoBottom * .76), 235, 290, 0, 0, Math.PI * 2);
+    ctx.ellipse(540, height * .68, 250, 330, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,.88)";
-    ctx.textAlign = "center";
-    ctx.font = '700 26px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText("ADD SWIMMER PHOTO", 735, Math.min(630, photoBottom * .58));
   }
-  ctx.restore();
 
-  // The angular maroon field is the recognizable Trojan card signature.
-  ctx.fillStyle = maroon;
+  const topGlow = ctx.createLinearGradient(0, 0, 0, height * .52);
+  topGlow.addColorStop(0, "rgba(248,250,248,.92)");
+  topGlow.addColorStop(.48, "rgba(230,247,249,.4)");
+  topGlow.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = topGlow;
+  ctx.fillRect(0, 0, width, height * .58);
+
+  ctx.fillStyle = "rgba(20,190,214,.17)";
+  ctx.fillRect(0, 0, width, height);
+
+  const lowerShade = ctx.createLinearGradient(0, height * .38, 0, height);
+  lowerShade.addColorStop(0, "rgba(43,8,23,0)");
+  lowerShade.addColorStop(.56, "rgba(43,8,23,.18)");
+  lowerShade.addColorStop(1, "rgba(43,8,23,.9)");
+  ctx.fillStyle = lowerShade;
+  ctx.fillRect(0, height * .38, width, height * .62);
+
+  const edgeShade = ctx.createLinearGradient(0, 0, width, 0);
+  edgeShade.addColorStop(0, "rgba(120,29,66,.34)");
+  edgeShade.addColorStop(.28, "rgba(120,29,66,0)");
+  edgeShade.addColorStop(.75, "rgba(43,8,23,0)");
+  edgeShade.addColorStop(1, "rgba(43,8,23,.32)");
+  ctx.fillStyle = edgeShade;
+  ctx.fillRect(0, 0, width, height);
+
+  // Loose lane lines and orbit strokes keep the composition in motion.
+  ctx.strokeStyle = "rgba(255,255,255,.5)";
+  ctx.lineWidth = 12;
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(565, 0);
-  ctx.lineTo(412, photoBottom);
-  ctx.lineTo(0, photoBottom);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = maroonDark;
+  ctx.ellipse(515, height * .46, 425, height * .18, -.16, 0, Math.PI * 1.82);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(84,199,219,.8)";
+  ctx.lineWidth = 18;
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(34, 0);
-  ctx.lineTo(192, photoBottom);
-  ctx.lineTo(0, photoBottom);
-  ctx.closePath();
-  ctx.fill();
+  ctx.ellipse(540, height * .47, 470, height * .2, -.1, .08, Math.PI * 1.18);
+  ctx.stroke();
 
-  ctx.strokeStyle = "rgba(255,255,255,.12)";
-  ctx.lineWidth = 3;
-  for (let y = 520; y < photoBottom - 60; y += 84) {
+  ctx.strokeStyle = "rgba(255,255,255,.2)";
+  ctx.lineWidth = 2;
+  for (let y = height * .7; y < height - 150; y += 62) {
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.bezierCurveTo(120, y - 34, 220, y + 35, 410, y - 5);
+    ctx.moveTo(55, y);
+    ctx.bezierCurveTo(280, y - 35, 630, y + 40, 1025, y - 8);
     ctx.stroke();
   }
 
-  ctx.fillStyle = aqua;
-  ctx.beginPath();
-  ctx.moveTo(0, photoBottom - 28);
-  ctx.lineTo(416, photoBottom - 28);
-  ctx.lineTo(412, photoBottom);
-  ctx.lineTo(0, photoBottom);
-  ctx.closePath();
-  ctx.fill();
-
-  // Brand lockup.
-  ctx.fillStyle = cream;
-  ctx.fillRect(74, 72, 106, 106);
+  // Slim, widely tracked celebration line from the reference direction.
   ctx.fillStyle = maroon;
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = '900 55px "Arial Narrow", Impact, sans-serif';
-  ctx.fillText("JT", 127, 129);
-  ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
+  ctx.font = `500 ${state.format === "portrait" ? 31 : 27}px "Arial Narrow", "Helvetica Neue", sans-serif`;
+  drawCenteredTrackedText(ctx, "CONGRATULATIONS", width / 2, state.format === "portrait" ? 102 : 82, 17);
+
+  const nameParts = (state.name.trim() || "SWIMMER NAME").split(/\s+/);
+  const firstName = nameParts.shift() || "SWIMMER";
+  const lastName = nameParts.join(" ") || "TROJAN";
+  const bigNameY = state.format === "portrait" ? 490 : 405;
+  const firstSize = fitDisplayText(ctx, firstName.toUpperCase(), 950, state.format === "portrait" ? 270 : 225, '900 {size}px "Arial Narrow", Impact, sans-serif');
+  const nameGradient = ctx.createLinearGradient(90, bigNameY - firstSize, 900, bigNameY);
+  nameGradient.addColorStop(0, "#16D3E1");
+  nameGradient.addColorStop(.55, "#42C8DD");
+  nameGradient.addColorStop(1, "#067BA2");
+  ctx.textAlign = "center";
+  ctx.font = `900 ${firstSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(255,255,255,.64)";
+  ctx.strokeText(firstName.toUpperCase(), width / 2, bigNameY);
+  ctx.fillStyle = nameGradient;
+  ctx.globalAlpha = .88;
+  ctx.fillText(firstName.toUpperCase(), width / 2, bigNameY);
+  ctx.globalAlpha = 1;
+
+  const scriptY = state.format === "portrait" ? 685 : 565;
+  const scriptSize = fitDisplayText(ctx, lastName, 860, state.format === "portrait" ? 178 : 145, '500 {size}px "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive');
+  ctx.font = `500 ${scriptSize}px "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive`;
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = '800 23px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText("JENKS TROJANS", 203, 113);
-  ctx.fillStyle = aqua;
-  ctx.font = '700 18px "Helvetica Neue", Arial, sans-serif';
-  ctx.letterSpacing = "4px";
-  ctx.fillText("SWIM CLUB", 203, 147);
-  ctx.letterSpacing = "0px";
+  ctx.shadowColor = "rgba(43,8,23,.36)";
+  ctx.shadowBlur = 16;
+  ctx.fillText(lastName, width / 2, scriptY);
+  ctx.shadowBlur = 0;
 
-  ctx.fillStyle = aqua;
-  ctx.fillRect(74, 278, 46, 7);
-  ctx.fillStyle = "rgba(255,255,255,.7)";
-  ctx.font = '700 19px "Helvetica Neue", Arial, sans-serif';
-  ctx.letterSpacing = "4px";
-  ctx.fillText("BUILT FOR THE NEXT LEVEL", 74, 328);
-  ctx.letterSpacing = "0px";
-
-  const headlineWords = state.headline.toUpperCase().trim().split(/\s+/).filter(Boolean);
-  const lines = headlineWords.length <= 1
-    ? [headlineWords[0] || "ACHIEVEMENT"]
-    : headlineWords.length === 2
-      ? headlineWords
-      : headlineWords.length === 3
-        ? headlineWords
-        : [headlineWords.slice(0, 2).join(" "), headlineWords.slice(2).join(" ")];
-  ctx.fillStyle = "#FFFFFF";
-  ctx.textAlign = "left";
-  lines.forEach((line, index) => {
-    fitText(ctx, line, 408, lines.length > 2 ? 99 : 114);
-    ctx.fillText(line, 72, 460 + index * (lines.length > 2 ? 94 : 108));
-  });
-
-  const subY = 494 + lines.length * (lines.length > 2 ? 94 : 108);
-  ctx.fillStyle = aqua;
-  ctx.font = '800 22px "Helvetica Neue", Arial, sans-serif';
-  const subWords = state.subline.toUpperCase().split(" ");
-  let subFirst = "";
-  let subSecond = "";
-  for (const word of subWords) {
-    const candidate = subFirst ? `${subFirst} ${word}` : word;
-    if (!subSecond && ctx.measureText(candidate).width < 350) subFirst = candidate;
-    else subSecond = subSecond ? `${subSecond} ${word}` : word;
+  if (!state.image) {
+    ctx.fillStyle = "rgba(255,255,255,.82)";
+    ctx.font = '700 20px "Helvetica Neue", Arial, sans-serif';
+    drawCenteredTrackedText(ctx, "UPLOAD A SWIMMER PHOTO", width / 2, scriptY + 62, 4);
   }
-  ctx.fillText(subFirst, 74, subY);
-  if (subSecond) ctx.fillText(subSecond, 74, subY + 31);
 
-  // Bottom information plate.
-  ctx.fillStyle = cream;
-  ctx.fillRect(0, photoBottom, width, height - photoBottom);
+  const detailTop = state.format === "portrait" ? height - 455 : height - 390;
+  ctx.fillStyle = aqua;
+  ctx.font = '800 18px "Helvetica Neue", Arial, sans-serif';
+  drawCenteredTrackedText(ctx, "ACHIEVEMENT UNLOCKED", width / 2, detailTop, 7);
+  ctx.fillStyle = "rgba(255,255,255,.94)";
+  const achievement = (state.headline || "ACHIEVEMENT").toUpperCase();
+  const achievementSize = fitText(ctx, achievement, 930, 66, 900);
+  ctx.font = `900 ${achievementSize}px "Arial Narrow", Impact, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText(achievement, width / 2, detailTop + 78);
+  ctx.fillStyle = "rgba(255,255,255,.8)";
+  ctx.font = '700 19px "Helvetica Neue", Arial, sans-serif';
+  drawCenteredTrackedText(ctx, state.subline.toUpperCase(), width / 2, detailTop + 126, 3);
+
+  ctx.fillStyle = "rgba(245,240,230,.92)";
+  ctx.beginPath();
+  ctx.roundRect(135, detailTop + 166, 810, 68, 34);
+  ctx.fill();
+  ctx.fillStyle = maroonDark;
+  ctx.font = '800 24px "Helvetica Neue", Arial, sans-serif';
+  drawCenteredTrackedText(ctx, (state.eventLine || "EVENT • TIME").toUpperCase(), width / 2, detailTop + 210, 4);
+
+  // Official mark and compact team signature.
+  const footerY = height - 135;
+  ctx.fillStyle = "rgba(245,240,230,.94)";
+  ctx.fillRect(0, footerY, width, 135);
+  if (state.brandMark) ctx.drawImage(state.brandMark, 58, footerY + 17, 77, 91);
+  ctx.fillStyle = maroonDark;
+  ctx.textAlign = "left";
+  ctx.font = '900 25px "Arial Narrow", Impact, sans-serif';
+  ctx.fillText("JENKS TROJANS", 162, footerY + 56);
   ctx.fillStyle = maroon;
-  ctx.fillRect(0, photoBottom, 22, height - photoBottom);
-  ctx.fillStyle = maroon;
-  const safeName = (state.name || "SWIMMER NAME").toUpperCase();
-  const nameSize = fitText(ctx, safeName, 735, 78, 900);
-  ctx.font = `900 ${nameSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText(safeName, 70, photoBottom + 101);
-  ctx.fillStyle = "#282128";
-  ctx.font = '700 22px "Helvetica Neue", Arial, sans-serif';
-  ctx.letterSpacing = "2px";
-  ctx.fillText((state.eventLine || "EVENT • TIME").toUpperCase(), 74, photoBottom + 155);
+  ctx.font = '800 14px "Helvetica Neue", Arial, sans-serif';
+  drawCenteredTrackedText(ctx, "SWIM CLUB", 227, footerY + 85, 4);
+  ctx.fillStyle = aqua;
+  ctx.fillRect(419, footerY + 28, 3, 76);
   ctx.fillStyle = maroon;
   ctx.textAlign = "right";
-  ctx.font = '800 22px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText((state.classYear || "CLASS OF 2027").toUpperCase(), 1010, photoBottom + 101);
-  ctx.fillStyle = "#6E6268";
-  ctx.font = '700 16px "Helvetica Neue", Arial, sans-serif';
-  ctx.letterSpacing = "3px";
-  ctx.fillText("RISE TOGETHER", 1010, photoBottom + 155);
-  ctx.letterSpacing = "0px";
-
-  ctx.fillStyle = aqua;
-  ctx.fillRect(74, height - 34, 936, 5);
+  ctx.font = '800 20px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText((state.classYear || "CLASS OF 2027").toUpperCase(), 1017, footerY + 58);
+  ctx.fillStyle = "#6D6267";
+  ctx.font = '700 14px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText("BUILT FOR THE NEXT LEVEL", 1017, footerY + 87);
+  ctx.fillStyle = maroon;
+  ctx.fillRect(0, height - 8, width, 8);
 }
 
 export default function CardStudio() {
@@ -252,6 +284,7 @@ export default function CardStudio() {
   const [format, setFormat] = useState<CardFormat>("portrait");
   const [photoUrl, setPhotoUrl] = useState("");
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
+  const [brandMark, setBrandMark] = useState<HTMLImageElement | null>(null);
   const [zoom, setZoom] = useState(1);
   const [verticalPosition, setVerticalPosition] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -259,8 +292,12 @@ export default function CardStudio() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, zoom, verticalPosition });
-  }, [name, classYear, headline, subline, eventName, time, format, photo, zoom, verticalPosition]);
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, format, image: photo, brandMark, zoom, verticalPosition });
+  }, [name, classYear, headline, subline, eventName, time, format, photo, brandMark, zoom, verticalPosition]);
+
+  useEffect(() => {
+    loadImage("/jenks-trojan-logo.png").then(setBrandMark).catch(() => setBrandMark(null));
+  }, []);
 
   useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
 
@@ -305,7 +342,7 @@ export default function CardStudio() {
     <main className="studio-shell">
       <header className="studio-header">
         <a className="studio-brand" href="#top" aria-label="Jenks Trojan Swim Club card studio home">
-          <span className="studio-brand-mark">JT</span>
+          <span className="studio-brand-mark" aria-hidden="true" />
           <span><b>JENKS TROJANS</b><small>SWIM CLUB</small></span>
         </a>
         <div className="header-title"><span>TEAM TOOL</span><b>ACHIEVEMENT CARD STUDIO</b></div>
@@ -341,7 +378,7 @@ export default function CardStudio() {
 
           <div className="control-section">
             <span className="section-number">02</span>
-            <div className="section-heading"><h2>Choose the milestone</h2><span>Four team presets</span></div>
+            <div className="section-heading"><h2>Choose the milestone</h2><span>Six team presets</span></div>
             <div className="achievement-grid" role="group" aria-label="Achievement preset">
               {achievements.map((item, index) => (
                 <button key={item.label} type="button" className={achievementIndex === index ? "active" : ""} onClick={() => chooseAchievement(index)}>

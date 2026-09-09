@@ -18,6 +18,8 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /<span>Time<\/span>/);
   assert.match(studio, /Download PNG/);
   assert.match(studio, /canvas\.toBlob/);
+  assert.match(studio, /jenks-trojan-logo\.png/);
+  assert.match(studio, /CONGRATULATIONS/);
   assert.ok(assets.some((name) => name.startsWith("CardStudio-") && name.endsWith(".js")));
   assert.doesNotMatch(`${page}${layout}`, /codex-preview|react-loading-skeleton|Starter Project/);
 });
