@@ -14,8 +14,13 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /Choose a photo/);
   assert.match(studio, /Futures/);
   assert.match(studio, /Zones/);
+  assert.match(studio, /label: "Season Best"[^\n]*\n\s*\{ label: "Broke Team Record", headline: "BROKE TEAM RECORD", subline: "" \}/);
+  assert.match(studio, /\{achievements.length\} team presets/);
   assert.match(studio, /Achievement name/);
-  assert.match(studio, /<span>Time<\/span>/);
+  assert.match(studio, /EventResultsEditor value=\{eventRows\}/);
+  const eventEditor = await readFile(new URL("../app/components/EventResultsEditor.tsx", import.meta.url), "utf8");
+  assert.match(eventEditor, /Time \(optional\)/);
+  assert.match(eventEditor, /Add event/);
   assert.match(studio, /downloadCard/);
   assert.match(studio, /exportCanvas\.toBlob/);
   assert.match(studio, /jenks-trojan-logo\.png/);

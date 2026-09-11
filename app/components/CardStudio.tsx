@@ -1,8 +1,12 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useStudioExperience } from "./StudioExperience";
 import SocialCaptions from "./SocialCaptions";
-import { imageFilename, socialFormats, meetDetails } from "../../lib/social-content.mjs";
+import { imageFilename, socialFormats, meetDetails, normalizeCardEvents } from "../../lib/social-content.mjs";
+import EventResultsEditor from "./EventResultsEditor";
+import { eventNameMissing, type AchievementEvent } from "../../lib/achievement-events";
+import { drawMultiEventCard } from "../../lib/multi-event-card";
 
 type CardFormat = "portrait" | "square";
 type CardTemplate = "classic" | "signature" | "race";
@@ -15,6 +19,7 @@ type CardDrawingState = {
   eventLine: string;
   eventName: string;
   time: string;
+  events: { eventName: string; time: string }[];
   meetName: string;
   meetDate: string;
   format: CardFormat;
@@ -34,6 +39,7 @@ const achievements = [
   { label: "Junior Nationals", headline: "JUNIOR NATIONAL QUALIFIER", subline: "USA SWIMMING JUNIOR NATIONALS" },
   { label: "National Team", headline: "NATIONAL TEAM", subline: "SELECTED • TEAM USA PATHWAY" },
   { label: "Season Best", headline: "SEASON BEST", subline: "" },
+  { label: "Broke Team Record", headline: "BROKE TEAM RECORD", subline: "" },
 ] as const;
 
 const initialAchievement = achievements[0];
@@ -227,6 +233,11 @@ function drawCard(
   canvas.width = width;
   canvas.height = height;
 
+  if (state.events.length > 1) {
+    drawMultiEventCard(ctx, width, height, state);
+    return;
+  }
+
   if (state.template === "classic") {
     drawClassicCard(ctx, width, height, state);
     return;
@@ -365,16 +376,59 @@ function drawCard(
   ctx.fillRect(0, height - 4, width, 4);
 }
 
+/** Burst of colored particles on card export */
+function CelebrationBurst() {
+  const colors = ["#741b38", "#c9963a", "#4db6a0", "#f0c347", "#54C7DB", "#ffffff"];
+  const particles = useMemo(() => Array.from({ length: 18 }, (_, i) => {
+    const angle = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    const distance = 60 + Math.random() * 80;
+    return {
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      color: colors[i % colors.length],
+      size: 4 + Math.random() * 4,
+      delay: Math.random() * 0.15,
+    };
+  }), []);
+  return (
+    <div className="celebration-burst" aria-hidden="true">
+      {particles.map((p, i) => (
+        <span key={i} className="particle" style={{
+          "--bx": `${p.x}px`, "--by": `${p.y}px`,
+          background: p.color,
+          width: p.size, height: p.size,
+          animationDelay: `${p.delay}s`,
+        } as CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
 export default function CardStudio() {
+  const { motion, paused, toggleMotion, notify } = useStudioExperience();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fadeCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lastTemplate = useRef<CardTemplate | null>(null);
+  const uploadSequence = useRef(0);
+  const exportLock = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("Avery Thompson");
   const [classYear, setClassYear] = useState("Class of 2027");
   const [achievementIndex, setAchievementIndex] = useState(0);
   const [headline, setHeadline] = useState<string>(initialAchievement.headline);
   const [subline, setSubline] = useState<string>(initialAchievement.subline);
-  const [eventName, setEventName] = useState("100Y Butterfly");
-  const [time, setTime] = useState("55.42");
+  const [eventRows, setEventRows] = useState<AchievementEvent[]>([{ id: "first", eventName: "100Y Butterfly", time: "55.42" }]);
+  const events = useMemo(() => normalizeCardEvents(eventRows), [eventRows]);
+  const eventName = events[0]?.eventName || "";
+  const time = events[0]?.time || "";
+  const invalidEvents = eventRows.some(eventNameMissing);
+  useEffect(() => {
+    const initial = eventRows.length === 1 && eventRows[0].eventName === "100Y Butterfly" && eventRows[0].time === "55.42";
+    if (initial) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [eventRows]);
   const [meetName, setMeetName] = useState("");
   const [meetDate, setMeetDate] = useState("");
   const [format, setFormat] = useState<CardFormat>("portrait");
@@ -388,12 +442,67 @@ export default function CardStudio() {
   const [exporting, setExporting] = useState<CardTemplate | null>(null);
   const [exportNotice, setExportNotice] = useState("");
   const [photoError, setPhotoError] = useState("");
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [photoName, setPhotoName] = useState("");
+  const [celebration, setCelebration] = useState(0);
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  /** Parallax tilt + spotlight on pointer move over the canvas stage */
+  const handleStageMouse = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!motion || event.pointerType !== "mouse") return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+    const cx = bounds.width / 2;
+    const cy = bounds.height / 2;
+    // Spotlight position
+    event.currentTarget.style.setProperty("--light-x", `${x}px`);
+    event.currentTarget.style.setProperty("--light-y", `${y}px`);
+    // Parallax tilt: ±8 degrees
+    const rotateY = ((x - cx) / cx) * 8;
+    const rotateX = ((cy - y) / cy) * 8;
+    const frame = event.currentTarget.querySelector<HTMLElement>(".canvas-frame");
+    if (frame) frame.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+  }, [motion]);
+
+  const handleStageLeave = useCallback(() => {
+    if (stageRef.current) {
+      const frame = stageRef.current.querySelector<HTMLElement>(".canvas-frame");
+      if (frame) frame.style.transform = "rotateX(0) rotateY(0)";
+    }
+  }, []);
+
+  /** Magnetic button hover: shift toward cursor */
+  const handleMagneticMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!motion || event.pointerType !== "mouse") return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const dx = (event.clientX - bounds.left - bounds.width / 2) * 0.25;
+    const dy = (event.clientY - bounds.top - bounds.height / 2) * 0.25;
+    event.currentTarget.style.transform = `translate(${dx}px, ${dy}px)`;
+  }, [motion]);
+
+  const handleMagneticLeave = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.style.transform = "";
+  }, []);
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    const overlay = fadeCanvasRef.current;
+    if (overlay && lastTemplate.current && lastTemplate.current !== template && motion) {
+      overlay.getAnimations().forEach(animation => animation.cancel());
+      overlay.width = canvasRef.current.width;
+      overlay.height = canvasRef.current.height;
+      overlay.getContext("2d")?.drawImage(canvasRef.current, 0, 0);
+      overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease-out" });
+    }
+    lastTemplate.current = template;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
-  }, [name, classYear, headline, subline, eventName, time, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition]);
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+  }, [name, classYear, headline, subline, eventName, time, events, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, motion]);
+
+  useEffect(() => { if (!motion) fadeCanvasRef.current?.getAnimations().forEach(animation => animation.cancel()); }, [motion]);
+  useEffect(() => () => { uploadSequence.current += 1; }, []);
 
   useEffect(() => {
     loadImage("/jenks-trojan-logo.png").then(setBrandMark).catch(() => setBrandMark(null));
@@ -410,7 +519,14 @@ export default function CardStudio() {
 
   async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
+    await preparePhoto(file);
+  }
+
+  async function preparePhoto(file: File) {
+    const sequence = ++uploadSequence.current;
+    setPhotoLoading(false);
     setPhotoError("");
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setPhotoError("Please choose a JPG, PNG, or WebP photo.");
@@ -420,29 +536,43 @@ export default function CardStudio() {
       setPhotoError("Please choose a photo smaller than 20 MB.");
       return;
     }
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    if (file.size === 0) { setPhotoError("This file is empty. Choose another photo."); return; }
     const url = URL.createObjectURL(file);
-    setPhotoUrl(url);
-    setZoom(1);
-    setHorizontalPosition(0);
-    setVerticalPosition(0);
+    setPhotoLoading(true);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      setPhoto(await loadImage(url));
+      const image = await Promise.race([
+        loadImage(url),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("Photo timeout")), 15000); }),
+      ]);
+      if (sequence !== uploadSequence.current) { URL.revokeObjectURL(url); return; }
+      setPhotoUrl(url);
+      setPhoto(image);
+      setPhotoName(file.name);
+      setZoom(1); setHorizontalPosition(0); setVerticalPosition(0);
+      notify("Photo ready. Adjust the crop in the live preview.");
     } catch {
-      setPhoto(null);
-      setPhotoError("This photo could not be opened. Please choose another JPG, PNG, or WebP image.");
+      URL.revokeObjectURL(url);
+      if (sequence === uploadSequence.current) setPhotoError("This photo could not be opened. Your previous photo is unchanged. Choose another JPG, PNG, or WebP image.");
+    } finally {
+      clearTimeout(timeout);
+      if (sequence === uploadSequence.current) setPhotoLoading(false);
     }
   }
 
   function downloadCard(targetTemplate: CardTemplate) {
+    if (exportLock.current || photoLoading) return;
+    const invalid = eventRows.find(eventNameMissing);
+    if (invalid) { document.getElementById(`event-name-${invalid.id}`)?.focus(); return; }
     const exportCanvas = document.createElement("canvas");
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
+    exportLock.current = true;
     setExporting(targetTemplate);
     setExportNotice("");
     try {
-    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
     exportCanvas.toBlob((blob) => {
-      if (!blob) { setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
+      if (!blob) { exportLock.current = false; setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");
       link.download = imageFilename(name, targetTemplate, format);
       link.href = URL.createObjectURL(blob);
@@ -451,9 +581,13 @@ export default function CardStudio() {
       link.remove();
       setTimeout(() => URL.revokeObjectURL(link.href), 30000);
       setExportNotice(`${targetTemplate === "classic" ? "Classic" : targetTemplate === "race" ? "Race Result" : "Signature"} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
+      notify("PNG ready. Check your downloads, then copy your caption.");
+      setCelebration(value => value + 1);
+      exportLock.current = false;
       setExporting(null);
     }, "image/png");
     } catch {
+      exportLock.current = false;
       setExporting(null);
       setExportNotice("The image could not be exported. Please reload your photo and try again.");
     }
@@ -472,25 +606,29 @@ export default function CardStudio() {
 
       <section className="studio-intro" id="top">
         <div>
-          <span className="studio-kicker">01 / TEAM GRAPHICS</span>
+          <span className="studio-kicker">JTSC / TEAM GRAPHICS</span>
           <h1>Achievement studio</h1>
         </div>
-        <p>Add a swimmer and their result. Download a team graphic and captions for Instagram or Facebook. Photos stay on this device.</p>
+        <div className="intro-actions"><p>Celebrate the swim. Create a card and captions for Instagram or Facebook.</p><div><a href="#achievement-preview">Jump to preview <span aria-hidden="true">↗</span></a><button type="button" aria-pressed={paused} onClick={toggleMotion}>{paused ? "Resume animations" : "Pause animations"}</button></div></div>
       </section>
 
       <section className="studio-workspace" aria-label="Achievement card maker">
         <aside className="studio-controls">
-          <div className="control-section photo-control">
+          <div className="control-section photo-control reveal">
             <span className="section-number">01</span>
             <div className="section-heading"><h2>Add swimmer photo</h2><span>JPG, PNG or WebP</span></div>
-            <input ref={fileRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={onPhotoChange} />
-            <button className="upload-button" type="button" onClick={() => fileRef.current?.click()}>
-              <span className="upload-icon">↑</span>
-              <span><b>{photo ? "Replace photo" : "Choose a photo"}</b><small>{photo ? "Photo ready • click to change" : "Portrait photos work best"}</small></span>
-              <b className="button-arrow">→</b>
+            <input ref={fileRef} className="visually-hidden" aria-label="Swimmer photo" tabIndex={-1} type="file" accept="image/jpeg,image/png,image/webp" onChange={onPhotoChange} />
+            <button className={`upload-button ${dragOver ? "is-dragging" : ""} ${photoLoading ? "is-processing" : ""}`} aria-describedby="photo-guidance photo-feedback" aria-busy={photoLoading} type="button" onClick={() => fileRef.current?.click()}
+              onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setDragOver(true); }}
+              onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragOver(false); }}
+              onDrop={event => { event.preventDefault(); setDragOver(false); if (event.dataTransfer.files.length !== 1) { setPhotoError("Drop one swimmer photo at a time."); return; } void preparePhoto(event.dataTransfer.files[0]); }}>
+              <span className="upload-thumbnail" aria-hidden="true">{photoUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={photoUrl} alt="" /> : <span className="upload-icon">↑</span>}</span>
+              <span><b>{photoLoading ? "Processing photo…" : photo ? "Replace photo" : "Choose a photo"}</b><small>{dragOver ? "Release to add your photo" : "or drag and drop it here"}</small></span>
+              <b className="button-arrow" aria-hidden="true">↗</b>
             </button>
-            <small className="device-note">Photos stay on this device · up to 20 MB</small>
-            {photoError && <p role="alert">{photoError}</p>}
+            <small className="device-note" id="photo-guidance">Photos stay on this device · up to 20 MB</small>
+            <div className="photo-feedback" id="photo-feedback"><p role={photoError ? "alert" : "status"}>{photoError || (photoLoading ? "Preparing your photo locally…" : photoName ? `${photoName} · Ready` : "Portrait photos work best. Your face stays in focus.")}</p></div>
+            {photoLoading && <button className="photo-cancel" type="button" onClick={() => { uploadSequence.current += 1; setPhotoLoading(false); setPhotoError(""); }}>Cancel photo processing</button>}
             {photo && (
               <div className="photo-sliders">
                 <label><span>Zoom</span><input aria-label="Photo zoom" type="range" min="1" max="2" step="0.02" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} /></label>
@@ -500,70 +638,74 @@ export default function CardStudio() {
             )}
           </div>
 
-          <div className="control-section">
+          <div className="control-section reveal">
             <span className="section-number">02</span>
-            <div className="section-heading"><h2>Choose the milestone</h2><span>Seven team presets</span></div>
+            <div className="section-heading"><h2>Choose the milestone</h2><span>{achievements.length} team presets</span></div>
             <div className="achievement-grid" role="group" aria-label="Achievement preset">
               {achievements.map((item, index) => (
-                <button key={item.label} type="button" className={achievementIndex === index ? "active" : ""} onClick={() => chooseAchievement(index)}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>{item.label}
+                <button key={item.label} type="button" aria-pressed={achievementIndex === index} style={{ "--enter-delay": `${index * 65}ms` } as CSSProperties} className={achievementIndex === index ? "active" : ""} onClick={() => chooseAchievement(index)}>
+                  <span aria-hidden="true">{achievementIndex === index ? "✓" : "◇"}</span>{item.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="control-section details-section">
+          <div className="control-section details-section reveal">
             <span className="section-number">03</span>
             <div className="section-heading"><h2>Personalize the card</h2><span>Edits update live</span></div>
             <label className="studio-field"><span>Swimmer name</span><input value={name} maxLength={32} onChange={(e) => setName(e.target.value)} /></label>
             <label className="studio-field"><span>Achievement name</span><input value={headline.replaceAll("\n", " ")} maxLength={34} onChange={(e) => { setHeadline(e.target.value.toUpperCase()); setAchievementIndex(-1); }} /></label>
-            <div className="field-row">
-              <label className="studio-field"><span>Class / team</span><input value={classYear} maxLength={24} onChange={(e) => setClassYear(e.target.value)} /></label>
-              <label className="studio-field"><span>Event</span><input value={eventName} maxLength={24} onChange={(e) => setEventName(e.target.value)} /></label>
-            </div>
-            <label className="studio-field"><span>Time</span><input value={time} maxLength={16} inputMode="decimal" placeholder="e.g. 55.42" onChange={(e) => setTime(e.target.value)} /></label>
+            <label className="studio-field"><span>Class / team</span><input value={classYear} maxLength={24} onChange={(e) => setClassYear(e.target.value)} /></label>
+            <EventResultsEditor value={eventRows} onChange={setEventRows} />
             <label className="studio-field"><span>Supporting line</span><input value={subline} maxLength={48} onChange={(e) => setSubline(e.target.value)} /></label>
             <label className="studio-field"><span>Meet name (optional)</span><input value={meetName} maxLength={60} placeholder="e.g. Central Zone Championships" onChange={(e) => setMeetName(e.target.value)} /></label>
             <label className="studio-field"><span>Meet date (optional)</span><input type="date" value={meetDate} min="1900-01-01" max="9999-12-31" onChange={(e) => setMeetDate(e.target.value)} /></label>
           </div>
         </aside>
 
-        <div className="preview-panel">
+        <div className="preview-panel" id="achievement-preview">
           <div className="preview-toolbar">
-            <div><span>LIVE PREVIEW</span><small>{format === "portrait" ? "1080 × 1350 PX" : "1080 × 1080 PX"}</small></div>
+            <div><span className="live-indicator">LIVE PREVIEW</span><small>{format === "portrait" ? "1080 × 1350 PX" : "1080 × 1080 PX"}</small></div>
             <div className="format-toggle" role="group" aria-label="Card format">
               <button type="button" aria-pressed={format === "portrait"} className={format === "portrait" ? "active" : ""} onClick={() => setFormat("portrait")}><i className="portrait-icon" /> Instagram · 4:5</button>
               <button type="button" aria-pressed={format === "square"} className={format === "square" ? "active" : ""} onClick={() => setFormat("square")}><i className="square-icon" /> Facebook · 1:1</button>
             </div>
           </div>
           <div className="template-picker" role="group" aria-label="Card template">
-            <button type="button" className={template === "classic" ? "active" : ""} onClick={() => setTemplate("classic")}>
-              <span>01</span><div><b>Classic Zone</b><small>Original banner format</small></div><i>Current</i>
+            <button type="button" aria-pressed={template === "classic"} className={template === "classic" ? "active" : ""} onClick={() => setTemplate("classic")}>
+              <span className="template-swatch swatch-classic" aria-hidden="true" /><div><b>Classic Zone</b><small>Original banner</small></div><i aria-hidden="true">{template === "classic" ? "✓" : ""}</i>
             </button>
-            <button type="button" className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
-              <span>02</span><div><b>JTSC Signature</b><small>Compact frosted glass</small></div><i>New</i>
+            <button type="button" aria-pressed={template === "signature"} className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
+              <span className="template-swatch swatch-signature" aria-hidden="true" /><div><b>JTSC Signature</b><small>Frosted glass</small></div><i aria-hidden="true">{template === "signature" ? "✓" : ""}</i>
             </button>
             <button type="button" aria-pressed={template === "race"} className={template === "race" ? "active" : ""} onClick={() => setTemplate("race")}>
-              <span>03</span><div><b>Race Result</b><small>Bold time-first layout</small></div><i>New</i>
+              <span className="template-swatch swatch-race" aria-hidden="true" /><div><b>Race Result</b><small>Time-first layout</small></div><i aria-hidden="true">{template === "race" ? "✓" : ""}</i>
             </button>
           </div>
-          <div className={`canvas-stage ${format}`}>
-            <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
+          <div ref={stageRef} className={`canvas-stage ${format}`} onPointerMove={handleStageMouse} onPointerLeave={handleStageLeave}>
+            <div className="canvas-frame">
+              <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
+              <canvas ref={fadeCanvasRef} className="preview-crossfade" aria-hidden="true" />
+              {photoLoading && <div className="preview-skeleton" aria-hidden="true"><span /></div>}
+              {!photo && !photoLoading && <button type="button" className="preview-add-photo" onClick={() => fileRef.current?.click()}><span aria-hidden="true">↑</span> Add your swimmer photo</button>}
+              {celebration > 0 && <span key={celebration} className="export-sparkles" aria-hidden="true">✦ <i>✦</i> ✦</span>}
+              {celebration > 0 && <CelebrationBurst key={`burst-${celebration}`} />}
+            </div>
           </div>
+          <div className="preview-meta"><span>{photo ? "Your photo" : "Sample details · add your photo"}</span><span>{events.length} {events.length === 1 ? "event" : "events"} · PNG</span></div>
           <div className="export-row">
             <div><b>Download any design</b><span>{socialFormats[format].label} · 1080 × {socialFormats[format].height} · PNG</span></div>
             <div className="download-options">
-              <button type="button" className="secondary-download" onClick={() => downloadCard("classic")} disabled={exporting !== null}><span>↓</span>{exporting === "classic" ? "Preparing…" : "Classic PNG"}</button>
-              <button type="button" onClick={() => downloadCard("signature")} disabled={exporting !== null}><span>↓</span>{exporting === "signature" ? "Preparing…" : "Signature PNG"}</button>
-              <button type="button" onClick={() => downloadCard("race")} disabled={exporting !== null}><span>↓</span>{exporting === "race" ? "Preparing…" : "Race Result PNG"}</button>
+              {(["classic", "signature", "race"] as const).map(design => <button key={design} type="button" className={`magnetic-btn ${design === "classic" ? "secondary-download" : ""}`} aria-busy={exporting === design} onClick={() => downloadCard(design)} disabled={exporting !== null || invalidEvents || photoLoading} onPointerMove={handleMagneticMove} onPointerLeave={handleMagneticLeave}><span className="download-icon" aria-hidden="true">{exporting === design ? "◌" : "↓"}</span>{design === "classic" ? "Classic PNG" : design === "race" ? "Race Result PNG" : "Signature PNG"}</button>)}
             </div>
           </div>
+          {invalidEvents && <p className="event-error" role="alert">Add a name for each event with a time before downloading.</p>}
           <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic, Signature, or Race Result. Profile-grid previews may crop differently.</p>
-          <p className="export-status" role="status">{exportNotice}</p>
+          <p className="export-status" role="status">{exporting ? "Preparing your high-resolution PNG…" : photoLoading ? "Downloads will be ready when photo processing finishes." : exportNotice}</p>
         </div>
       </section>
 
-      <SocialCaptions details={{ name, headline, subline, eventName, time, meetName, meetDate }} />
+      <SocialCaptions details={{ name, headline, subline, eventName, time, events, meetName, meetDate }} />
 
       <footer className="studio-footer"><span>JENKS TROJAN SWIM CLUB</span><span>JENKS, OKLAHOMA</span></footer>
     </main>

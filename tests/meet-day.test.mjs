@@ -4,12 +4,42 @@ import { build } from "esbuild";
 import { resolve } from "node:path";
 import { readFile, readdir } from "node:fs/promises";
 import { formatMeetDate, meetDetails, createCaptions } from "../lib/social-content.mjs";
+import { normalizeCardEvents } from "../lib/social-content.mjs";
 
 async function moduleFrom(entry) {
   const result = await build({ entryPoints: [resolve(entry)], bundle: true, write: false, format: "esm", platform: "browser", external: ["pdfjs-dist"] });
   return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString("base64")}`);
 }
 const model = await moduleFrom("lib/meet-day.ts");
+const { multiEventLayout, eventNameMissing, MAX_CARD_EVENTS } = await moduleFrom("lib/achievement-events.ts");
+const { drawMultiEventCard } = await moduleFrom("lib/multi-event-card.ts");
+
+test("multi-event captions preserve order, optional times, and legacy single-event input", () => {
+  const events = [{ eventName: " 50Y Free ", time: " 24.31 " }, { eventName: "100Y Breast", time: "1:02.35" }, { eventName: "200Y IM", time: "" }, { eventName: " ", time: "" }];
+  assert.equal(normalizeCardEvents(events).length, 3);
+  const captions = createCaptions({ name: "Lily Nitzel", headline: "STATE QUALIFIER", events });
+  for (const caption of Object.values(captions)) {
+    assert.ok(caption.includes("50Y Free · 24.31\n100Y Breast · 1:02.35\n200Y IM"));
+    assert.ok(!caption.includes("undefined"));
+  }
+  assert.deepEqual(createCaptions({ eventName: "50Y Free", time: "24.31" }), createCaptions({ events: [events[0]] }));
+  assert.equal(eventNameMissing({ eventName: "", time: "24.31" }), true);
+  assert.equal(eventNameMissing({ eventName: "50Y Free", time: "" }), false);
+});
+
+test("all multi-event templates draw every result within both output sizes", () => {
+  for (const height of [1080, 1350]) for (let count = 2; count <= MAX_CARD_EVENTS; count++) for (const template of ["classic", "signature", "race"]) {
+    const layout = multiEventLayout(height, count);
+    assert.ok(layout.photoBottom - layout.photoTop >= 400);
+    assert.ok(layout.rowsTop + count * layout.rowHeight < height - 83);
+    const calls = [];
+    const ctx = new Proxy({ measureText: value => ({ width: value.length * 14 }), createLinearGradient: () => ({ addColorStop() {} }) }, { get: (o,p) => p in o ? o[p] : (...args) => calls.push([p,...args]), set: (o,p,v) => {o[p]=v;return true;} });
+    const events = Array.from({length:count},(_,i) => ({eventName:`EVENT ${i+1}`,time:`1:0${i}.35`}));
+    drawMultiEventCard(ctx,1080,height,{name:"Avery Thompson",classYear:"Class of 2027",headline:"STATE QUALIFIER",subline:"STATE CHAMPIONSHIPS",meetName:"Winter Meet",meetDate:"2026-12-12",template,events,image:null,brandMark:null,zoom:1,horizontalPosition:0,verticalPosition:0});
+    for (const event of events) for (const text of [event.eventName,event.time]) assert.equal(calls.filter(c=>c[0]==="fillText"&&c[1]===text).length,1);
+    for (const c of calls.filter(c=>c[0]==="fillText")) assert.ok(c[3]>0&&c[3]<height);
+  }
+});
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");
 const { drawMeetPoster } = await moduleFrom("lib/meet-renderer.ts");
 const { createMeetCaptions, meetExportSize, fitMeetPoster } = await moduleFrom("lib/meet-social.ts");

@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Archivo_Narrow } from "next/font/google";
+import { Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import "./site-design.css";
+import "./achievement-design.css";
 
-const archivo = Archivo({ variable: "--font-body", subsets: ["latin"] });
-const archivoNarrow = Archivo_Narrow({ variable: "--font-display", subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-display", subsets: ["latin"] });
+const dmSans = DM_Sans({ variable: "--font-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://jtsc-achievement-card-studio.lion-sushilh.chatgpt.site"),
@@ -18,12 +19,12 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", images: ["/og.png"] },
 };
 
-export const viewport: Viewport = { themeColor: "#7d2248", colorScheme: "light" };
+export const viewport: Viewport = { themeColor: "#1a0a12", colorScheme: "light" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${archivo.variable} ${archivoNarrow.variable}`}>{children}</body>
+      <body className={`${spaceGrotesk.variable} ${dmSans.variable}`}>{children}</body>
     </html>
   );
 }

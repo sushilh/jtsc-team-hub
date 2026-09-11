@@ -1,4 +1,6 @@
 "use client";
+
+import AutoGrowTextarea from "./AutoGrowTextarea";
 import { useState, type ChangeEvent } from "react";
 import { parseMeetBook, readMeetBook, type BookDraft, type BookSession } from "../../lib/meet-book";
 
@@ -24,7 +26,7 @@ export default function MeetBookImport({ onImport }: { onImport: (sessions: Book
   return <details className="meet-book"><summary>Start from a meet book · PDF or text</summary>
     <p>Upload your meet book to extract a starting schedule. Review the suggestions before replacing the sample. No file leaves this device. PDF/text only, up to 15 MB and 60 PDF pages.</p>
     <label>Upload meet book<input type="file" accept="application/pdf,text/plain,.pdf,.txt" onChange={upload} disabled={busy} /></label>
-    <label>Or paste / correct the schedule text<textarea rows={6} maxLength={200000} value={text} placeholder={"July 23, 2026\nSession 1 – Timed Finals\n11 & Over\nWarm-up: 3:00–4:35 PM\nMeet starts: 5:00 PM\nEvent 1 Girls 11 & Over 1500 Freestyle"} onChange={e => { setText(e.target.value); setStale(true); }} /></label>
+    <label>Or paste / correct the schedule text<AutoGrowTextarea rows={6} maxLength={200000} value={text} placeholder={"July 23, 2026\nSession 1 – Timed Finals\n11 & Over\nWarm-up: 3:00–4:35 PM\nMeet starts: 5:00 PM\nEvent 1 Girls 11 & Over 1500 Freestyle"} onChange={e => { setText(e.target.value); setStale(true); }} /></label>
     <div className="meet-add"><button disabled={busy || !text.trim()} onClick={() => extract(text)}>{busy ? "Reading…" : "Find sessions & events"}</button></div>
     <p role="status">{notice}</p>
     {(draft.sessions.length > 0 || draft.events.length > 0) && <><div className="book-review">

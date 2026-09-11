@@ -1,5 +1,7 @@
 "use client";
 
+import AutoGrowTextarea from "./AutoGrowTextarea";
+
 import { useEffect, useRef, useState, type PointerEvent, type ChangeEvent } from "react";
 import { initialMeetBlocks, clampBlock, hitTest, meetThemes, POSTER_WIDTH, POSTER_HEIGHT, type MeetBlock, type ThemeId } from "../../lib/meet-day";
 import { drawMeetPoster } from "../../lib/meet-renderer";
@@ -136,7 +138,7 @@ export default function MeetDayStudio() {
         </section>
         {selected && <section className="meet-properties"><h2>Edit {selected.label}</h2>
           <label>Component name<input value={selected.label} maxLength={60} onChange={e => update(selected.id, { label: e.target.value })} /></label>
-          {(selected.kind === "text" || selected.kind === "session") && <label>{selected.kind === "session" ? "Session / event name" : "Text (line breaks supported)"}<textarea value={selected.text || ""} maxLength={1000} rows={3} onChange={e => update(selected.id, { text: e.target.value })} /></label>}
+          {(selected.kind === "text" || selected.kind === "session") && <label>{selected.kind === "session" ? "Session / event name" : "Text (line breaks supported)"}<AutoGrowTextarea value={selected.text || ""} maxLength={1000} rows={3} onChange={e => update(selected.id, { text: e.target.value })} /></label>}
           {selected.kind === "session" && <>
             <div className="meet-fields"><label>Day label<input value={selected.day || ""} onChange={e => update(selected.id, { day: e.target.value })} /></label><label>Date<input type="date" value={selected.date || ""} onChange={e => update(selected.id, { date: e.target.value })} /></label></div>
             <label>Age group<input value={selected.ageGroup || ""} onChange={e => update(selected.id, { ageGroup: e.target.value })} /></label>

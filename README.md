@@ -21,6 +21,7 @@ This starter does not use `wrangler.jsonc`.
 
 ## Product features
 
+- Multiple achievement events: add up to six event/time rows for any qualifier or milestone, remove/undo rows, and export the same ordered results in all three templates and both social sizes. Single-event layouts remain available. Times are optional; a time without an event name blocks export. Captions include all listed events.
 - Meet-deck interface with numbered tool tabs, condensed headings, neutral canvas surfaces, and responsive editing controls; no changes to the three achievement-card layouts.
 - Meet Day Studio: draggable/resizable text, sessions, photo, logo, QR, and panel blocks; editable dates, ages, warm-ups, and start times
 - Three live color themes, layer order controls, hide/delete/duplicate, layout undo/redo, and 1080×1620 PNG poster export
@@ -49,6 +50,9 @@ Meet books are parsed heuristically in the browser using PDF.js. Review all dete
 - `npm run dev`: start local development
 - `npm run build`: verify the vinext build output
 - `npm test`: production build and regression tests
+- `npm run deploy:cloudflare`: build and publish the public `jtsc-team-hub` Worker using the separate Cloudflare configuration. Requires an authenticated Wrangler session. The existing Sites publication is not changed.
+
+The Cloudflare deployment serves only `dist/client` as public assets. Server modules and hosting metadata are not public assets. Its `ASSETS` binding also serves the versioned browser-asset URLs. Volunteer administration still requires the original service's admin sign-in; public check-in displays the shared roster and active attendance.
 
 ## Volunteer data and authentication
 

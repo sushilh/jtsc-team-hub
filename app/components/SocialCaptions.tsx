@@ -1,10 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
+import AutoGrowTextarea from "./AutoGrowTextarea";
 import { createCaptions } from "../../lib/social-content.mjs";
 
 type Platform = "instagram" | "facebook";
-type Details = { name: string; headline: string; subline: string; eventName: string; time: string; meetName: string; meetDate: string };
+type Details = { name: string; headline: string; subline: string; eventName: string; time: string; events?: { eventName: string; time: string }[]; meetName: string; meetDate: string };
 
 type Props = { details: Details; captions?: never; subject?: string } | { captions: Record<Platform, string>; details?: never; subject: string };
 
@@ -31,7 +32,7 @@ export default function SocialCaptions(props: Props) {
     {Object.keys(edits).length > 0 && <p className="caption-edited">Your edits are kept when card details change. Regenerate to replace them with updated drafts.</p>}
     <div className="caption-grid">{(["instagram", "facebook"] as const).map(platform => <div className="caption-card" key={platform}>
       <label htmlFor={`${instance}-caption-${platform}`}>{platform === "instagram" ? "Instagram" : "Facebook"} caption</label>
-      <textarea id={`${instance}-caption-${platform}`} value={edits[platform] ?? generated[platform]} maxLength={platform === "instagram" ? 2200 : 5000} rows={9} onChange={event => { setEdits(current => ({ ...current, [platform]: event.target.value })); setNotice(""); }} />
+      <AutoGrowTextarea id={`${instance}-caption-${platform}`} value={edits[platform] ?? generated[platform]} maxLength={platform === "instagram" ? 2200 : 5000} rows={9} onChange={event => { setEdits(current => ({ ...current, [platform]: event.target.value })); setNotice(""); }} />
       <div className="caption-actions"><span>{(edits[platform] ?? generated[platform]).length} characters</span><button type="button" onClick={() => copy(platform)}>Copy caption</button></div>
     </div>)}</div>
     <p role="status" className="caption-status">{notice}</p>
