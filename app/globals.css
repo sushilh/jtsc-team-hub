@@ -204,6 +204,22 @@ a { color: inherit; text-decoration: none; }
 .job-option b { margin-top: auto; font-size: 10px; color: var(--maroon); }
 .job-option.selected .job-index, .job-option.selected small, .job-option.selected b { color: rgba(255,255,255,.75); }
 .hours-row { display: flex; align-items: end; gap: 18px; margin: 22px 0; }
+/* Admin: bulk-add the club's standard job list to a session. */
+.bulk-jobs-panel { margin-top: 18px; }
+.bulk-intro { margin: 0 0 14px; font-size: 12px; line-height: 1.55; color: var(--muted); }
+.bulk-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.bulk-toggle { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--maroon); cursor: pointer; transition: .18s ease; }
+.bulk-toggle:hover { border-color: var(--maroon); background: #fcf8fa; }
+.bulk-job-list { max-height: 290px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; }
+.bulk-job { display: flex; align-items: center; gap: 11px; padding: 10px 13px; border-bottom: 1px solid var(--line); cursor: pointer; transition: background .15s ease; }
+.bulk-job:last-child { border-bottom: 0; }
+.bulk-job:hover { background: #fcf8fa; }
+.bulk-job.selected { background: #fbf4f7; }
+.bulk-job input { flex: none; width: 16px; height: 16px; accent-color: var(--maroon); cursor: pointer; }
+.bulk-job span { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.bulk-job b { flex: none; font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.bulk-job.selected b { color: var(--maroon); }
+
 /* Job picker: a dropdown scales to a long standard-job list far better than a grid. */
 .job-select-field { margin: 26px 0 0; display: block; }
 .job-select-field select { width: 100%; min-height: 52px; font-size: 15px; font-weight: 600; }
