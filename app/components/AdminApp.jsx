@@ -3,6 +3,7 @@
 // Recovered from the existing Volunteer Crew production bundle; preserves its workflows.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
+import { volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
 
 function today() {
   const date = new Date();
@@ -613,16 +614,18 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate }) {
               jsx("input", {
                 list: "job-suggestions",
                 value: jobName,
-                onChange: (event) => setJobName(event.target.value)
+                placeholder: "Start typing, or pick a standard job",
+                onChange: (event) => {
+                  const next = event.target.value;
+                  setJobName(next);
+                  // A standard job carries its usual credit; the admin can still override it.
+                  const standard = defaultJobHours(next);
+                  if (standard) setJobHours(String(standard));
+                }
               }),
-              jsxs("datalist", {
+              jsx("datalist", {
                 id: "job-suggestions",
-                children: [
-                  jsx("option", { value: "Timer" }),
-                  jsx("option", { value: "Console Operator" }),
-                  jsx("option", { value: "Concessions" }),
-                  jsx("option", { value: "Check-in Operator" })
-                ]
+                children: volunteerJobNames.map((name) => jsx("option", { value: name }, name))
               })
             ]
           }),

@@ -1,8 +1,9 @@
 "use client";
 
 // Recovered from the existing Volunteer Crew production bundle; preserves its workflows.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
+import { jobHourOptions } from "../../lib/volunteer-jobs.mjs";
 
 function localIsoDate() {
   const now = new Date();
@@ -66,6 +67,18 @@ function VolunteerApp() {
   }, [load]);
   const session = data?.sessions.find((item) => item.id === Number(sessionId));
   const selectedJob = session?.jobs.find((job) => job.id === Number(jobId));
+  // A long job list reads far better alphabetically than in the order it was created.
+  const sortedJobs = useMemo(
+    () => [...(session?.jobs ?? [])].sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true })),
+    [session]
+  );
+  const jobCount = sortedJobs.length;
+  // Shifts of this name have historically been credited these amounts.
+  const hourPresets = useMemo(() => {
+    const options = jobHourOptions(selectedJob?.name);
+    const withDefault = selectedJob ? [...options, Number(selectedJob.defaultHours)] : options;
+    return [...new Set(withDefault.filter((value) => Number(value) > 0))].sort((a, b) => a - b);
+  }, [selectedJob]);
   const activeEntries = data?.activeEntries.filter((entry) => entry.sessionId === Number(sessionId)) ?? [];
   const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0);
   async function checkIn(event) {
@@ -244,34 +257,46 @@ function VolunteerApp() {
                     })]
                   })]
                 }),
-                jsxs("fieldset", {
-                  className: "job-fieldset",
-                  children: [jsx("legend", { children: "Select your assignment" }), jsx("div", {
-                    className: "job-grid",
-                    children: session?.jobs.map((job, index) => jsxs("label", {
-                      className: `job-option ${job.id === Number(jobId) ? "selected" : ""}`,
+                jsxs("label", {
+                  className: "field job-select-field",
+                  children: [
+                    jsx("span", { children: "Select your assignment" }),
+                    jsxs("select", {
+                      value: jobId,
+                      onChange: (event) => {
+                        const nextId = Number(event.target.value) || "";
+                        setJobId(nextId);
+                        const picked = session?.jobs.find((job) => job.id === nextId);
+                        setHours(picked ? String(picked.defaultHours) : "");
+                      },
                       children: [
-                        jsx("input", {
-                          type: "radio",
-                          name: "job",
+                        jsx("option", {
+                          value: "",
+                          children: jobCount ? `Choose from ${jobCount} ${jobCount === 1 ? "job" : "jobs"}\u2026` : "No jobs posted yet"
+                        }),
+                        ...sortedJobs.map((job) => jsx("option", {
                           value: job.id,
-                          checked: job.id === Number(jobId),
-                          onChange: () => { setJobId(job.id); setHours(String(job.defaultHours)); }
-                        }),
-                        jsxs("span", {
-                          className: "job-index",
-                          children: ["0", index + 1]
-                        }),
-                        jsx("strong", { children: job.name }),
-                        jsxs("small", { children: [
-                          displayTime(job.startTime),
-                          "\u2013",
-                          displayTime(job.endTime)
-                        ] }),
-                        jsxs("b", { children: [job.defaultHours, " hrs"] })
+                          children: `${job.name} \xB7 ${displayTime(job.startTime)}\u2013${displayTime(job.endTime)} \xB7 ${job.defaultHours} hrs`
+                        }, job.id))
                       ]
-                    }, job.id))
-                  })]
+                    })
+                  ]
+                }),
+                selectedJob && jsxs("div", {
+                  className: "job-detail-strip",
+                  children: [
+                    jsxs("div", {
+                      children: [
+                        jsx("strong", { children: selectedJob.name }),
+                        jsxs("span", { children: [
+                          displayTime(selectedJob.startTime),
+                          "\u2013",
+                          displayTime(selectedJob.endTime)
+                        ] })
+                      ]
+                    }),
+                    jsxs("b", { children: [selectedJob.defaultHours, " hrs"] })
+                  ]
                 }),
                 jsxs("div", {
                   className: "hours-row",
@@ -288,7 +313,27 @@ function VolunteerApp() {
                         onChange: (event) => setHours(event.target.value)
                       }), jsx("b", { children: "HRS" })]
                     })]
-                  }), jsx("p", { children: "Need a different amount? You can adjust it here before checking in." })]
+                  }), hourPresets.length > 1 ? jsxs("div", {
+                    className: "hour-presets",
+                    children: [
+                      jsx("span", {
+                        className: "preset-label",
+                        children: "Common for this job"
+                      }),
+                      jsx("div", {
+                        className: "preset-chips",
+                        role: "group",
+                        "aria-label": "Common credit hours for this job",
+                        children: hourPresets.map((value) => jsxs("button", {
+                          type: "button",
+                          className: `preset-chip ${Number(hours) === value ? "selected" : ""}`,
+                          "aria-pressed": Number(hours) === value,
+                          onClick: () => setHours(String(value)),
+                          children: [value, " hrs"]
+                        }, value))
+                      })
+                    ]
+                  }) : jsx("p", { children: "Need a different amount? You can adjust it here before checking in." })]
                 }),
                 jsxs("button", {
                   className: "primary-button",
