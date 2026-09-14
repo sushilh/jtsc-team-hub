@@ -2,8 +2,8 @@
 
 // Recovered from the existing Volunteer Crew production bundle; preserves its workflows.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { jsx, jsxs } from "react/jsx-runtime";
-import { volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { volunteerJobCatalog, volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
 
 function today() {
   const date = new Date();
@@ -129,6 +129,46 @@ function AdminApp() {
         text: error instanceof Error ? error.message : "Unable to save your change."
       });
       return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  // Posting the standard job list one shift at a time, then refreshing once at the end.
+  async function bulkAddJobs(sessionId, jobsToAdd) {
+    setBusy(true);
+    setMessage(null);
+    const failed = [];
+    let added = 0;
+    try {
+      for (const job of jobsToAdd) {
+        try {
+          const response = await fetch("/api/admin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "add_job",
+              sessionId,
+              name: job.name,
+              startTime: job.startTime,
+              endTime: job.endTime,
+              defaultHours: Number(job.defaultHours)
+            })
+          });
+          if (!response.ok) { failed.push(job.name); continue; }
+          added += 1;
+        } catch {
+          failed.push(job.name);
+        }
+      }
+      setMessage(failed.length ? {
+        kind: "error",
+        text: `Added ${added} ${added === 1 ? "job" : "jobs"}. ${failed.length} could not be added: ${failed.slice(0, 3).join(", ")}${failed.length > 3 ? "…" : ""}`
+      } : {
+        kind: "success",
+        text: `${added} standard ${added === 1 ? "job is" : "jobs are"} now on this session.`
+      });
+      await load();
+      return added;
     } finally {
       setBusy(false);
     }
@@ -310,7 +350,7 @@ function AdminApp() {
             children: "\xD7"
           })]
         }),
-        tab === "overview" && jsxs(import_jsx_runtime4.Fragment, { children: [jsxs("div", {
+        tab === "overview" && jsxs(Fragment, { children: [jsxs("div", {
           className: "metric-grid",
           children: [
             jsx(Metric, {
@@ -401,7 +441,8 @@ function AdminApp() {
           sessions: sessions2,
           jobs: jobs2,
           busy,
-          mutate
+          mutate,
+          bulkAddJobs
         }),
         tab === "swimmers" && jsx(SwimmersPanel, {
           swimmers: swimmers2,
@@ -499,7 +540,7 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate }) {
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate, bulkAddJobs }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -511,6 +552,35 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate }) {
   const [jobStart, setJobStart] = useState("07:00");
   const [jobEnd, setJobEnd] = useState("12:00");
   const [jobHours, setJobHours] = useState("5");
+  const [bulkPicks, setBulkPicks] = useState(() => new Set());
+  const sessionRecord = sessions2.find((session) => session.id === Number(selectedSession));
+  // Standard jobs this session does not already carry, so a second run adds nothing twice.
+  const missingStandardJobs = useMemo(() => {
+    const present = new Set(
+      jobs2.filter((job) => job.sessionId === Number(selectedSession)).map((job) => job.name.trim().toLowerCase())
+    );
+    return volunteerJobCatalog.filter((job) => !present.has(job.name.toLowerCase()));
+  }, [jobs2, selectedSession]);
+  const pickedJobs = missingStandardJobs.filter((job) => bulkPicks.has(job.name));
+  function toggleBulkPick(name) {
+    setBulkPicks((current) => {
+      const next = new Set(current);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  }
+  async function addStandardJobs() {
+    if (!selectedSession || !pickedJobs.length) return;
+    const start = sessionRecord?.startTime || jobStart;
+    const end = sessionRecord?.endTime || jobEnd;
+    await bulkAddJobs(selectedSession, pickedJobs.map((job) => ({
+      name: job.name,
+      startTime: start,
+      endTime: end,
+      defaultHours: defaultJobHours(job.name) ?? hoursBetween(start, end)
+    })));
+    setBulkPicks(new Set());
+  }
   async function createSession(event) {
     event.preventDefault();
     if (await mutate({
@@ -660,6 +730,70 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate }) {
           })
         ]
       })]
+    }), jsxs("section", {
+      className: "panel form-panel bulk-jobs-panel",
+      children: [
+        jsxs("div", {
+          className: "panel-head",
+          children: [jsxs("div", { children: [
+            jsx("span", { className: "panel-kicker", children: "STANDARD JOBS" }),
+            jsx("h2", { children: "Add the club job list" })
+          ] }), jsxs("span", {
+            className: "count-badge",
+            children: [missingStandardJobs.length, " left"]
+          })]
+        }),
+        jsx("p", {
+          className: "bulk-intro",
+          children: missingStandardJobs.length
+            ? `Pick the jobs this meet needs. Each is added across the session's hours (${sessionRecord ? `${sessionRecord.startTime}\u2013${sessionRecord.endTime}` : "session times"}) with its usual credit, and you can fine-tune any of them afterwards.`
+            : "Every standard job is already on this session."
+        }),
+        missingStandardJobs.length > 0 && jsxs("div", {
+          className: "bulk-actions",
+          children: [
+            jsx("button", {
+              type: "button",
+              className: "bulk-toggle",
+              onClick: () => setBulkPicks(new Set(missingStandardJobs.map((job) => job.name))),
+              children: "Select all"
+            }),
+            jsx("button", {
+              type: "button",
+              className: "bulk-toggle",
+              onClick: () => setBulkPicks(new Set()),
+              children: "Clear"
+            })
+          ]
+        }),
+        missingStandardJobs.length > 0 && jsx("div", {
+          className: "bulk-job-list",
+          role: "group",
+          "aria-label": "Standard jobs to add",
+          children: missingStandardJobs.map((job) => jsxs("label", {
+            className: `bulk-job ${bulkPicks.has(job.name) ? "selected" : ""}`,
+            children: [
+              jsx("input", {
+                type: "checkbox",
+                checked: bulkPicks.has(job.name),
+                onChange: () => toggleBulkPick(job.name)
+              }),
+              jsx("span", { children: job.name }),
+              jsxs("b", { children: [defaultJobHours(job.name) ?? "\u2014", " hrs"] })
+            ]
+          }, job.name))
+        }),
+        missingStandardJobs.length > 0 && jsxs("button", {
+          type: "button",
+          className: "admin-primary",
+          disabled: busy || !selectedSession || !pickedJobs.length,
+          onClick: () => void addStandardJobs(),
+          children: [
+            busy ? "Adding\u2026" : pickedJobs.length ? `Add ${pickedJobs.length} ${pickedJobs.length === 1 ? "job" : "jobs"}` : "Select jobs to add",
+            " \u2192"
+          ]
+        })
+      ]
     })] }), jsxs("section", {
       className: "panel session-list-panel",
       children: [jsxs("div", {
