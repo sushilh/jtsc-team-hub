@@ -194,3 +194,40 @@ test("PDF parser and worker are packaged locally, and achievement exports receiv
   assert.match(source, /drawCard\(exportCanvas, \{[^\n]+meetName, meetDate/);
   assert.match(source, /drawCard\(canvasRef.current, \{[^\n]+meetName, meetDate/);
 });
+
+test("session presets stay inside the poster and keep the livestream panel clear", () => {
+  const W = model.POSTER_WIDTH, H = model.POSTER_HEIGHT;
+  const overlaps = (a, b) =>
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+  for (const preset of model.meetLayouts) {
+    const blocks = model.initialMeetBlocks(preset.sessions);
+    const sessions = blocks.filter(b => b.kind === "session");
+    assert.equal(sessions.length, preset.sessions, `${preset.id} session count`);
+
+    // Nothing may fall off the poster.
+    for (const b of blocks) {
+      assert.ok(b.x >= 0 && b.y >= 0, `${preset.id}/${b.id} inside top-left`);
+      assert.ok(b.x + b.w <= W, `${preset.id}/${b.id} within width`);
+      assert.ok(b.y + b.h <= H, `${preset.id}/${b.id} within height`);
+    }
+
+    // Sessions must not collide with each other, the panel, or the footer.
+    const panel = blocks.find(b => b.id === "qr-panel");
+    const footer = blocks.find(b => b.id === "footer");
+    const code = blocks.find(b => b.id === "qr");
+    sessions.forEach((s1, i) => {
+      assert.ok(!overlaps(s1, panel), `${preset.id}/session-${i} clear of the panel`);
+      assert.ok(!overlaps(s1, footer), `${preset.id}/session-${i} clear of the footer`);
+      sessions.slice(i + 1).forEach((s2, j) => {
+        assert.ok(!overlaps(s1, s2), `${preset.id}/session-${i} clear of session-${i + j + 1}`);
+      });
+    });
+
+    // The QR code has to stay square and sit within its panel.
+    assert.equal(code.w, code.h, `${preset.id} QR stays square`);
+    assert.ok(code.x >= panel.x && code.x + code.w <= panel.x + panel.w, `${preset.id} QR within panel width`);
+    assert.ok(code.y >= panel.y && code.y + code.h <= panel.y + panel.h, `${preset.id} QR within panel height`);
+    assert.ok(code.w >= 120, `${preset.id} QR still scannable at ${code.w}px`);
+  }
+});

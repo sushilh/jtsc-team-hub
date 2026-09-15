@@ -3,7 +3,7 @@
 import AutoGrowTextarea from "./AutoGrowTextarea";
 
 import { useEffect, useRef, useState, type PointerEvent, type ChangeEvent } from "react";
-import { initialMeetBlocks, clampBlock, hitTest, meetThemes, POSTER_WIDTH, POSTER_HEIGHT, type MeetBlock, type ThemeId } from "../../lib/meet-day";
+import { initialMeetBlocks, clampBlock, hitTest, meetThemes, meetLayouts, POSTER_WIDTH, POSTER_HEIGHT, type MeetBlock, type ThemeId, type MeetLayoutId } from "../../lib/meet-day";
 import { drawMeetPoster } from "../../lib/meet-renderer";
 import MeetBookImport from "./MeetBookImport";
 import type { BookSession } from "../../lib/meet-book";
@@ -15,6 +15,7 @@ export default function MeetDayStudio() {
   const [blocks, setBlocks] = useState<MeetBlock[]>(initialMeetBlocks);
   const [selectedId, setSelectedId] = useState("title");
   const [theme, setTheme] = useState<ThemeId>("trojan");
+  const [layout, setLayout] = useState<MeetLayoutId>("championship");
   const [customColor, setCustomColor] = useState<string | null>(null);
   const [hexInput, setHexInput] = useState(meetThemes.trojan.primary);
   const activeTheme = resolveMeetTheme(theme, customColor);
@@ -55,6 +56,15 @@ export default function MeetDayStudio() {
   function update(id: string, patch: Partial<MeetBlock>, remember = true) {
     if (remember) checkpoint();
     setBlocks(current => current.map(b => b.id === id ? clampBlock({ ...b, ...patch }) : b));
+  }
+  function applyLayout(id: MeetLayoutId) {
+    const preset = meetLayouts.find(item => item.id === id);
+    if (!preset || id === layout) return;
+    checkpoint();
+    setBlocks(initialMeetBlocks(preset.sessions));
+    setLayout(id);
+    setSelectedId("title");
+    setNotice(`${preset.label} layout applied. Undo layout restores your previous poster.`);
   }
   function undo() { if (!past.length) return; setFuture(current => [blocks, ...current]); setBlocks(past[past.length - 1]); setPast(current => current.slice(0, -1)); }
   function redo() { if (!future.length) return; setPast(current => [...current, blocks]); setBlocks(future[0]); setFuture(current => current.slice(1)); }
@@ -119,7 +129,7 @@ export default function MeetDayStudio() {
 
   return <main className="meet-studio">
     <header className="meet-heading"><div><span>02 / MEET COMMUNICATIONS</span><h1>Meet Day Studio</h1><p>Edit sessions, times and meet details. Select any component to move it on the poster.</p></div><a className="meet-download-link" href="#meet-download">Download & captions ↓</a></header>
-    <div className="meet-toolbar"><div className="meet-themes" role="group" aria-label="Poster color theme">{Object.entries(meetThemes).map(([id, value]) => <button key={id} aria-pressed={!customColor && theme === id} onClick={() => { setTheme(id as ThemeId); setCustomColor(null); setHexInput(value.primary); }}><i style={{ background: value.primary, borderColor: value.accent }} />{value.label}</button>)}</div><div><button onClick={undo} disabled={!past.length}>Undo layout</button><button onClick={redo} disabled={!future.length}>Redo layout</button></div></div>
+    <div className="meet-toolbar"><div className="meet-themes" role="group" aria-label="Poster color theme">{Object.entries(meetThemes).map(([id, value]) => <button key={id} aria-pressed={!customColor && theme === id} onClick={() => { setTheme(id as ThemeId); setCustomColor(null); setHexInput(value.primary); }}><i style={{ background: value.primary, borderColor: value.accent }} />{value.label}</button>)}</div><div className="meet-layouts" role="group" aria-label="Poster session layout">{meetLayouts.map(item => <button key={item.id} aria-pressed={layout === item.id} className={layout === item.id ? "active" : ""} onClick={() => applyLayout(item.id)}><b>{item.label}</b><small>{item.detail}</small></button>)}</div><div><button onClick={undo} disabled={!past.length}>Undo layout</button><button onClick={redo} disabled={!future.length}>Redo layout</button></div></div>
     <p className="meet-status" role="status">{notice || "Sample July 2026 schedule — replace with your meet details. Photos and edits stay in this browser tab."}</p>
     <div className="meet-workspace">
       <aside className="meet-inspector">

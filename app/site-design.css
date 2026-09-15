@@ -923,7 +923,8 @@ html { scrollbar-gutter: stable; }
 .guide-footer a { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 1000px) {
-  .guide-layout { grid-template-columns: 1fr; gap: 0; }
+  .guide-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .guide-jump, .guide-article { min-width: 0; }
   .guide-jump { position: static; padding: 34px 0 4px; }
   .guide-jump ol { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 12px; border: 0; scroll-snap-type: x proximity; }
   .guide-jump li { flex: 0 0 auto; border: 0; }
@@ -1325,4 +1326,23 @@ html { scrollbar-gutter: stable; }
   .guide-arm-svg { width: min(150px, 60%); display: block; margin-inline: auto; }
   .guide-timeline-band span { font-size: 9px; letter-spacing: .03em; }
   .guide-motion-on .guide-gear-list li:hover .guide-gear-icon { transform: none; }
+}
+
+/* Poster session presets, beside the colour themes in the studio toolbar. */
+.meet-layouts { display: flex; flex-wrap: wrap; gap: 7px; }
+.meet-layouts button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 8px 13px; border: 1px solid var(--line); border-radius: 10px;
+  background: #fff; cursor: pointer; text-align: left; transition: .18s ease;
+}
+.meet-layouts button b { font-size: 12px; font-weight: 800; color: var(--ink); }
+.meet-layouts button small { font-size: 10px; color: var(--muted); letter-spacing: .02em; }
+.meet-layouts button:hover { border-color: var(--maroon); background: #fcf8fa; }
+.meet-layouts button.active { border-color: var(--maroon); background: var(--maroon); }
+.meet-layouts button.active b { color: #fff; }
+.meet-layouts button.active small { color: rgba(255,255,255,.72); }
+
+@media (max-width: 860px) {
+  .meet-layouts { display: grid; grid-template-columns: 1fr 1fr; }
+  .meet-layouts button { align-items: center; text-align: center; }
 }
