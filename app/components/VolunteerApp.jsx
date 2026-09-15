@@ -47,6 +47,8 @@ function VolunteerApp() {
   const [jobId, setJobId] = useState("");
   const [hours, setHours] = useState("");
   const [signupDate, setSignupDate] = useState("");
+  const [swimmerPick, setSwimmerPick] = useState("");
+  const [volunteerPick, setVolunteerPick] = useState("");
   const [query, setQuery] = useState("");
   const [signupCredits, setSignupCredits] = useState({});
   const [notice, setNotice] = useState(null);
@@ -94,16 +96,34 @@ function VolunteerApp() {
   }, [selectedJob]);
 
   const [selectedEventDate, selectedEventTitle] = signupDate.split("|||");
+  const meetRows = useMemo(() => (data?.signupRows ?? []).filter(
+    (row) => row.eventDate === selectedEventDate && row.eventTitle === selectedEventTitle,
+  ), [data, selectedEventDate, selectedEventTitle]);
+
+  const byName = (a, b) => a.localeCompare(b, "en", { sensitivity: "base" });
+  // Pick a family first and the volunteer list narrows to the people on that account.
+  const swimmerOptions = useMemo(
+    () => [...new Set(meetRows.map((row) => row.swimmerName).filter(Boolean))].sort(byName),
+    [meetRows],
+  );
+  const volunteerOptions = useMemo(
+    () => [...new Set(meetRows
+      .filter((row) => !swimmerPick || row.swimmerName === swimmerPick)
+      .map((row) => row.volunteerName).filter(Boolean))].sort(byName),
+    [meetRows, swimmerPick],
+  );
+
   const signupRows = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return (data?.signupRows ?? []).filter((row) => (
-      row.eventDate === selectedEventDate && row.eventTitle === selectedEventTitle
+    return meetRows.filter((row) => (
+      (!swimmerPick || row.swimmerName === swimmerPick)
+      && (!volunteerPick || row.volunteerName === volunteerPick)
       && (!normalized || `${row.volunteerName} ${row.swimmerName} ${row.jobName} ${row.slot}`.toLowerCase().includes(normalized))
     )).sort((a, b) => {
       const rank = (row) => row.checkedInAt && !row.completed ? 0 : row.completed ? 2 : 1;
       return rank(a) - rank(b) || a.volunteerName.localeCompare(b.volunteerName);
     });
-  }, [data, query, selectedEventDate, selectedEventTitle]);
+  }, [meetRows, query, swimmerPick, volunteerPick]);
 
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
@@ -208,7 +228,10 @@ function VolunteerApp() {
             <div className="signup-toolbar">
               <label className="field">
                 <span>Meet date and event</span>
-                <select value={signupDate} onChange={(event) => { setSignupDate(event.target.value); setQuery(""); }}>
+                <select value={signupDate} onChange={(event) => {
+                  setSignupDate(event.target.value);
+                  setQuery(""); setSwimmerPick(""); setVolunteerPick("");
+                }}>
                   {data.signupDates.map((item) => <option key={`${item.eventDate}-${item.eventTitle}`} value={`${item.eventDate}|||${item.eventTitle}`}>
                     {displayDate(item.eventDate)} · {item.eventTitle}
                   </option>)}
@@ -221,6 +244,26 @@ function VolunteerApp() {
                   {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear volunteer search">×</button>}
                 </span>
               </label>
+            </div>
+
+            <div className="signup-pickers">
+              <label className="field">
+                <span>Swimmer / account</span>
+                <select value={swimmerPick} onChange={(event) => { setSwimmerPick(event.target.value); setVolunteerPick(""); }}>
+                  <option value="">All swimmers ({swimmerOptions.length})</option>
+                  {swimmerOptions.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>Volunteer name</span>
+                <select value={volunteerPick} onChange={(event) => setVolunteerPick(event.target.value)}>
+                  <option value="">All volunteers ({volunteerOptions.length})</option>
+                  {volunteerOptions.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+              </label>
+              {(swimmerPick || volunteerPick || query) && <button type="button" className="picker-clear"
+                onClick={() => { setSwimmerPick(""); setVolunteerPick(""); setQuery(""); }}
+              >Show everyone</button>}
             </div>
 
             <div className="signup-result-head" aria-live="polite">

@@ -455,6 +455,17 @@ html { scrollbar-gutter: stable; }
 .volunteer-grid { grid-template-columns: minmax(0, 2.15fr) minmax(320px, .85fr); }
 .expected-card { min-width: 0; }
 .signup-toolbar { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(280px, 1.2fr); gap: 14px; padding: 22px 0 18px; }
+/* Pick a swimmer or a volunteer by name instead of typing, for the desk. */
+.signup-pickers { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) auto; align-items: end; gap: 14px; padding: 0 0 18px; }
+.signup-pickers select { min-height: 46px; font-size: 15px; font-weight: 600; }
+.picker-clear { height: 46px; padding: 0 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--maroon); cursor: pointer; white-space: nowrap; transition: .18s ease; }
+.picker-clear:hover { border-color: var(--maroon); background: #fcf8fa; }
+
+@media (max-width: 760px) {
+  .signup-pickers { grid-template-columns: 1fr; }
+  .picker-clear { width: 100%; }
+}
+
 .search-wrap { position: relative; display: block; }
 .search-wrap input { padding-right: 46px; }
 .search-wrap button { position: absolute; right: 7px; top: 7px; width: 36px; height: 36px; border: 0; border-radius: 8px; background: var(--maroon-soft); color: var(--maroon); font-size: 20px; line-height: 1; }
