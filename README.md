@@ -34,7 +34,7 @@ This starter does not use `wrangler.jsonc`.
 Meet books are parsed heuristically in the browser using PDF.js. Review all detected values before importing. Select up to seven sessions and eight events for a single poster; scanned/password-protected PDFs need a readable copy or pasted text. Files are not uploaded to a server. QR codes are uploaded images, not generated from URLs; a square white-margin container avoids stretching, but users must scan the final export to verify the supplied code. Drafts and images are held in memory and reset on page reload. Layout undo/redo covers component edits, not image replacements or theme changes.
 
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
-- `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, scoped roster clearing, preserved corrections, same-format `.xls` download, walk-in sessions, hour adjustments, and CSV reports
+- `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, scoped roster clearing, preserved corrections, same-format `.xls` download, imported-job walk-ins, manual walk-in sessions, hour adjustments, and CSV reports
 - Classic and Signature card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
 - editable, locally generated captions with separate copy buttons for Instagram and Facebook
 

@@ -190,6 +190,20 @@ with sync_playwright() as playwright:
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)
 
+        # A walk-in can use an imported job instead of requiring the desk to
+        # recreate a manual session. It is stored in the same roster and can
+        # be checked out from the normal on-deck flow.
+        walkin = page.locator("form.signup-walkin-form")
+        walkin.get_by_label("Walk-in volunteer name").fill("Eve Helper")
+        walkin.get_by_label("Walk-in swimmer").select_option(label="Family, Alice")
+        walkin.get_by_label("Walk-in job").select_option(label=re.compile("^Timer"))
+        walkin.get_by_label("Walk-in hours").fill("4")
+        walkin.get_by_role("button", name="Check in walk-in").click()
+        page.get_by_text("Eve Helper is checked in for Timer.").wait_for()
+        eve = page.locator("article.signup-person").filter(has_text="Eve Helper")
+        eve.get_by_role("button", name="Check out").click()
+        eve.get_by_text("Completed").wait_for()
+
         alice = page.locator("article.signup-person").filter(has_text="Alice Helper")
         alice.get_by_role("button", name="Check in").click()
         alice.get_by_text("On deck").wait_for()
@@ -230,7 +244,7 @@ with sync_playwright() as playwright:
         upload_from_admin(page, tomorrow_file)
         public = page.request.get(f"{BASE_URL}/api/public").json()
         same_title_rows = [row for row in public["signupRows"] if row["eventTitle"] == meet_title]
-        assert len(same_title_rows) == 4
+        assert len(same_title_rows) == 5
         assert {row["eventDate"] for row in same_title_rows} == {today.isoformat(), tomorrow.isoformat()}
         assert next(row for row in same_title_rows if row["volunteerName"] == "Alice Helper")["completed"] is True
         future_row = next(row for row in same_title_rows if row["eventDate"] == tomorrow.isoformat())

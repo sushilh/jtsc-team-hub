@@ -49,6 +49,10 @@ function VolunteerApp() {
   const [swimmerId, setSwimmerId] = useState("");
   const [jobId, setJobId] = useState("");
   const [hours, setHours] = useState("");
+  const [signupWalkinName, setSignupWalkinName] = useState("");
+  const [signupWalkinSwimmer, setSignupWalkinSwimmer] = useState("");
+  const [signupWalkinJob, setSignupWalkinJob] = useState("");
+  const [signupWalkinHours, setSignupWalkinHours] = useState("");
   const [signupDate, setSignupDate] = useState("");
   const [showPastMeets, setShowPastMeets] = useState(false);
   const [swimmerPick, setSwimmerPick] = useState("");
@@ -119,6 +123,18 @@ function VolunteerApp() {
     () => [...new Set(meetRows.map((row) => row.swimmerName).filter(Boolean))].sort(byName),
     [meetRows],
   );
+  const importedWalkinJobs = useMemo(
+    () => (data?.signupJobs ?? []).filter((job) => job.eventDate === selectedEventDate && job.eventTitle === selectedEventTitle)
+      .sort((a, b) => a.jobName.localeCompare(b.jobName, "en", { sensitivity: "base" }) || String(a.eventStart).localeCompare(String(b.eventStart))),
+    [data, selectedEventDate, selectedEventTitle],
+  );
+  const importedWalkinSwimmers = useMemo(() => {
+    const imported = (data?.signupSwimmers ?? [])
+      .filter((item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle)
+      .map((item) => item.swimmerName);
+    return [...new Set([...imported, ...(data?.swimmers ?? []).map((item) => item.name)])].filter(Boolean).sort(byName);
+  }, [data, selectedEventDate, selectedEventTitle]);
+  const selectedImportedJob = importedWalkinJobs.find((job) => `${job.jobName}|||${job.eventStart}|||${job.eventEnd}` === signupWalkinJob);
   const volunteerOptions = useMemo(
     () => [...new Set(meetRows
       .filter((row) => !swimmerPick || row.swimmerName === swimmerPick)
@@ -153,8 +169,20 @@ function VolunteerApp() {
   const selectedMeetManuallyOpen = selectedProgress?.checkinMode === "open";
   const sessionIsToday = session?.sessionDate === clubToday;
   const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0 && sessionIsToday);
+  const signupWalkinReady = Boolean(selectedProgress && canCheckInSelectedMeet && signupWalkinName.trim()
+    && signupWalkinSwimmer && selectedImportedJob && Number(signupWalkinHours) >= 0.25);
 
   function mutationWasSaved(result, payload, before) {
+    if (payload.action === "signup_walkin") {
+      const previousIds = new Set((before?.signupRows ?? []).map((row) => row.id));
+      return result.signupRows.some((row) => !previousIds.has(row.id)
+        && row.eventDate === payload.eventDate
+        && row.eventTitle === payload.eventTitle
+        && row.jobName === payload.jobName
+        && row.swimmerName === payload.swimmerName
+        && row.volunteerName === String(payload.volunteerName).trim()
+        && row.checkedInAt && !row.completed);
+    }
     if (payload.action.startsWith("signup_")) {
       const row = result.signupRows.find((item) => item.id === Number(payload.id));
       if (!row) return false;
@@ -239,6 +267,23 @@ function VolunteerApp() {
     );
   }
 
+  async function signupWalkinCheckIn(event) {
+    event.preventDefault();
+    if (!signupWalkinReady || !selectedImportedJob) return;
+    const saved = await postCheckin({
+      action: "signup_walkin",
+      eventDate: selectedEventDate,
+      eventTitle: selectedEventTitle,
+      jobName: selectedImportedJob.jobName,
+      swimmerName: signupWalkinSwimmer,
+      volunteerName: signupWalkinName,
+      creditedHours: Number(signupWalkinHours),
+    }, `${signupWalkinName.trim()} is checked in for ${selectedImportedJob.jobName}.`, "signup-walkin");
+    if (saved) {
+      setSignupWalkinName(""); setSignupWalkinSwimmer(""); setSignupWalkinJob(""); setSignupWalkinHours("");
+    }
+  }
+
   async function manualCheckIn(event) {
     event.preventDefault();
     if (!ready || !session) return;
@@ -288,6 +333,7 @@ function VolunteerApp() {
                 <select value={signupDate} onChange={(event) => {
                   setSignupDate(event.target.value);
                   setQuery(""); setSwimmerPick(""); setVolunteerPick("");
+                  setSignupWalkinSwimmer(""); setSignupWalkinJob(""); setSignupWalkinHours("");
                 }}>
                   {visibleMeets.map((item) => <option key={`${item.eventDate}-${item.eventTitle}`} value={`${item.eventDate}|||${item.eventTitle}`}>
                     {displayDate(item.eventDate)} · {item.eventTitle}{item.eventDate < localIsoDate() ? " (past)" : ""}
@@ -419,9 +465,36 @@ function VolunteerApp() {
           <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss message">×</button>
         </div>}
 
-        <details className="walkin-panel" open={!data?.signupDates.length}>
-          <summary>Walk-in volunteer <span>Not listed in the signup file?</span></summary>
-          {!data?.sessions.length ? <div className="empty-state compact"><strong>No manual session is open</strong><span>An admin can create one for walk-ins.</span></div>
+        <details className="walkin-panel" open={!data?.signupDates.length || Boolean(selectedProgress && importedWalkinJobs.length && canCheckInSelectedMeet)}>
+          <summary>Walk-in volunteer <span>Add someone using an imported job or a manual session</span></summary>
+          {selectedProgress && importedWalkinJobs.length > 0 && <form className="signup-walkin-form" noValidate onSubmit={signupWalkinCheckIn}>
+            <div className="walkin-form-heading"><strong>Use a job from this signup</strong><span>Choose the meet’s existing job, then add the walk-in.</span></div>
+            {!canCheckInSelectedMeet && <p className="past-meets-note">{selectedMeetClosed ? "An admin closed this meet’s check-in." : `Check-in opens ${displayDate(selectedEventDate)}.`}</p>}
+            <div className="form-row">
+              <label className="field"><span>Walk-in volunteer name</span><input value={signupWalkinName} onChange={(event) => setSignupWalkinName(event.target.value)} placeholder="First and last name" autoComplete="name" /></label>
+              <label className="field"><span>Walk-in swimmer</span><select value={signupWalkinSwimmer} onChange={(event) => setSignupWalkinSwimmer(event.target.value)}>
+                <option value="">Select swimmer</option>
+                {importedWalkinSwimmers.map((name) => <option value={name} key={name}>{name}</option>)}
+              </select></label>
+            </div>
+            <label className="field job-select-field"><span>Walk-in job</span><select value={signupWalkinJob} onChange={(event) => {
+              const next = event.target.value; setSignupWalkinJob(next);
+              const picked = importedWalkinJobs.find((job) => `${job.jobName}|||${job.eventStart}|||${job.eventEnd}` === next);
+              setSignupWalkinHours(picked ? String(picked.creditPossible) : "");
+            }}>
+              <option value="">Choose from {importedWalkinJobs.length} imported jobs…</option>
+              {importedWalkinJobs.map((job) => {
+                const key = `${job.jobName}|||${job.eventStart}|||${job.eventEnd}`;
+                return <option value={key} key={key}>{job.jobName} · {shiftTime(job.eventStart, job.eventEnd)} · {job.creditPossible} {job.creditUnits || "hrs"}</option>;
+              })}
+            </select></label>
+            <div className="hours-row">
+              <label className="field compact-field"><span>Walk-in hours</span><div className="number-wrap"><input type="number" min="0.25" max="24" step="0.25" value={signupWalkinHours} onChange={(event) => setSignupWalkinHours(event.target.value)} /><b>HRS</b></div></label>
+              <p className="field-help">The imported credit is a starting point. You can overwrite it for this walk-in.</p>
+            </div>
+            <button className="primary-button" type="submit" disabled={!signupWalkinReady || busyId !== null}><span>{busyId === "signup-walkin" ? "Saving…" : "Check in walk-in"}</span><b aria-hidden="true">→</b></button>
+          </form>}
+          {!data?.sessions.length ? !importedWalkinJobs.length && <div className="empty-state compact"><strong>No manual session is open</strong><span>An admin can create one for walk-ins.</span></div>
             : <form noValidate onSubmit={manualCheckIn}>
               {data.sessions.length > 1 && <label className="field"><span>Session</span><select value={sessionId} onChange={(event) => { setSessionId(Number(event.target.value)); setJobId(""); setHours(""); }}>
                 {data.sessions.map((item) => <option value={item.id} key={item.id}>{item.title} · {item.sessionDate}</option>)}
