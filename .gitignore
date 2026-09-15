@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Local throwaway signup files for manual check-in testing
 test-signup-files/
+
+# Local worker secrets (never commit)
+.dev.vars
