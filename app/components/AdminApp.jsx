@@ -687,7 +687,7 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SignupImportPanel({ signupImports, busy, importSignup, mutate }) {
+function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode }) {
   const [file, setFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
@@ -738,12 +738,15 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate }) {
         <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
       </div>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
     </div>
-    {signupImports.length > 0 && <div className="danger-zone">
+    {demoMode && <div className="danger-zone">
       {!resetOpen
-        ? <button type="button" className="danger-link" onClick={() => setResetOpen(true)}>Clear all imported rosters…</button>
+        ? <>
+          <button type="button" className="danger-link" onClick={() => setResetOpen(true)}>Clear all data…</button>
+          <span className="demo-tag">Demo only</span>
+        </>
         : <div className="danger-confirm">
-          <strong>Clear every imported roster?</strong>
-          <p>This deletes all signup rows and their check-ins so the club can start fresh. Download anything worth keeping first — this cannot be undone.</p>
+          <strong>Clear every roster and check-in?</strong>
+          <p>This deletes all imported signup rows, their check-ins, and any walk-in entries, leaving an empty system. Download anything worth keeping first — this cannot be undone.</p>
           <label>
             <span>Type RESET to confirm</span>
             <input value={resetConfirm} onChange={(event) => setResetConfirm(event.target.value)} placeholder="RESET" autoComplete="off" />
@@ -751,12 +754,12 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate }) {
           <div className="danger-actions">
             <button type="button" className="danger-primary" disabled={busy || resetConfirm.trim().toUpperCase() !== "RESET"}
               onClick={async () => {
-                if (await mutate({ action: "reset_signup_data", confirm: resetConfirm }, "Every imported roster was cleared.")) {
+                if (await mutate({ action: "reset_signup_data", confirm: resetConfirm }, "All rosters and check-ins were cleared.")) {
                   setResetOpen(false);
                   setResetConfirm("");
                   window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
                 }
-              }}>Clear rosters</button>
+              }}>Clear all data</button>
             <button type="button" className="bulk-toggle" onClick={() => { setResetOpen(false); setResetConfirm(""); }}>Cancel</button>
           </div>
         </div>}
@@ -828,7 +831,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, 
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, demoMode: data?.demoMode }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",
