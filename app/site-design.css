@@ -946,3 +946,15 @@ html { scrollbar-gutter: stable; }
 .danger-primary { padding: 9px 16px; border: 0; border-radius: 8px; background: #a32f3f; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .05em; cursor: pointer; transition: .18s ease; }
 .danger-primary:hover:not(:disabled) { background: #8c2436; }
 .danger-primary:disabled { opacity: .45; cursor: default; }
+
+/* Hour ledger: totals up front, then either a per-volunteer roll-up or every shift. */
+.ledger-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 12px; margin: 18px 0 16px; }
+.ledger-tile { padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fcfbfb; }
+.ledger-tile b { display: block; font-family: var(--font-display); font-size: 27px; line-height: 1; color: var(--maroon); }
+.ledger-tile span { display: block; margin-top: 5px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; color: var(--muted); }
+.ledger-switch { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 999px; background: #f6f4f4; }
+.ledger-switch button { padding: 7px 16px; border: 0; border-radius: 999px; background: none; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; transition: .18s ease; }
+.ledger-switch button.active { background: #fff; color: var(--maroon); box-shadow: 0 1px 3px rgba(0,0,0,.09); }
+.ledger-source { display: inline-block; padding: 3px 9px; border-radius: 999px; background: #f1eef0; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: var(--muted); white-space: nowrap; }
+.reports-panel td b { color: var(--maroon); font-weight: 800; }
+.reports-panel td small { display: block; margin-top: 2px; font-size: 10px; color: var(--muted); }

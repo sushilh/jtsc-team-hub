@@ -61,6 +61,8 @@ function AdminApp() {
   const [message, setMessage] = useState(null);
   const [busy, setBusy] = useState(false);
   const [reportSession, setReportSession] = useState("all");
+  const [reportMeet, setReportMeet] = useState("all");
+  const [ledgerView, setLedgerView] = useState("people");
   const [hourEdits, setHourEdits] = useState({});
   const load = useCallback(async () => {
     const response = await fetch("/api/admin", { cache: "no-store" });
@@ -218,6 +220,75 @@ function AdminApp() {
   const activeCount = entries.filter((entry) => !entry.checkedOutAt).length;
   const completedCount = entries.filter((entry) => entry.checkedOutAt).length;
   const filteredEntries = reportSession === "all" ? entries : entries.filter((entry) => entry.sessionId === Number(reportSession));
+
+  // The hour ledger has to cover both ways a shift gets credited: the signup roster,
+  // which is the normal meet-day path, and walk-in entries recorded against a manual
+  // session. Points-based jobs (donations) are counted apart from hours, never summed in.
+  const signupRows2 = data?.signupRows ?? [];
+  const ledgerMeets = useMemo(() => {
+    const seen = new Map();
+    for (const row of signupRows2) {
+      const key = `${row.eventDate}|||${row.eventTitle}`;
+      if (!seen.has(key)) seen.set(key, { key, eventDate: row.eventDate, eventTitle: row.eventTitle });
+    }
+    return [...seen.values()].sort((a, b) => b.eventDate.localeCompare(a.eventDate));
+  }, [signupRows2]);
+
+  const creditLedger = useMemo(() => {
+    const fromSignup = signupRows2
+      .filter((row) => row.completed && (reportMeet === "all" || `${row.eventDate}|||${row.eventTitle}` === reportMeet))
+      .map((row) => ({
+        id: `signup-${row.id}`,
+        source: "Signup roster",
+        volunteerName: row.volunteerName,
+        swimmerName: row.swimmerName,
+        jobName: row.jobName,
+        meet: row.eventTitle,
+        meetDate: row.eventDate,
+        credit: Number(row.creditedValue ?? row.creditEarned ?? 0),
+        units: row.creditUnits === "Pts." ? "Pts." : "Hrs.",
+        checkedInAt: row.checkedInAt,
+        checkedOutAt: row.checkedOutAt,
+        adjusted: Boolean(row.volunteerOverride),
+      }));
+    // Walk-ins only belong in an all-meets view; they are not tied to a signup meet.
+    const fromWalkIn = reportMeet !== "all" ? [] : entries.filter((entry) => entry.checkedOutAt).map((entry) => ({
+      id: `entry-${entry.id}`,
+      source: "Walk-in",
+      volunteerName: entry.volunteerName,
+      swimmerName: entry.swimmerName,
+      jobName: entry.jobName,
+      meet: sessions2.find((item) => item.id === entry.sessionId)?.title ?? "Manual session",
+      meetDate: sessions2.find((item) => item.id === entry.sessionId)?.sessionDate ?? "",
+      credit: Number(entry.creditedHours),
+      units: "Hrs.",
+      checkedInAt: entry.checkedInAt,
+      checkedOutAt: entry.checkedOutAt,
+      adjusted: Boolean(entry.volunteerOverride),
+    }));
+    return [...fromSignup, ...fromWalkIn].sort(
+      (a, b) => a.volunteerName.localeCompare(b.volunteerName) || a.jobName.localeCompare(b.jobName),
+    );
+  }, [signupRows2, entries, sessions2, reportMeet]);
+
+  const ledgerTotals = useMemo(() => ({
+    shifts: creditLedger.length,
+    hours: creditLedger.filter((row) => row.units === "Hrs.").reduce((sum, row) => sum + row.credit, 0),
+    points: creditLedger.filter((row) => row.units === "Pts.").reduce((sum, row) => sum + row.credit, 0),
+    people: new Set(creditLedger.map((row) => row.volunteerName)).size,
+  }), [creditLedger]);
+
+  // Families care about their own total, so roll the ledger up per volunteer too.
+  const ledgerByVolunteer = useMemo(() => {
+    const totals = new Map();
+    for (const row of creditLedger) {
+      const current = totals.get(row.volunteerName) ?? { name: row.volunteerName, swimmerName: row.swimmerName, shifts: 0, hours: 0, points: 0 };
+      current.shifts += 1;
+      if (row.units === "Pts.") current.points += row.credit; else current.hours += row.credit;
+      totals.set(row.volunteerName, current);
+    }
+    return [...totals.values()].sort((a, b) => b.hours - a.hours || b.points - a.points);
+  }, [creditLedger]);
   const jobTotals = useMemo(() => {
     const totals = new Map();
     for (const entry of entries) {
@@ -287,33 +358,33 @@ function AdminApp() {
     })]
   });
   function exportCsv() {
-    const csv = [[
-      "Session",
-      "Date",
-      "Volunteer",
-      "Swimmer",
-      "Job",
-      "Check in",
-      "Check out",
-      "Credited hours",
-      "Volunteer override"
-    ], ...filteredEntries.map((entry) => {
-      const session = sessions2.find((item) => item.id === entry.sessionId);
-      return [
-        session?.title,
-        session?.sessionDate,
-        entry.volunteerName,
-        entry.swimmerName,
-        entry.jobName,
-        entry.checkedInAt,
-        entry.checkedOutAt,
-        entry.creditedHours,
-        entry.volunteerOverride ? "Yes" : "No"
-      ];
-    })].map((row) => row.map(csvCell).join(",")).join("\n");
+    // Hours and points are different currencies, so they get their own columns
+    // rather than being added together.
+    const rows = creditLedger.map((row) => [
+      row.volunteerName,
+      row.swimmerName,
+      row.jobName,
+      row.meet,
+      row.meetDate,
+      row.units === "Hrs." ? row.credit : "",
+      row.units === "Pts." ? row.credit : "",
+      row.checkedInAt ?? "",
+      row.checkedOutAt ?? "",
+      row.adjusted ? "Yes" : "No",
+      row.source,
+    ]);
+    const totalHours = creditLedger.filter((row) => row.units === "Hrs.").reduce((sum, row) => sum + row.credit, 0);
+    const totalPoints = creditLedger.filter((row) => row.units === "Pts.").reduce((sum, row) => sum + row.credit, 0);
+    const csv = [
+      ["Volunteer", "Swimmer / account", "Job", "Meet", "Meet date", "Hours", "Points", "Check in", "Check out", "Credit adjusted", "Source"],
+      ...rows,
+      [],
+      ["TOTAL", "", "", "", "", totalHours, totalPoints, "", "", "", `${creditLedger.length} shifts`],
+    ].map((row) => row.map(csvCell).join(",")).join("\n");
+    const label = reportMeet === "all" ? "all-meets" : reportMeet.split("|||")[0];
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    link.download = `JTSC-volunteer-report-${today()}.csv`;
+    link.download = `JTSC-volunteer-hours-${label}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
   }
@@ -484,76 +555,77 @@ function AdminApp() {
           busy,
           mutate
         }),
-        tab === "reports" && jsxs("section", {
-          className: "panel reports-panel",
-          children: [
-            jsxs("div", {
-              className: "panel-head report-head",
-              children: [jsxs("div", { children: [jsx("span", {
-                className: "panel-kicker",
-                children: "HOUR LEDGER"
-              }), jsx("h2", { children: "Volunteer activity" })] }), jsxs("div", { children: [jsxs("select", {
-                value: reportSession,
-                onChange: (event) => setReportSession(event.target.value),
-                children: [jsx("option", {
-                  value: "all",
-                  children: "All sessions"
-                }), sessions2.map((session) => jsx("option", {
-                  value: session.id,
-                  children: session.title
-                }, session.id))]
-              }), jsx("button", {
-                className: "export-button",
-                onClick: exportCsv,
-                children: "Export CSV \u2193"
-              })] })]
-            }),
-            jsxs("div", {
-              className: "report-summary",
-              children: [jsxs("span", { children: [jsx("b", { children: filteredEntries.length }), " shifts"] }), jsxs("span", { children: [jsx("b", { children: filteredEntries.reduce((sum, entry) => sum + Number(entry.creditedHours), 0).toFixed(1) }), " total hours"] })]
-            }),
-            jsxs("div", {
-              className: "table-scroll",
-              children: [jsxs("table", { children: [jsx("thead", { children: jsxs("tr", { children: [
-                jsx("th", { children: "Volunteer" }),
-                jsx("th", { children: "Swimmer" }),
-                jsx("th", { children: "Assignment" }),
-                jsx("th", { children: "Check in" }),
-                jsx("th", { children: "Check out" }),
-                jsx("th", { children: "Hours" }),
-                jsx("th", {})
-              ] }) }), jsx("tbody", { children: filteredEntries.map((entry) => jsxs("tr", { children: [
-                jsxs("td", { children: [jsx("strong", { children: entry.volunteerName }), entry.volunteerOverride ? jsx("small", { children: "Volunteer adjusted" }) : null] }),
-                jsx("td", { children: entry.swimmerName }),
-                jsx("td", { children: entry.jobName }),
-                jsx("td", { children: stamp(entry.checkedInAt) }),
-                jsx("td", { children: stamp(entry.checkedOutAt) }),
-                jsx("td", { children: jsx("input", {
-                  className: "hour-edit",
-                  type: "number",
-                  step: "0.25",
-                  min: "0",
-                  max: "24",
-                  value: hourEdits[entry.id] ?? "",
-                  onChange: (event) => setHourEdits((current) => ({
-                    ...current,
-                    [entry.id]: event.target.value
-                  }))
-                }) }),
-                jsx("td", { children: jsx("button", {
-                  className: "save-link",
-                  disabled: busy || Number(hourEdits[entry.id]) === Number(entry.creditedHours),
-                  onClick: () => void mutate({
-                    action: "update_hours",
-                    id: entry.id,
-                    hours: Number(hourEdits[entry.id])
-                  }, `Hours updated for ${entry.volunteerName}.`),
-                  children: "Save"
-                }) })
-              ] }, entry.id)) })] }), !filteredEntries.length && jsx(PanelEmpty, { text: "No volunteer activity matches this report." })]
-            })
-          ]
-        })
+        tab === "reports" && <section className="panel reports-panel">
+          <div className="panel-head report-head">
+            <div>
+              <span className="panel-kicker">HOUR LEDGER</span>
+              <h2>Completed volunteer credit</h2>
+            </div>
+            <div>
+              <select value={reportMeet} onChange={(event) => setReportMeet(event.target.value)}>
+                <option value="all">All meets{ledgerMeets.length ? "" : " (no roster yet)"}</option>
+                {ledgerMeets.map((meet) => <option key={meet.key} value={meet.key}>{meet.eventDate} · {meet.eventTitle}</option>)}
+              </select>
+              <button className="export-button" onClick={exportCsv}>Export CSV ↓</button>
+            </div>
+          </div>
+
+          <div className="ledger-tiles">
+            <div className="ledger-tile">
+              <b>{ledgerTotals.hours.toFixed(2).replace(/\.?0+$/, "")}</b>
+              <span>hours completed</span>
+            </div>
+            {ledgerTotals.points > 0 && <div className="ledger-tile">
+              <b>{ledgerTotals.points.toFixed(2).replace(/\.?0+$/, "")}</b>
+              <span>points completed</span>
+            </div>}
+            <div className="ledger-tile">
+              <b>{ledgerTotals.shifts}</b>
+              <span>{ledgerTotals.shifts === 1 ? "shift" : "shifts"}</span>
+            </div>
+            <div className="ledger-tile">
+              <b>{ledgerTotals.people}</b>
+              <span>{ledgerTotals.people === 1 ? "volunteer" : "volunteers"}</span>
+            </div>
+          </div>
+
+          <div className="ledger-switch" role="group" aria-label="Ledger view">
+            <button type="button" className={ledgerView === "people" ? "active" : ""} aria-pressed={ledgerView === "people"}
+              onClick={() => setLedgerView("people")}>By volunteer</button>
+            <button type="button" className={ledgerView === "shifts" ? "active" : ""} aria-pressed={ledgerView === "shifts"}
+              onClick={() => setLedgerView("shifts")}>Every shift</button>
+          </div>
+
+          <div className="table-scroll">
+            {ledgerView === "people"
+              ? <table>
+                <thead><tr><th>Volunteer</th><th>Swimmer / account</th><th>Shifts</th><th>Hours</th><th>Points</th></tr></thead>
+                <tbody>
+                  {ledgerByVolunteer.map((person) => <tr key={person.name}>
+                    <td><strong>{person.name}</strong></td>
+                    <td>{person.swimmerName}</td>
+                    <td>{person.shifts}</td>
+                    <td><b>{person.hours ? person.hours.toFixed(2).replace(/\.?0+$/, "") : "—"}</b></td>
+                    <td>{person.points ? person.points.toFixed(2).replace(/\.?0+$/, "") : "—"}</td>
+                  </tr>)}
+                </tbody>
+              </table>
+              : <table>
+                <thead><tr><th>Volunteer</th><th>Swimmer / account</th><th>Job</th><th>Meet</th><th>Credit</th><th>Source</th></tr></thead>
+                <tbody>
+                  {creditLedger.map((row) => <tr key={row.id}>
+                    <td><strong>{row.volunteerName}</strong>{row.adjusted ? <small>Credit adjusted</small> : null}</td>
+                    <td>{row.swimmerName}</td>
+                    <td>{row.jobName}</td>
+                    <td>{row.meetDate ? `${row.meetDate} · ` : ""}{row.meet}</td>
+                    <td><b>{row.credit}</b> {row.units === "Pts." ? "pts" : "hrs"}</td>
+                    <td><span className="ledger-source">{row.source}</span></td>
+                  </tr>)}
+                </tbody>
+              </table>}
+            {!creditLedger.length && <PanelEmpty text="No completed shifts yet. Credit appears here once volunteers are checked out at the desk." />}
+          </div>
+        </section>
       ]
     })]
   });
