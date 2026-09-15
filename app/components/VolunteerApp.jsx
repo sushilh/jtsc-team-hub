@@ -328,7 +328,14 @@ function VolunteerApp() {
               {!signupRows.length && <div className="deck-empty"><span>⌕</span><strong>No matching signup</strong><small>Try a last name, swimmer / account name, or job.</small></div>}
               {signupRows.length > 120 && <p className="signup-limit">Showing the first 120 matches. Add a name or job to narrow the list.</p>}
             </div>
-          </> : <div className="empty-state"><strong>No signup roster uploaded yet</strong><span>An admin can import the meet’s Job Signup Excel file.</span></div>}
+          </> : data.unassignedMeets?.length ? <div className="empty-state">
+            <strong>Nobody has signed up yet</strong>
+            <span>
+              {data.unassignedMeets.map((item) => `${item.openCount} open ${item.openCount === 1 ? "shift" : "shifts"} for ${item.eventTitle}`).join(", ")}
+              {" — but no volunteer names are in the file. Export the Job Signup again once parents have signed up, then re-import it here."}
+            </span>
+          </div>
+          : <div className="empty-state"><strong>No signup roster uploaded yet</strong><span>An admin can import the meet’s Job Signup file.</span></div>}
 
         {notice && <div className={`notice ${notice.kind}`} role="status">
           <b>{notice.kind === "success" ? "✓" : "!"}</b><span>{notice.text}</span>

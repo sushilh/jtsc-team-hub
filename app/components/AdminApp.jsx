@@ -192,6 +192,8 @@ function AdminApp() {
         kind: "success",
         text: result.duplicate
           ? `${imported.fileName || file.name} was already imported. No duplicate rows were added.`
+          : imported.assignedCount === 0
+          ? `${imported.rowCount} shifts were imported, but no volunteer names are in this file yet. Export the Job Signup again once parents have signed up, then re-import it here.`
           : [
             `${imported.assignedCount} assigned volunteers are ready to check in across ${imported.eventCount} events.`,
             imported.keptCheckins ? `${imported.keptCheckins} check-in${imported.keptCheckins === 1 ? "" : "s"} already recorded at the desk ${imported.keptCheckins === 1 ? "was" : "were"} kept.` : "",
