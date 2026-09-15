@@ -271,6 +271,27 @@ function AdminApp() {
     );
   }, [signupRows2, entries, sessions2, reportMeet]);
 
+  // Shifts checked in but not yet checked out. They have earned nothing yet, so they are
+  // reported apart from completed credit rather than folded into it.
+  const pendingLedger = useMemo(() => signupRows2
+    .filter((row) => row.checkedInAt && !row.completed
+      && (reportMeet === "all" || `${row.eventDate}|||${row.eventTitle}` === reportMeet))
+    .map((row) => ({
+      id: `pending-${row.id}`,
+      volunteerName: row.volunteerName,
+      swimmerName: row.swimmerName,
+      jobName: row.jobName,
+      meet: row.eventTitle,
+      meetDate: row.eventDate,
+      credit: Number(row.creditedValue ?? row.creditPossible ?? 0),
+      units: row.creditUnits === "Pts." ? "Pts." : "Hrs.",
+    })), [signupRows2, reportMeet]);
+
+  const pendingTotals = useMemo(() => ({
+    shifts: pendingLedger.length,
+    hours: pendingLedger.filter((row) => row.units === "Hrs.").reduce((sum, row) => sum + row.credit, 0),
+  }), [pendingLedger]);
+
   const ledgerTotals = useMemo(() => ({
     shifts: creditLedger.length,
     hours: creditLedger.filter((row) => row.units === "Hrs.").reduce((sum, row) => sum + row.credit, 0),
@@ -579,6 +600,10 @@ function AdminApp() {
               <b>{ledgerTotals.points.toFixed(2).replace(/\.?0+$/, "")}</b>
               <span>points completed</span>
             </div>}
+            {pendingTotals.shifts > 0 && <div className="ledger-tile pending">
+              <b>{pendingTotals.hours.toFixed(2).replace(/\.?0+$/, "")}</b>
+              <span>still on deck</span>
+            </div>}
             <div className="ledger-tile">
               <b>{ledgerTotals.shifts}</b>
               <span>{ledgerTotals.shifts === 1 ? "shift" : "shifts"}</span>
@@ -588,6 +613,19 @@ function AdminApp() {
               <span>{ledgerTotals.people === 1 ? "volunteer" : "volunteers"}</span>
             </div>
           </div>
+
+          {pendingTotals.shifts > 0 && <div className="pending-banner">
+            <div>
+              <strong>{pendingTotals.shifts} {pendingTotals.shifts === 1 ? "volunteer is" : "volunteers are"} still checked in</strong>
+              <span>Credit is earned at check-out, so these {pendingTotals.hours.toFixed(2).replace(/\.?0+$/, "")} hours are not counted yet. People often leave without checking out.</span>
+            </div>
+            {reportMeet !== "all" && <button type="button" className="admin-primary" disabled={busy}
+              onClick={() => {
+                const [eventDate, eventTitle] = reportMeet.split("|||");
+                void mutate({ action: "signup_checkout_all", eventDate, eventTitle },
+                  `Checked out everyone still on deck for ${eventTitle}.`);
+              }}>Check out all {pendingTotals.shifts} →</button>}
+          </div>}
 
           <div className="ledger-switch" role="group" aria-label="Ledger view">
             <button type="button" className={ledgerView === "people" ? "active" : ""} aria-pressed={ledgerView === "people"}
@@ -623,7 +661,9 @@ function AdminApp() {
                   </tr>)}
                 </tbody>
               </table>}
-            {!creditLedger.length && <PanelEmpty text="No completed shifts yet. Credit appears here once volunteers are checked out at the desk." />}
+            {!creditLedger.length && <PanelEmpty text={pendingTotals.shifts
+              ? `Nobody has checked out yet. ${pendingTotals.shifts} ${pendingTotals.shifts === 1 ? "volunteer is" : "volunteers are"} on deck and will earn credit once checked out.`
+              : "No completed shifts yet. Credit appears here once volunteers are checked out at the desk."} />}
           </div>
         </section>
       ]

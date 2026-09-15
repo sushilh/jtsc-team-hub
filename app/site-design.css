@@ -963,3 +963,11 @@ html { scrollbar-gutter: stable; }
 .past-meets-note { margin: -6px 0 16px; font-size: 12px; color: var(--muted); }
 .past-meets-note button, .inline-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--maroon); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .past-meets-note button:hover, .inline-link:hover { color: var(--maroon-dark); }
+
+/* Credit still on deck: earned at check-out, so reported apart from completed hours. */
+.ledger-tile.pending { border-color: #cfe4de; background: #f4fbf9; }
+.ledger-tile.pending b { color: #2f8f7c; }
+.pending-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; padding: 15px 17px; margin-bottom: 16px; border: 1px solid #cfe4de; border-radius: 12px; background: #f4fbf9; }
+.pending-banner strong { display: block; font-size: 14px; color: #226456; }
+.pending-banner span { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: #4a6b64; max-width: 60ch; }
+.pending-banner .admin-primary { flex: none; }
