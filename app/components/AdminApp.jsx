@@ -580,14 +580,17 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate }) {
   const [resetConfirm, setResetConfirm] = useState("");
   async function submit(event) {
     event.preventDefault();
+    // React clears currentTarget once the event finishes dispatching, so the form
+    // has to be captured before the upload is awaited.
+    const form = event.currentTarget;
     if (!file) {
-      setLocalMessage("Choose the Job Signup Excel file first.");
+      setLocalMessage("Choose the Job Signup file first.");
       return;
     }
     setLocalMessage("");
     if (await importSignup(file)) {
       setFile(null);
-      event.currentTarget.reset();
+      form?.reset();
     }
   }
   return <section className="panel signup-import-panel">
