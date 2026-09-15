@@ -1,0 +1,11 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["app"],
+  "locale": "en-US",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Form", "CRUD", "Toast", "Scrollbar", "Date"],
+  "ownership": { "Date": "native", "Select/Listbox": "native" },
+  "commands": { "unit": "npm test", "typecheck": "npx tsc --noEmit", "lint": "npm run lint" },
+  "requiredCommands": ["unit", "typecheck", "lint"],
+  "evidence": { "crudFullFlow": "tests/ui/multi-event.py", "failurePaths": "tests/ui/multi-event.py" }
+}

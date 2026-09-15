@@ -1,0 +1,1695 @@
+
+===== PDF PAGE 1 / MANUAL PAGE -5 =====
+ 
+ 
+3480.509.02 
+Version 1.4 
+Edition October 2019 
+ 
+ 
+ 
+  
+ 
+QUANTUM-SWIMMING 
+ 
+ 
+User’s Manual 
+ 
+
+===== PDF PAGE 2 / MANUAL PAGE -4 =====
+ 
+ 
+ 
+Caution and safety precautions 
+ 
+▪ Never use any other charger than the supplied or a type approved by Swiss Timing. This could 
+destroy the battery, cause damage to unit, and possible cause personal injury due to fire or/and 
+electrical shock. 
+▪ Never bypass a power cord ground lead by breaking off the ground pin, or by using inappropriate 
+extension cords or adapters. 
+▪ Never plug a power cord into the AC power source until you have made sure that all installation, 
+cabling and power levels, are proper, and that the applicable procedures in this manual have been 
+followed.  
+▪ Protect the equipment against splashing, rain and excessive sun rays.  
+▪ Never use the device if it is damaged or insecure.  
+▪ Verify the selection of the power distribution. 
+▪ Verify that the voltage quoted on the rating plate is the same as your voltage. Connect the appliance 
+only to power sockets with protective earth. The use of incorrect connection voids warranty.  
+▪ This program may be modified at any time without prior notification. 
+▪ Do not open the case; there is nothing that needs servicing inside it. Nevertheless, if the case must 
+be opened, you must call for some qualified personnel. The power supply cable must be 
+disconnected before opening the case. 
+▪ During the transport of all Swiss Timing equipment delivered with a reusable carry case, the said 
+case should be used at all times. This is imperative to limit the damage, such as shocks or vibration 
+that can be caused to the units during transport. 
+▪ The same cases should also be used when returning equipment to Swiss Timing for repair. Swiss 
+Timing reserves the right to refuse all guarantees if this condition is not fulfilled.  
+▪ If the installation includes a horn, be sure to maintain a sufficient security distance from the public.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Documentation Updates 
+Swiss Timing Ltd. reserves the right to make improvements in the products described in this documentation 
+at any time without prior notice. Furthermore, Swiss Timing Ltd.  reserves the right to revise this 
+documentation in its content at any time and without any obligation to notify any person or organization of 
+such revision.   
+ 
+Disclaimer 
+The information provided in this documentation has been obtained from sources believed to be reliable, 
+accurate and current. However, Swiss Timing Ltd. makes no representation or warranty, express or implied, 
+with respect, but not limited to, the completeness, accuracy, correctness and actuality of the content of this 
+documentation. Swiss Timing Ltd.  specifically disclaims any implied warranty of merchantability, quality 
+and/or fitness for any particular purpose. Swiss Timing Ltd.  shall not be liable for errors contained in this 
+documentation or for incidental or consequential damages in connection with the supply, performance or use 
+of this documentation. 
+ 
+Environment 
+This symbol indicates that this product should not be disposed with household waste. It has to be 
+returned to a local authorized collection system. By following this procedure you will contribute to 
+the protection of the environment and human health. The recycling of the materials will help to 
+conserve natural resources. 
+ 
+Copyright  
+© Swiss Timing Ltd. 
+All rights reserved.  
+This documentation may not, as a whole or in part, be copied, translated, reproduced, transmitted or reduced 
+and/or stored to any electronic medium or machine -readable form without the prior written consent of Swiss 
+Timing Ltd. 
+ 
+
+===== PDF PAGE 3 / MANUAL PAGE -3 =====
+ 
+ /  
+ 
+ P.O. Box 138, rue de l'Envers 1 Phone +41 32 488 36 11 
+ 2606 Corgémont www.swisstiming.com 
+ Switzerland info@swisstiming.com 
+SWISS TIMING LTD  
+ 
+ 
+SWISS TIMING LT D 
+ 
+TABLE OF CONTENTS 
+ 
+1 INTRODUCTION........................................................................................................... 1 
+2 SOFTWARE INSTALLATION ....................................................................................... 2 
+3 HOME PAGE ................................................................................................................ 5 
+4 CONFIGURATION MENU ............................................................................................ 6 
+4.1 Timer ................................ ................................ ................................ ............................ 6 
+4.1.1 Connection to timer (USB COM) ................................ ................................ .... 6 
+4.1.2 Timer synchronisation ................................ ................................ .................... 7 
+4.1.3 Synchro out (Primary & Secondary) ................................ ...............................  7 
+4.2 Language Configuration ................................ ................................ ................................  8 
+4.3 About Version ................................ ................................ ................................ ............... 8 
+4.3.1 Protection Dongle  ................................ ................................ ................. 9 
+5 RACE MENU .............................................................................................................. 10 
+5.1 Preparing a meet ................................ ................................ ................................ ........ 10 
+5.1.1 Open, Create & Delete a meet ................................ ................................ ..... 10 
+5.2 Settings ................................ ................................ ................................ ...................... 11 
+5.2.1 I/Os (Scoreboards and Data handling peripherals) ................................ ....... 12 
+5.2.2 Pool Configuration ................................ ................................ ........................ 16 
+5.2.3 Pool test ................................ ................................ ................................ ....... 18 
+5.2.4 Timing ................................ ................................ ................................ .......... 18 
+5.2.5 Printers................................ ................................ ................................ ......... 19 
+5.2.6 Tables ................................ ................................ ................................ .......... 19 
+6 RUNNING A MEET ..................................................................................................... 20 
+6.1 Before the first race ................................ ................................ ................................ .... 20 
+6.2 Schedule................................ ................................ ................................ ..................... 20 
+6.2.1 Import schedule ................................ ................................ ............................ 21 
+6.2.2 Create schedule manually ................................ ................................ ............ 21 
+6.3 Start signal ................................ ................................ ................................ .................. 23 
+6.4 The race window ................................ ................................ ................................ ......... 24 
+6.5 Lane menu ................................ ................................ ................................ .................. 25 
+6.5.1 Adding or removing a lap for one lane ................................ .......................... 25 
+6.5.2 Adding or removing a lap for all swimmers ................................ ................... 25 
+6.5.3 Arming or disarming a touchpad or all touchpads ................................ ......... 25 
+6.5.4 Take backup time ................................ ................................ ......................... 25 
+6.6 The race view ................................ ................................ ................................ ............. 26 
+
+
+===== PDF PAGE 4 / MANUAL PAGE -2 =====
+ 
+ 
+ 
+ 
+ P.O. Box 138, rue de l'Envers 1 Phone +41 32 488 36 11 
+ 2606 Corgémont www.swisstiming.com 
+ Switzerland info@swisstiming.com 
+SWISS TIMING LTD  
+ 
+ 
+SWISS TIMING LT D 
+ 
+6.6.1 IOs dashboard ................................ ................................ .............................. 26 
+6.6.2 Start view ................................ ................................ ................................ ..... 27 
+6.6.3 Timing view ................................ ................................ ................................ .. 28 
+6.6.4 Result view ................................ ................................ ................................ ... 30 
+6.7 Make the result official ................................ ................................ ................................  31 
+7 INSTALLATION........................................................................................................... 32 
+8 MAINTENANCE AND PROTECTION ......................................................................... 33 
+8.1 General maintenance (after/before events) ................................ ................................ . 33 
+8.1.1 Quantum ................................ ................................ ................................ ...... 33 
+8.1.2 Deck plates / Harnesses ................................ ................................ .............. 33 
+8.1.3 Touchpads ................................ ................................ ................................ ... 33 
+8.1.4 Starting blocks ................................ ................................ .............................. 33 
+8.1.5 Push buttons ................................ ................................ ................................  33 
+8.1.6 Cables ................................ ................................ ................................ .......... 33 
+8.1.7 Batteries ................................ ................................ ................................ ....... 33 
+8.1.8 Electronic equipment ................................ ................................ .................... 34 
+8.1.9 Serial printer ................................ ................................ ................................ . 34 
+9 APPENDIX .................................................................................................................. 35 
+9.1 Heat status ................................ ................................ ................................ ................. 35 
+9.2 Short keys (US keyboard) ................................ ................................ ........................... 36 
+9.3 Version history ................................ ................................ ................................ ............ 37 
+ 
+ 
+ 
+
+===== PDF PAGE 5 / MANUAL PAGE -1 =====
+
+
+===== PDF PAGE 6 / MANUAL PAGE 0 =====
+ 
+ 
+ 
+ 
+
+===== PDF PAGE 7 / MANUAL PAGE 1 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 1 
+1 INTRODUCTION 
+QUANTUM  Aquatics is an intelligent aquatics timer with inputs/outputs interface and 
+onboard memory buffers. All timing events are recorded through each input port and are identified 
+with a unique data code. Data from the timer interface is transmitted to the associated computer 
+(desktop or notebook) through an USB port. 
+All data processing then takes place in that computer. 
+The quantity of data stored (i.e. number of races or competitions) is only limited by the size of the 
+hard drive, enabling results from previous races to be recalled for examination on the computer's 
+display, for re-transmission to the scoreboard or re-printing of the results. 
+Printed data is available in two formats. 
+The timer concept shall enable start lists and event data including titles and records to be loaded 
+into the main timer database.  
+This enables a full result list to be generated by the timer, including competitor names. 
+This data is available for transmission to the main results printer or to a numeric, alphanumerical or 
+matrix scoreboard. 
+The timer interface is operated from a twelve volt DC power pack.  
+The addition of battery powered computers and A4 printer allows the competition to continue even 
+in the event of a total mains power failure. 
+This feature also allows the timing system to be operated safely from the pool side. 
+The timing includes a primary and a secondary interface and a data switcher and is supplied with 
+computer and appropriate software. 
+ 
+
+===== PDF PAGE 8 / MANUAL PAGE 2 =====
+ 
+ 
+ 
+ 
+Page 2 3480.509.02 Version 1.4 
+2 SOFTWARE INSTALLATION 
+The Quantum Swimming application is designed to run 
+on  computer. To install the software, you don’t  
+ 
+ 
+need to connect USB dongle protection key  . 
+ 
+ 
+• Insert CD in your computer 
+• Start   
+• Read « Installation procedure » 
+ 
+ 
+ 
+1. Start Microsoft.NET Framework   
+     
+ 
+ 
+2. Start DRC Base libraries 
+         
+ 
+If you want to modify default folder, click on Change and select 
+new destination. 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+
+
+===== PDF PAGE 9 / MANUAL PAGE 3 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 3 
+ 
+      Click on Finish 
+ 
+ 
+3. Start QUANTUM SWIMMING 
+ 
+The swimming application must be installed on the same HD as the framework 
+ 
+If error message appears, log  off 
+and log back and try again.  
+Error message will disappear 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+        
+ 
+ 
+ 
+ 
+ 
+Installation of Quantum Swimming icon is completed 
+ 
+ 
+ 
+ 
+  
+
+
+===== PDF PAGE 10 / MANUAL PAGE 4 =====
+ 
+ 
+ 
+ 
+Page 4 3480.509.02 Version 1.4 
+4. Start QUANTUM USB Driver 
+       
+ 
+ 
+With QUANTUM USB Driver Troubleshooting , you can check connection between your 
+computer and Quantum device. You can also remove the drivers and install them again.  Use only 
+for repair. 
+ 
+    
+ 
+ 
+5. Start EXIT to close application 
+ 
+
+
+===== PDF PAGE 11 / MANUAL PAGE 5 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 5 
+3 HOME PAGE 
+Select the Quantum AQ swimming program by double clicking on the Swimming icon .  
+ 
+A window will appear as shown on the right. This is 
+known as the Home page. If the box top right is red 
+instead of green, go to the section 4.1.1. 
+ 
+Quantum swimming software is protected by USB 
+dongle protection key  . If dongle is not 
+installed, information message will appear.  
+It is not possible to start a Race without dongle. 
+See also section 4.3.1  
+ 
+If the dongle is correctly connected to the 
+computer, information message will disappear. 
+ 
+ 
+ 
+ 
+ 
+Synchronisation of QUANTUM-AQ 
+Serial port COM 
+Language 
+ 
+ 
+ 
+Open and create a meet 
+Start a race 
+ 
+ 
+To exit the software, return to Home and select Quit  
+ 
+• Yes to confirm exit 
+• No to return in Main Menu 
+Green: PC is connected to QUANTUM-AQ 
+Timer (through USB cable) 
+ 
+ Red  : No connection to QUANTUM-AQ 
+
+===== PDF PAGE 12 / MANUAL PAGE 6 =====
+ 
+ 
+ 
+ 
+Page 6 3480.509.02 Version 1.4 
+4 CONFIGURATION MENU 
+Selecting  will display a new page, with 3 tabs on the left, and the event window 
+on the right. 
+ 
+ 
+ 
+4.1 Timer 
+Click  to return Home 
+4.1.1 Connection to timer (USB COM) 
+Allow possibility to select USB Serial Port from the list. 
+ 
+ 
+ 
+Auto: The application will scan the USB port to find the Quantum -AQ, this is the preferred method 
+of connection. 
+ In mode “ Auto”, software might take up to 10s to find the connection  (Over 1 min. for the first 
+Quantum connection). 
+  
+
+
+===== PDF PAGE 13 / MANUAL PAGE 7 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 7 
+ 
+4.1.2 Timer synchronisation 
+All of the timing functions are carried out by the Quantum AQ interface, and all times are calculated 
+against a daytime clock running within it.  When you enter the program and switch on the interfa ce 
+it is important to synchronise this time base. To do so, choose PC time, Manual or On Start Pulse 
+and press Do synchro (or start button on device). 
+ 
+ 
+ 
+Manual on PC time  
+This function can be used to set the clock of a single timer. The timer will use the PC time when 
+the “Do Synchro” button is pressed. 
+ 
+Manual 
+This function can be used to set the clock of a single timer. First enter the desired time in the field 
+and the press the “Do Synchro” button. 
+ 
+On start pulse 
+This is the preferred method when Primary and Secondary timer synchronisation is required. 
+1. Connect the StartTime and turn it on. 
+2. Enter the desired time in the field (for both Primary and Secondary Timer). 
+3. Press the “Do Synchro” button (for both Primary and Secondary Timer): the timers are now 
+waiting for a start pulse. 
+4. On the StartTime, the ready light is now on, a start can be done. 
+5. Both timers will be synchronised when the start pulse is received. 
+6. 2 seconds after the start, the ready light is on again, thus allowing a test to confirm that 
+both timers are correctly synchronised. 
+4.1.3 Synchro out (Primary & Secondary) 
+The “Synchro Out” triggers a pulse on the Starts Out connectors  (Quantum Primary & secondary 
+only) at a precise time. 
+ 
+ 
+ 
+1. Select from the combo list box the output desired time (based on the Timer Time, not the 
+PC Time). The countdown indicates the time left until the next possible synch out time. 
+2. Press “Send Pulse Out”: The system is in waiting mode until the pulse is sent out. 
+  
+
+
+===== PDF PAGE 14 / MANUAL PAGE 8 =====
+ 
+ 
+ 
+ 
+Page 8 3480.509.02 Version 1.4 
+4.2 Language Configuration 
+Select software language and keyboard. 
+ 
+ 
+ 
+Click  to return in main menu. 
+4.3 About Version 
+This windows shows software versions and   dongle identity 
+ 
+ 
+ 
+ 
+ 
+  
+
+
+===== PDF PAGE 15 / MANUAL PAGE 9 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 9 
+4.3.1 Protection Dongle  
+Quantum swimming software is protected by USB dongle 
+protection key  . If the dongle is not installed, 
+information message appears. 
+   It is not possible to start a Race without dongle 
+If dongle is correctly connected to the computer, an 
+information message disappears. 
+ 
+If you loose your dongle before a meet, you can request 
+a limited code for 3 days. 
+Go to  and select  Tab. Press  
+for help. 
+ 
+Click on  and go to  the web site  
+http://online-dongleactivation.sportresult.com 
+Type in the Request code and fill all the fields.  
+ 
+Insert the captcha code  displayed. 
+If captcha code is difficult to read, press  and a new 
+captcha code will appear. 
+ 
+Click  
+ 
+A confirmation message is displayed 
+ 
+ 
+ 
+ 
+A validation code will be emailed to the specified email 
+address. 
+ 
+Return in the Version Tab of swimming software. 
+Type in or paste the received validation code 
+ 
+Press . Your licence is now valid for 3 days 
+starting from date of event.  
+ 
+When temporary code is activated, home menu display 
+information about validity. 
+ 
+ 
+ Note : 
+ The request code and the validation code are paired. If you press again , then you will 
+have to redo the internet procedure to obtain another code. 
+• When a valid  has been detected, the request and validation codes are cancelled. 
+• When the computer date is changed in the past, the request and validation codes are cancelled. 
+
+
+===== PDF PAGE 16 / MANUAL PAGE 10 =====
+ 
+ 
+ 
+ 
+Page 10 3480.509.02 Version 1.4 
+5 RACE MENU 
+5.1 Preparing a meet 
+A meet setup is required before being able to run a meet. The preparation consists of  
+1. choosing a name 
+2. checking/altering the timing setting 
+3. checking/altering the pool cabling configuration 
+4. checking/altering the peripherals connection options. 
+5.1.1 Open, Create & Delete a meet 
+The Quantum -AQ does not make any distinction 
+between a meet and a session of a meet. If a meet is 
+divided in multiple sessions, it is recommended that 
+you create one meet for each session in your 
+program.  
+5.1.1.1 Create a meet 
+Use the  button to add a new meet. The name of the meet 
+is a free text that is free to choose. It will in fact be the folder 
+name where data for that meet will be stored. When choosing 
+a name for a meet but consider:  
+  Do not use special characters. 
+ 
+Indicate the session number at the end of the name 
+(recommended when using LstFile to import the schedule). 
+Example of correct names:  NatChamp2014Day1S1 
+    SchoolChallengeS1 
+5.1.1.2 Open a meet 
+To open a meet: 
+• Select meet and click . 
+• Double click on a selected meet. 
+5.1.1.3 Delete a meet 
+To delete a meet: 
+• Select meet and click . 
+  
+
+
+===== PDF PAGE 17 / MANUAL PAGE 11 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 11 
+5.2 Settings 
+ 
+Timing  
+ 
+Race page displays five top line tabs plus a real time 
+indicator of the Quantum AQ battery life. 
+ 
+These are the general timing settings that apply for the 
+current meet. They can be altered at any time during 
+competitions. Any changes there will not have retroactive 
+effects on races previously performed.  
+ 
+Important settings there are: 
+• Reaction Time Window: Specifies the time window within which a reaction time will be 
+accepted after or before a start. Typically, the value is 2 seconds 
+• Relay time window:  Specifies the time window within which a relay take s over will be 
+measured before or after the arrival of previous team member. Typically, the value is 1 
+second. 
+• Split Time hold: Specifies how long the split will stay on the screen before being cleared. 
+This affects only the timing window, not the scoreboard output(s), as they have their own 
+settings. 
+ 
+Tables 
+ 
+ Delete selected record entry 
+ Fill the record list according to the timetable. 
+ 
+ To quickly find the 
+record for a particular race, check this box and 
+select a race in the timetable. 
+ 
+ To refresh the list after a change of record type or times. 
+ 
+ 
+ 
+To enter the split times, simply type the distance and the times all separated by a space. Then 
+press the refresh button to visually validate the split 
+Examples :  
+ 
+50 2642 
+50 2379 100 4929 150 11472. 
+
+
+===== PDF PAGE 18 / MANUAL PAGE 12 =====
+ 
+ 
+ 
+ 
+Page 12 3480.509.02 Version 1.4 
+5.2.1 I/Os (Scoreboards and Data handling peripherals) 
+Selects and configures scoreboard and data handling connections. To add a new configuration to a 
+blank line, click in the drop down list of choices. To modify an existing line, click once to highlight it. 
+Different choices have different options. The common ones are, for Scoreboards, Alpha for 
+Galactica systems and Calypso for Swiss Timing numeric displays. For single Quantums you can 
+choose Serial1 or Serial2 for the output port. Double Quantums add Serial3 and Serial41. Default 
+values will populate all the other settings, which should normally not be changed. 
+Alpha has additional parameters to shape the templates for each screen. Highlighting the template 
+name displays additional parameters below the window. 
+Data handling, for Hytek insert the shared folder name  and Data Set value , for Lst  files, provide 
+the working folder name. Check the corresponding box to enable the chosen I/O. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+1 Serial 4 is not displayed where bi-directional data is required 
+Name of the I/O 
+Double click to edit 
+and change name 
+ 
+Type of the I/O 
+Select protocol in the 
+list box 
+ 
+Settings for the selected 
+I/O. 
+ 
+Single Quantum: 
+ Select Serial 1 or 2 
+ 
+Double Quantum: 
+Select Serial 1 to 41 
+Activate the I/O 
+
+===== PDF PAGE 19 / MANUAL PAGE 13 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 13 
+5.2.1.1 SCOREBOARDS 
+Currently, the following scoreboard types are available: 
+ 
+• SCB_SwissTiming Alpha : Alphanumeric feed of the 12x32chars type. The protocol is the 
+Swiss Timing Custom Protocol. Compatible with Swiss Timing  IRIS and Galactica 
+scoreboards. 
+Parameters : 
+1a-1b Requires serial port and valid settings. Default is Serial 1 and 9600,n,8,1 
+3d With Auto switch to Results enabled, scoreboard will change to a result list when the current race is 
+flagged as “official”. 
+3e If result page is displayed, and a new race is started, the scoreboard will revert to the race after the 
+time specified. 
+4a-4g Content for various scoreboard pages are controlled using a series of tokens and masks. 
+By highlighting a title, the info section below details the values for each token on that line. A token 
+can be used on its own, e.g. {1}, or you can define the maximum length using the format {1:L12} 
+where the contents of token {1} would be truncated after 12 characters and justified Left. You can 
+also use C or R for centre or right justification. 
+5a-5d There are four m asks where the lines of tokens are repeated for the number of lanes defined for the 
+competition. These are for start list presentation, race mode, race result and event summary 
+6a Start a test pattern. The scoreboard must be activated. 
+ 
+ 
+• SCB ERTD : Alphanumeric feed of the 12x32chars type. The protocol is the ERTD 
+protocol, each line at an offset of 100 characters. Line 1 at the offset 1, line 2 at the offset 
+101, line 3 at the offset 201, and so on. 
+Parameters : 
+Control options are the same as for Swiss Timing Alpha above 
+ 
+ 
+• SCB Calypso : A numeric output compatible with Swiss Timing scoreboards. 
+Parameters : 
+1a-1b Requires serial port and valid settings. Default is Serial 1 and 9600,n,8,1 
+3d With Auto switch to Results enabled, scoreboard will change to a result list when the current race is 
+flagged as “official”. 
+3e If result page is displayed, and a new race is started, the scoreboard will revert to th e race after the 
+time specified. 
+3f Event and heat can be included in the message to SCB. Select 0 for No Display or on which line you 
+want to display event/heat 
+3g Select of how many lines the result should be shi fted down. Useful to keep the event/heat on the 
+board. Default is 0. 
+5a Start a test pattern. The scoreboard must be activated. 
+ 
+ 
+• SCB Finish Light : Currently reserved for Swiss Timing Service use. 
+  
+
+===== PDF PAGE 20 / MANUAL PAGE 14 =====
+ 
+ 
+ 
+ 
+Page 14 3480.509.02 Version 1.4 
+5.2.1.2 DATA HANDLING 
+Currently the following Data Handling interfaces are available: 
+ 
+• DH_LSTFILES: This type of DH can import the schedule and start lists from the 
+LSTxxx.TXT file (ARES files type). It can also export the result to the LSTResults.txt file.  
+Requires communications via a folder. It is recommended to use a shared folder on the 
+Quantum Computer. A set of text files defining each part of a database and using a series 
+of indexes to link to each other. 
+LstStyle.txt Swim styles, e.g. freestyle 
+LstLong.txt Race distances, e.g. 50 metres 
+LstCat.txt Categories, e.g. Men 
+LstRound.txt Competitions phases, e.g. Final 
+LstStat.txt Status (optional), e.g. DQ 
+LstRace.txt Schedule. The list of events in a meet 
+LstRecord.txt   Records, e.g. WR 
+LstComp.txt Competitor names 
+LstStart.txt Start lists, composition of each heat 
+ 
+The content of these files are typically managed and generated by third party software such as 
+Sportsystems, Hytek Meet Manager or a spreadsheet application. 
+Parameters : 
+1a Insert (or create) a valid path for the files 
+1b You can also create sub folders to act as separate sessions of a meet. Then we can use the Mask for 
+the session  to complete the folder path. To use this, both the session folder and the Meet name 
+chosen should include the same numeric value. e. G. c: \MyMeet\Session1 with meet name 
+'M‘MeetS1'.’Enter the prefix of the session folder without the numeric value. 
+1c Results can be exported to another file, LstRslt.txt. If is checked, then the result export will be done 
+on the “official” button of each race 
+4a By pressing Start, the software will check the defined path for the existence of all files and list the 
+results of the check 
+ 
+ 
+• DH_OSM6: This type of DH sends results via a serial port using the OSM6 protocol.  This is 
+a one way communication from Quantum to external peripheral  (Quantum can receive a 
+keep alive message from the peripheral to visually confirm the communication status.)  DH 
+packages such as Sportsystems use this method to collect results in combination with DH 
+Lst Files to import the schedule and start lists 
+Parameters : 
+1a-1b Requires serial port and valid settings. Default is Serial 1 and 9600,n,8,1 
+2a Set to a value of 0 to disable the presence message for older systems 
+ 
+  
+
+===== PDF PAGE 21 / MANUAL PAGE 15 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 15 
+• DH_HYTEK: This type of DH can import the schedule and the start list from the Hy -Tek 
+Meet Manager application using file on a shared folder. The results are also exported to 
+a file. Requires shared communications via a shared folder. It is recommended to use a 
+shared folder on the Quantum Computer.  The Hytek software should create the 
+schedule as “quantum.sch ” and the start lists as “startlist.slx”. Please check your 
+version has this option. Updates are available from your Hytek supplier. Quantum will 
+export the results as *.qaq files. Quantum  will try to load the style table from the 
+Defaults folder. It will select the correct file according to the language selected 
+Parameters : 
+1a Insert (or create) a valid path for the files 
+1b Insert HYTEK Data Set number 
+2a Set to a value of 0 to disable the presence message for older systems 
+ 
+ 
+• DH_SPLASH: This type of DH can import the schedule and the start list from the GeoLogix  
+SPLASH application. The results are sent the same way. Requires shared communications 
+via a shared folder. It is recommended to use a shared folder on the Quantum Computer. 
+The Splash software should create a file “splash_send.txt” to communicate with Quantum. 
+Quantum will create a file “splash_receive.txt” to send requests and data to Splash 
+Parameters : 
+1a Insert (or create) a valid path for the files 
+1b Check to have the results saved when the race 'o‘ficial' ’utton is pressed 
+1c Use option to toggle between using club name or nation in Quantum 
+1d Option will reverse the first and last names for scoreboard and print output. 
+ 
+ 
+5.2.1.3 SAVING I/O SETTINGS 
+Quantum can save up to five versions (Id) of your configuration, so if you change venue, or have 
+different results teams, each can be set quickly when you move. 
+Choose an Id, type in a meaningful name as a reminder and click save. 
+To restore the settings, Select the ID and click Load. 
+ 
+ 
+Note 
+If you return to settings and change an option, you should ensure that the check box is enabled to 
+confirm your I/O choice is active with the new option(s). 
+When you return to the Race tab, your active SCB and DH are displayed with a green background. 
+Additional actions can be performed from the available options displayed when clicking these 
+buttons. 
+ 
+  
+
+
+===== PDF PAGE 22 / MANUAL PAGE 16 =====
+ 
+ 
+ 
+ 
+Page 16 3480.509.02 Version 1.4 
+5.2.2 Pool Configuration 
+This is a very important step in the preparation process that 
+must be attended to with great care. In the pool configuration 
+screen you will tell the application all about the connections 
+that are actually done in the pool: touchpads, platforms, 
+push buttons…. 
+ 
+ protects you against modification. 
+If you have already opened a race for timing this will 
+be unchecked automatically.  
+ 
+ 
+The confirmation informs the application about: 
+ 
+  
+  
+What is the pool length: 25m or 50m?  Select your pool length   
+If a different pool length is required the values in the drop down box can be 
+edited using the StTranslatorAssist application and changing the 
+PoolConfig_PoolLengthList mode 
+ 
+On which side do all the finishes (or in some cases all the starts) occurs? 
+ 
+ 
+  
+Is there a harness (chain of modules) on the left (or right) hand side, and if so, on which 
+connector is it tied? 
+ 
+Shows a visual representation of 
+harness connection. Click on each 
+icon to enable or disable each item 
+so that it is the same as your pool 
+setup. If there are tou chpads at both 
+ends of the pool then select a harness for left and right. If pads are installed at one end only then 
+ensure the opposite end has an  
+  over each harness. 
+
+
+===== PDF PAGE 23 / MANUAL PAGE 17 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 17 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ A module number is green when it is correctly connected to the timer 
+ 
+ 
+ 
+Check that the pool length and number of lanes are corre ct then click on 
+ if this is the common setup for your competitions 
+ 
+Click  to restore default pool configuration. 
+ 
+  
+ 
+  
+Which devices are present on each module: a touchpad?  a Platform? any push buttons? 
+Shows a visual representation of what you have connected to each harness. Click on each 
+icon to enable or disable each item so 
+that it is the same as your pool setup. 
+. 
+ 
+  
+How many lanes are used and what is their sequential order? 
+Select preconfigured lanes number and sequential order or lanes number 
+in list box. This selection modifies 
+  display. 
+ 
+ 
+  
+What is the match between a lane and its associated module number? 
+ 
+Lane sequence can be changed using 
+the up and down arrows, or 
+individually by clicking on the lane box. 
+The outside column(s) are the module 
+id and the central column is the lane 
+number. With this flexibility, it is 
+possible for example to set modules 3 
+and 5 to act as lane 1 and lane 2, and 
+host a head to head competition in the 
+centre of the pool. The blue arrow 
+buttons will invert the whole column. 
+ 
+LEFT 
+Module number 
+RIGHT 
+Module number Lane number 
+
+===== PDF PAGE 24 / MANUAL PAGE 18 =====
+ 
+ 
+ 
+ 
+Page 18 3480.509.02 Version 1.4 
+5.2.3 Pool test 
+With pool test you can visually see that all contacts 
+you have selected are operational and that they are 
+delivering the contact to the lane allocated. 
+ 
+When there are harnesses at both ends of the pool 
+each connected device has its own entry. 
+ 
+The Quantum automatically tests for and reports the 
+presence of all the modules connected to the 
+harnesses. For each id found, the red square will turn 
+green when communication is successful. 
+ 
+ 
+For example, if someone touches the pad on the right 
+side in lane 3, you should check that that pad counter 
+on the screen increases by one. If you are on your 
+own, you can rotate the screen to face the pool, seeing clearly every press or touch as you test.  
+The delay value  determines how long  (sec.) the last contact fills the screen. To test 
+after a warm -up session, press the  to zero all the contact totals before beginning your final 
+check. 
+ 
+ can be used if your computer is equipped with a loudspeaker. 
+5.2.4 Timing 
+Selects and configures race window. 
+ 
+Arming indicators aspect 
+Waiting to arm Define color when lane is waiting to 
+arm 
+Armed Define color when lane is armed 
+Waiting touch Define color when lane is waiting a 
+touchpad pulse 
+Selected side Define color of selected pool side 
+Radius 
+ 
+0    10  
+ 
+Times (sec) 
+Arming The arming delay should be a little less than the fastest time a swimmer can swim back and forth 
+along the pool 
+Arming at start The arming delay should be a little less than the fastest time a swimmer can swim from the start 
+to the opposite end 
+Reaction window Define window time for reaction time based before (-) and after (+) start  
+Relay window Define window time for relay break detection based before (-) and after (+) touchpad pulse 
+Net time hold Period where time is held 
+No touch warning If touchpad pulse is not received after this period, warning is displayed 
+ 
+Miscellaneous 
+Sound for touch Computer will emit a beep for every new valid time 
+Sound for start Computer will emit a beep for start 
+Warn for unofficial races Open a warning window before next race if current race is unofficial 
+Auto unused lanes Lane is flagged as Unused if there is no name in the startlist 
+If you don’t use start list, lanes are always activated   
+Auto update records table on official Write in record table if new record on official 
+Skip split time when no touchpad  
+
+
+===== PDF PAGE 25 / MANUAL PAGE 19 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 19 
+5.2.5 Printers 
+Selects and configures printers. 
+ 
+PC printer 
+Enable XPS files Enable XPS files saving 
+ Open directory where XPS files are saved 
+Enable PC printer Enable computer printer 
+Use default printer Use default printer selected in your computer 
+Autoprint on official Print result automatically on official 
+Preview Display preview before printing 
+Button times Print result with backup buttons 
+Header logo file Select a specific header logo on printing 
+Footer logo file Select a specific footer logo on printing 
+ 
+Serial printer 
+Enable Enable serial printer 
+Auto print Print result automatically on official 
+Print in lane order Print in rank order or in lane order if checked 
+ Print configuration on serial printer 
+5.2.6 Tables 
+The content of these tables are typically managed and generated by third party software such as 
+Sportsystems, Hytek Meet Manager or a spreadsheet application. 
+You also have the possibility to create or delete records manually. 
+ 
+Table File name   
+Distances LstStyle.txt Race distances 
+e.g. 50 metres  
+ 
+Styles LstLong.txt Swim styles 
+e.g. Freestyle 
+Categories LstCat.txt Categories 
+e.g. Men 
+Rounds LstRound.txt Competitions phases 
+e.g. Final 
+Status LstStat.txt Status (optional) 
+e.g. DQ 
+Records LstRecord.txt Records 
+e.g. WR 
+ 
+  
+
+
+===== PDF PAGE 26 / MANUAL PAGE 20 =====
+ 
+ 
+ 
+ 
+Page 20 3480.509.02 Version 1.4 
+6 RUNNING A MEET 
+When you select Race from the main menu, you must first select or create a Meet (Chapter 5.1). 
+6.1 Before the first race 
+Follow these steps to prepare for your first race : 
+ 
+• Connect all the components of the swimming system (see also Installation manual) : 
+a. Start system(s) 
+b. Harnesses  
+c. Primary laptop (and secondary if applicable). 
+d. Scoreboard and Data Handling connections 
+ 
+• Launch the Quantum-AQ Swimming application 
+• Synchronise the Quantum-AQ (See chapter CONFIGURATION) 
+ Use a start pulse to precisely synchronise primary and secondary. 
+• Open or Create a meet (See chapter RACE). 
+• Setup the I/Os : scoreboards and data handling interface. 
+• Setup the Pool Configuration: 
+  This step MUST be done before the entering or importing races into the 
+schedule. 
+• Create or Import the schedule. 
+• Run the meet. 
+6.2 Schedule 
+A meet is usually a session of races therefore it should be called something descriptive that will tell 
+other users what it is. For example “ NatChamp2014Day1S1”. The creation date is displayed so 
+there is no need to include that. If you are using LstFile as a Data Handling source and you have 
+multiple sessions, then make the last character the session number, e.g.  “NatChamp2014Day1S2” 
+A meet creates a folder to store all data pertaining to the events, heats, competitors and times. 
+This is normally %stDrcApp%\Quantum\Swimming\Data\[name of your meet]. 
+ 
+Either highlight an existing meet and click “Open” or click the  to create a new one. 
+To change the current meet, click the “Home” button and then reselect “Race”. 
+  
+
+
+===== PDF PAGE 27 / MANUAL PAGE 21 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 21 
+ 
+6.2.1 Import schedule 
+The first action is normally to import the schedule from a Data Handling system. 
+If you have setup a DH source on the I/O setup 
+page and enabled it, it will be displayed at the top 
+of the workspace as a green or white button. 
+Click on your DH button and select Import 
+schedule. Quantum will display a progress bar 
+while the information loads, and will then populated the lists on the right of the screen. Other 
+choices will vary depending on the type of source you are using. This action will populate the 
+three windows within the Schedule tab displaying the events in the schedule, the heats for each 
+event, and if available, the names of the competitors in each lane of each heat. 
+6.2.2 Create schedule manually 
+Without Data Handling, all of the information can be created manually. At 
+the top of the schedule tab, click the  to add an event and a dialog will 
+be displayed showing all of the details need ed to add an event to the 
+schedule. 
+The  button allows for 
+existing events to be reopened 
+in the same dialog so that the 
+details can be modified. 
+ 
+Once an event is in the 
+schedule list, the order in the 
+schedule can be changed by 
+highlighting the event and 
+pressing the green up and down 
+arrows . 
+ 
+Click  to delete an event. 
+ 
+ 
+For Timed Finals, when the slow heats have 
+been run in a previous meet (session), it is 
+possible to import the results of these heat s 
+in the current meet. This way, the final 
+results (summary in a timed final) can be 
+displayed on the scoreboard.  
+ 
+The menu will list the meet s where the 
+same event number appears (here the 
+meets found are S1 and S2). 
+ 
+ 
+  
+
+
+===== PDF PAGE 28 / MANUAL PAGE 22 =====
+ 
+ 
+ 
+ 
+Page 22 3480.509.02 Version 1.4 
+In the middle window you have a list of available heats for each event. To 
+manually add heats , click the  once for each heat to be added. 
+Additional heats can be added even during the event to allow for the 
+unexpected. 
+At this point you can highlight and click  to begin timing a race. 
+The Quick Race select can be used to open or 
+view any race using the event and heat number. 
+Click on the empty box and it will take focus and 
+change colour. You can now type the event 
+number followed by a “.” and then the heat number. 
+ 
+ Quick Race select 
+ 
+By adding the “ +” symbol  the race will immediately open in race 
+view, or after a warning if the race has already been run. 
+By adding “ v”  the race will be opened in the result view  window. 
+This action will break  the link with the race view window. 
+ 
+This quick view method can be useful if you are displaying previous results on a scoreboard for 
+medal ceremonies during competition. 
+Pressing “-” at any time while typing will clear  all characters from the selection box. 
+ 
+If you are using an alphanumeric scoreboard to show the race information 
+or printing results from the Quantum software, adding swimmers names is 
+desirable. 
+Open the Add Swimmer  dialog by double clicking on any lane in the 
+bottom schedule window, or by clicking the  button. 
+ 
+All swimmers in the database will be 
+displayed. By typing a few characters, any 
+name can be quickly found as you type as 
+the list updates dynamically. The sort order 
+can also be toggled by clicking on the 
+column headers. The   button lets you 
+add a new swimmer. 
+Click on a name to high light it, select a lane 
+number from the drop down list and press 
+Add to Startlist  to insert the swimmer into 
+the race. The name number will automatically increment ready for the next swimmer. 
+The  will remove a swimmer from a lane and the up/down arrows allow lane positions to be 
+changed. 
+ 
+If Quantum detects that the race type is a relay race, then an 
+additional check box “Display relays” is added to the window. 
+If checked, as well as the team names, you can also add the 
+members of the team. The At lane in the Add Swimmer dialog 
+will also change to [team]-[order] so to add the second swimmer 
+to lane four you would Add to 4-2. This allows the team names 
+to be displayed on alphanumeric displays. 
+  
+
+
+===== PDF PAGE 29 / MANUAL PAGE 23 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 23 
+6.3 Start signal 
+Each Quantum has two start inputs, Primary and Secondary. These will be 
+displayed with a green background if they are detected by the Quantum, or 
+red if not connected. 
+When you highlight a heat and click Open, or double click on the heat, the timing view window will 
+be opened. The Start armed button should be green and checked, and an external start device 
+connected (green), meaning you are ready to start the race. At the same time, the Quantum will 
+send a signal to the start device, giving the starter a “ready” light so that they know that you are 
+ready to begin. If you have a scoreboard connected then the clock field will display “0.00”. 
+Should there be a request to delay the start from an authorised official, you can press Start armed 
+and it will toggle to the unarmed state , switch off the starter's’ready light and remove the 
+“0.00” from the scoreboard. 
+By default, Swiss Timing start devices will automatically give a false start signal instead of the start 
+tone if the ready light is not active when a start is attempted. This can however be overridden in the 
+device settings. If a genuine start occurs and you are not armed, or even don't ’have the race 
+window open, then you can retrieve the correct start time from the Quantum using the Attrib last 
+start button. The most recent precise daytime (from Quantum's ’internal clock) of an unarmed start 
+signal received is displayed below the button. If this is correct, clicking this button will activate the 
+race using this start time. The small arrow to the right of the button will display a drop down list of 
+all unarmed start signals, and offer a place to manually introduce a new start time with the most 
+recent at the top of the list. By selecting a time and pressing Ok the race clock will adjust to use 
+this start time. 
+If a False Start occurs and the timing has started, pressing  will reset the timing ready for 
+a new start. 
+ allows selection of another start time. 
+By double clicking on , last start time is selected. 
+ 
+*14:12:43.9178 
+  is selected start time of the current race 
++13:4 5:5 8.284
+8 
+ when start with Quantum in ready mode.  
++ 52.9881    If start is made without synchro, time start at 0 from power on 
+Edit Edit manually a start time ➔ 
+ 
+ 
+ 
+ 
+  
+
+
+===== PDF PAGE 30 / MANUAL PAGE 24 =====
+ 
+ 
+ 
+ 
+Page 24 3480.509.02 Version 1.4 
+ 
+Top left of the timing window is the  set focus button. It is good practice to press this once a 
+race has started. It gives the timing window topmost focus, which ensures that all keyboard short -
+cuts are recognised and actioned. Wh en the window has focus, the colour of the frame will be 
+yellow. If not, frame is red. 
+ 
+Yellow frame 
+Race window has focus  
+Red frame 
+Race window hasn’t focus 
+ 
+ 
+Below this is  which is green if there is a harness present.  This toggles the connection to all 
+harness modules, and will block all incoming timing pulses. When applied, the whole area will 
+remain with a red background until the harness is reconnected.  
+Click  button and accept disconnection of harnesses . If race is 
+already started, warning message appears. 
+ 
+To reconnect harnesses, click . 
+ 
+Top right is the  button which closes the timing window. If a race is still in progress, you will first 
+see a warning message asking you to confirm that you really want to exit before the race has been 
+completed. 
+Below this is the  button. This will advance to the next heat in the schedule, or if you have 
+completed the last heat in an event, it will advance to the next event. If a race is still in progress, 
+you will first see a warning message asking you to confirm that you really want to close the current 
+heat before the race has been completed. 
+6.4 The race window 
+The race window gives a full visual representation of everything related to the race, and allows you 
+to control many elements of it. The actual view you see will depend on your pool configuration. 
+Ideally, it should be laid out in the same way as you see the pool from your operating 
+position. For example, in an eight lane pool, with finishes on your left and lane one being 
+closest to your operating position, you would see a representation of this on the left of your 
+race window. If you have a harness at both ends of the pool, there will be a similar image 
+on the right side of the window.  
+If a lane number is green, the Quantum has good communications with that lane module. It 
+will be orange if communications are in progress and red if the module is not found. 
+ 
+The icons for the touchpad, starting platform (with relay detection) and up to three backup 
+buttons will be present for each harness if they have been selected in the pool configuration. 
+  
+
+
+===== PDF PAGE 31 / MANUAL PAGE 25 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 25 
+6.5 Lane menu 
+When heat is opened that already has swimmers allocated to lanes, 
+any empty lanes will automatically be flagged as unused (If auto 
+unused lanes is checked in timing settings). If there are no swimmers 
+in the heat, the race will open with all lanes flagged as in use. 
+The Lane menu is accessed by either clicking once on the lane 
+number or, when the race window has focus, the number keys 1 - – 
+and 0 on the main keyboard. 
+When the menu is visible, the underlined key can be used as the 
+shortcut to the menu item as shown in the image here. 
+The #0 shown here means you chose lane 0, and your menu choice 
+will be applied to this lane. Pressing 0 will exit the menu. 
+6.5.1 Adding or removing a lap for one lane 
+Click on the lane button (eg  )  and select  or   to add or remove a lap  
+ 
+6.5.2 Adding or removing a lap for all swimmers 
+Click on the white button upper lanes buttons . 
+Select  or  to add or remove a lap to all swimmers.  
+Click on the white button to cancel display of  and  
+6.5.3 Arming or disarming a touchpad or all touchpads 
+The quickest way to arm or disarm a specific lane is by clicking 
+ / 
+ . 
+ 
+To arm or disarm all lanes click 
+ / 
+ . 
+ 
+ Meaning Function (Click) 
+ Lane is disarmed Arm lane 
+ Lane is armed Disarm lane 
+ All lanes are not armed Arm all lanes 
+ All lanes are armed Disarm all lanes 
+ 
+ 
+You can also use lane menu clicking on the lane button (eg  )  and select  (or Q on 
+keyboard) or   (or Y on keyboard) to arm or disarm a lane 
+ 
+6.5.4 Take backup time 
+Click on the button  when appears in the timing view to have quick backup time (or B on 
+keyboard in the Lane menu). 
+  
+
+
+===== PDF PAGE 32 / MANUAL PAGE 26 =====
+ 
+ 
+ 
+ 
+Page 26 3480.509.02 Version 1.4 
+6.6 The race view 
+The race view windows displays current race and is divided like below :  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+      LEFT     RIGHT 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+6.6.1 IOs dashboard 
+The dashboard controls the IOs . You have possibility to send data to the scoreboard or import & 
+export data from data handling software. 
+ 
+ 
+ 
+ Enable / refresh scoreboard  
+  Import start lists 
+from DH 
+ Clear scoreboard   
+ Send results of  the race 
+displayed in the results view 
+ 
+  Export results to 
+DH 
+ Freeze last information 
+displayed 
+   
+ Display day time    
+ 
+  
+Results view 
+Timing view 
+IOs dashboard  
+Start view 
+
+
+===== PDF PAGE 33 / MANUAL PAGE 27 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 27 
+6.6.2 Start view 
+ 
+ 
+ 
+ 
+ 
+ Meaning Function (Click) 
+  Timing window focus button 
+ Harnesses are connected Disconnect harnesses 
+ Harnesses are disconnected Connect harnesses 
+ Current race time  
+ Start is disarmed Arm start 
+ Start is armed Disarm start 
+ Primary/Secondary start is armed  
+ Primary/secondary start is disarmed  
+  Select another start time  
+(double click = last start time) 
+ Start time of current race  
+  Close Race window 
+  Next heat 
+ Last heat of the event  
+ 
+  
+
+
+===== PDF PAGE 34 / MANUAL PAGE 28 =====
+ 
+ 
+ 
+ 
+Page 28 3480.509.02 Version 1.4 
+6.6.3 Timing view 
+ 
+ 
+ Meaning Function (Click) 
+  Open lane menu (Chap. 6.5) 
+ Distance performed / Distance of current 
+race 
+ 
+ All lanes are not armed Arm all lanes 
+ All lanes are armed Disarm all lanes 
+ Arming (and Arming at start) delay Change arm delay 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Meaning Function (Click) 
+ Lane is disarmed Arm lane 
+ Lane is armed Disarm lane 
+ Swimmer finishing the race  
+ Swimmer DSQ disqualified  
+ Swimmer DNS Did not Start  
+ Swimmer DNF Did not Finish  
+ Touchpad pulse received  
+ 
+Waiting touchpad pulse  
+ 
+Button for backup time Receive backup time when no touchpad time 
+  Harness is connected 
+  No connection with harness 
+  Searching harness connection 
+1 Rank or laps  
+> or < Current direction of swimmer  
+ 
+  
+Rank 
+ Laps 
+
+===== PDF PAGE 35 / MANUAL PAGE 29 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 29 
+ 
+ 
+ 
+ 
+ 
+ 
+A not so typical 50 metres race showing the various visual icons; 
+ 
+Lane 1 Is not used 
+Lane 2 Centre icon 
+  indicates that the status DNS (did not start) has been set on this 
+swimmer. 
+Lane 3 Has had 1 touch on the left touchpad, the red  shows that the left touchpad is 
+not armed. The 3 in the centre indicates 3 rd place at the 50m split and the > 
+means that Quantum is now expecting a touch on the right side. The green 
+checkmark shows the right touchpad is armed. The right timing status was fully 
+green showing Quantum is waiting for a touch, but the animated red bar has 
+begun to fill the area because a touch has not been received within an expected 
+time 
+Lane 4-5 Lane 4 and 5 show swimmers finishing the race with rank in the centre. The blue 
+icon denotes that their race is complete, with 1 touch on the right touchpad and then 
+their finish time. 
+Lane 6 Centre icon 
+  denotes that the status DNF (did not finish) has been set on this 
+swimmer. 
+Lane 7 Centre icon 
+  denotes that the status DSQ (disqualified) has been set on this 
+swimmer. 
+Lane 8 Is not used 
+  
+
+
+===== PDF PAGE 36 / MANUAL PAGE 30 =====
+ 
+ 
+ 
+ 
+Page 30 3480.509.02 Version 1.4 
+6.6.4 Result view 
+ 
+ Meaning Function (Click) 
+  Close result view 
+  Open result view 
+ Race is not official Set race as official 
+ Race is official  
+  Print results 
+ Timing and results windows are linked Unlink timing and result windows 
+ Timing and results windows are unlinked Link timing and result windows 
+  Close result window 
+ 
+ 
+ 
+ Meaning Function (Click) 
+ Race is not official Set race as official 
+ 
+Race is official  
+ Delta backup time is 200ms higher than 
+time 
+ 
+ Delta backup time is 200ms lower than 
+time 
+ 
+ 
+0 : reaction time 
+25 : metres 
+50 : 50 metres 
+Select distance of result view 
+ 
+  
+
+
+===== PDF PAGE 37 / MANUAL PAGE 31 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 31 
+6.7 Make the result official 
+To officialise a race, press 
+ . Go to next race pressing  or Ctrl-N. 
+ 
+If race is not finished, information message is displayed. 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+===== PDF PAGE 38 / MANUAL PAGE 32 =====
+ 
+ 
+ 
+ 
+Page 32 3480.509.02 Version 1.4 
+7 INSTALLATION 
+See document Quantum Concept 3480.508.02 
+ 
+ 
+ 
+
+
+===== PDF PAGE 39 / MANUAL PAGE 33 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 33 
+8 MAINTENANCE AND PROTECTION 
+Refer to each product manual for specific maintenance. 
+8.1 General maintenance (after/before events) 
+8.1.1 Quantum 
+Calibration certificate is delivered for 4 years. After this period, if requested by your Swimming 
+Federation, you need to return Quantum to Swiss Timing for re-calibration. 
+8.1.2 Deck plates / Harnesses 
+Deck plate connections /  mobile harness modules  should be cleaned and sockets re -greased 
+using the supplied Silicon grease on a weekly basis and after every use. 
+8.1.3 Touchpads 
+Touchpads should be stored vertically and where available on an approved storage trolley 
+supplied by Swiss Timing.  They should be cleaned u sing fresh water and a cloth, do not use 
+detergents or abrasives.  After cleaning allow to dry naturally. Touchpad cables should be laid on 
+top of the touchpad during storage to prevent damage. 
+Touchpads should be tes ted and inspe cted for physi cal damage prior to each u se. Broken 
+slats with sharp edges may be a danger to swimmers. 
+8.1.4 Starting blocks 
+They should be cleaned (including RBD) using fresh water and a cloth, do not use detergen ts or 
+abrasives, on a weekly basis and after every use  
+OSB Start blocks must be calibrated prior to use, if removed between use they should not be 
+stacked, coil the cable  and fasten inside the block to prevent damage.  The start blocks may be 
+left in place between u se, (though cables should be disconnected from the deckplate), but t his 
+may have an effect on the working life of moving parts.  There are a number of m oving parts 
+inside the start block that should be considered con sumables and should be repla ced every 2 -3 
+years by a service technician. 
+8.1.5 Push buttons 
+OIT push buttons, these should be tes ted prior to use, clean with a damp cloth and allow to dry 
+naturally. There are no serviceable parts within the OIT3. 
+8.1.6 Cables 
+All cables should be tested prior to use, clean with a damp cloth and allow to dry naturally. 
+8.1.7 Batteries 
+Battery packs and battery powered equipment, where possible fully discharge and then recharge 
+prior to storage, if stored f or long periods recharge at regular intervals and maintain a regular 
+discharge and recharge regime.  This will maximise the life of your battery.  Batteries may  
+alternatively be stored on a continuous floating charge. 
+  
+
+===== PDF PAGE 40 / MANUAL PAGE 34 =====
+ 
+ 
+ 
+ 
+Page 34 3480.509.02 Version 1.4 
+8.1.8 Electronic equipment 
+Clean with a damp cloth or approved cleaner for lap tops and PCs.  Avoid sudden changes in 
+temperature when moving into a humid atmosphere to reduce condensation in the equipment.  
+The equipment should be stored and where possible be operated in a dry, temperature and 
+humidity controlled  environment. Swiss Timing will not be responsible for any software faults 
+arising from the customer installing additional software or equipment on to their IT equipment, 
+this equipment should only be considered as an element of the timing system and no more. 
+8.1.9 Serial printer 
+Clean with a damp cloth and allow to dry naturally.  Fully charge the battery prior to storage and 
+remove the battery when stored for more than one month. Paper rolls should be stored away from 
+heat sources to prevent damage. 
+ 
+
+===== PDF PAGE 41 / MANUAL PAGE 35 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 35 
+9 APPENDIX 
+9.1 Heat status 
+Status 
+F Finished but not official 
+I Idle 
+O Official 
+S Started 
+U Unfinished race 
+W Waiting for start 
+ 
+  
+
+===== PDF PAGE 42 / MANUAL PAGE 36 =====
+ 
+ 
+ 
+ 
+Page 36 3480.509.02 Version 1.4 
+9.2 Short keys (US keyboard) 
+If you want to create your own shortcut, you 
+can use  software. 
+(…\SwissTiming\DRCApp\Quantum\Swimming) 
+Do not use this software without practice. 
+Backup the existing file first, so you can go 
+back. 
+ 
+Timing View (…\SwissTiming\DRCApp\Quantum\Swimming\Keyb) 
+Space Toggle active side 
+ Open lane menu 
+0 1 2 3 4 5 6 7 8 9 1
+0 
+1
+1 
+1
+2 
+ Lane number 
+ - Lap -1 
+ + Lap +1 
+ Q Arm touchpad 
+ Y Disarm touchpad 
+ F Edit finish time 
+ D Disqualified (DSQ) 
+ S Did not start (DNS) 
+ B Take backup time 
+ U Used / unused 
+Ctrl-N Next heat 
+Ctrl-Q Arm all lanes 
+Ctrl-Z Disarm all lanes 
+Ctrl-Shift-S Manual start command 
+Alt-S Arm start 
+F5 Timing view focus 
+F6 Event window focus 
+F7 Toggle result view 
+F8 Timing window focus 
+F11 Set a race as official 
+Ctrl-Insert Scoreboard ON 
+Ctrl-Home Scoreboard OFF 
+Ctrl-Page Up Send results to scoreboard 
+CTRL-Shift- Manual touchpad command 
+
+
+===== PDF PAGE 43 / MANUAL PAGE 37 =====
+ 
+ /  
+ 
+Version 1.4 3480.509.02 Page 37 
+9.3 Version history 
+Version Modifications since last version 
+0.0 Initial version 
+1.0 First version 
+1.1 Software update (SW 1.6.6  SW1.6.7) 
+1.2 New chapter 6.5.4 Take backup time and function backup time added in 
+chapter 6.6.3  
+1.3 Software update (SW 1.6.9  SW1.6.10), chapter 6.2.2 
+1.4 Link  → Dongle Activation web site corrected in chapter 4.3.1 
+
+===== PDF PAGE 44 / MANUAL PAGE 38 =====
+ 
+ 
+ 
+ 
+Page 38 3480.509.02 Version 1.4 
+NOTES 
+ 
+
+===== PDF PAGE 45 / MANUAL PAGE 39 =====
+ 
+ 
+ 
+ 
+ 
+ P.O. Box 138, rue de l'Envers 1 Phone +41 32 488 36 11 
+ 2606 Corgémont www.swisstiming.com 
+ Switzerland info@swisstiming.com 
+SWISS TIMING LTD  
+ 
+ 
+SWISS TIMING LT D 
+ 
+ 
+ 
