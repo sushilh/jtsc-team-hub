@@ -1154,7 +1154,7 @@ html { scrollbar-gutter: stable; }
 /* The big stat numbers stand off their card face. */
 .guide-motion-on .guide-facts > div { transform-style: preserve-3d; }
 .guide-motion-on .guide-facts > div strong {
-  display: block;
+  /* Already a flex item, so it is blockified and transformable as-is. */
   transition: transform .4s cubic-bezier(.22,.8,.3,1);
 }
 .guide-motion-on .guide-facts > div:hover strong { transform: translateZ(34px); }
@@ -1162,7 +1162,8 @@ html { scrollbar-gutter: stable; }
 /* Section numbers rotate in edge-on, like a lane marker turning to face you. */
 .guide-motion-on .guide-section-heading { perspective: 800px; }
 .guide-motion-on .guide-section-heading .guide-lane-number {
-  display: inline-block;
+  /* Keep the base display:grid + place-items:center. Overriding it to
+     inline-block knocked the number off centre inside its circle. */
   transform-origin: 50% 50%;
   transform: rotateY(-58deg) translateZ(-30px);
   opacity: 0;
@@ -1192,7 +1193,8 @@ html { scrollbar-gutter: stable; }
 
 /* Jump links press into the page rather than just changing color. */
 .guide-motion-on .guide-jump nav a {
-  display: block;
+  /* No display override here: the link is a flex row with a gap, and forcing
+     block collapsed the space between the number and the label. */
   transition: transform .26s cubic-bezier(.22,.8,.3,1), padding-left .26s ease;
 }
 .guide-motion-on .guide-jump nav a:hover { transform: translateX(5px) scale(1.012); }

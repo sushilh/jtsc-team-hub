@@ -1,12 +1,12 @@
 import GuideMotion from "./GuideMotion";
 
 const guideSections = [
-  { id: "welcome", label: "Welcome to JTSC" },
-  { id: "seasons-gear", label: "Seasons & gear" },
-  { id: "meet-basics", label: "Meet basics" },
-  { id: "sign-up", label: "Signing up" },
-  { id: "meet-day", label: "Meet day" },
-  { id: "volunteering", label: "Volunteering" },
+  { id: "guide-welcome", label: "Welcome to JTSC" },
+  { id: "guide-seasons-gear", label: "Seasons & gear" },
+  { id: "guide-meet-basics", label: "Meet basics" },
+  { id: "guide-sign-up", label: "Signing up" },
+  { id: "guide-meet-day", label: "Meet day" },
+  { id: "guide-volunteering", label: "Volunteering" },
 ];
 
 function SectionHeading({ number, title, eyebrow }: { number: string; title: string; eyebrow: string }) {
@@ -54,7 +54,7 @@ export default function ParentGuide() {
       </aside>
 
       <article className="guide-article">
-        <section id="welcome" className="guide-section">
+        <section id="guide-welcome" className="guide-section">
           <SectionHeading number="01" eyebrow="START HERE" title="Welcome to JTSC" />
           <div className="guide-prose">
             <p>JTSC is a year-round competitive swim program with more than 200 athletes, ranging from beginners to national-level competitors. We are a USA Swimming Level 3 Club.</p>
@@ -68,7 +68,7 @@ export default function ParentGuide() {
           <p className="guide-callout">We partner with parents to help athletes succeed not only in swimming, but in life. Our goal is to foster a lifelong love of the sport while helping each swimmer reach their full potential.</p>
         </section>
 
-        <section id="seasons-gear" className="guide-section">
+        <section id="guide-seasons-gear" className="guide-section">
           <SectionHeading number="02" eyebrow="GET EQUIPPED" title="Seasons & swimmer gear" />
           <div className="guide-split">
             <div className="guide-card season-card">
@@ -97,7 +97,7 @@ export default function ParentGuide() {
           </div>
         </section>
 
-        <section id="meet-basics" className="guide-section">
+        <section id="guide-meet-basics" className="guide-section">
           <SectionHeading number="03" eyebrow="READ THE HEAT SHEET" title="Swim meet basics" />
           <div className="guide-meet-summary">
             <div><strong>~4 hours</strong><span>Typical meet length</span></div>
@@ -121,7 +121,7 @@ export default function ParentGuide() {
           </div>
         </section>
 
-        <section id="sign-up" className="guide-section">
+        <section id="guide-sign-up" className="guide-section">
           <SectionHeading number="04" eyebrow="BEFORE THE MEET" title="How to sign up" />
           <div className="guide-signup">
             <div>
@@ -142,7 +142,7 @@ export default function ParentGuide() {
           <p className="guide-note wide">Coaches assign the events to your swimmer. Sometimes this happens during the week of the meet.</p>
         </section>
 
-        <section id="meet-day" className="guide-section">
+        <section id="guide-meet-day" className="guide-section">
           <SectionHeading number="05" eyebrow="ARRIVE READY" title="Meet-day expectations" />
           <div className="guide-day-grid">
             <div className="guide-card">
@@ -164,7 +164,7 @@ export default function ParentGuide() {
           </div>
         </section>
 
-        <section id="volunteering" className="guide-section">
+        <section id="guide-volunteering" className="guide-section">
           <SectionHeading number="06" eyebrow="HELP RUN THE MEET" title="Volunteer requirements & roles" />
           <div className="guide-volunteer-intro">
             <div><strong>20</strong><span>Hours per season</span></div>
