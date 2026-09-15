@@ -595,7 +595,7 @@ function AdminApp() {
           mutate,
           bulkAddJobs,
           importSignup,
-          demoMode: Boolean(data?.demoMode)
+          resetAllowed: data?.resetAllowed !== false
         }),
         tab === "swimmers" && jsx(SwimmersPanel, {
           swimmers: swimmers2,
@@ -713,7 +713,7 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode }) {
+function SignupImportPanel({ signupImports, busy, importSignup, mutate, resetAllowed }) {
   const [file, setFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
@@ -764,15 +764,15 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode
         <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
       </div>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
     </div>
-    {demoMode && <div className="danger-zone">
+    {resetAllowed && <div className="danger-zone">
       {!resetOpen
         ? <>
           <button type="button" className="danger-link" onClick={() => setResetOpen(true)}>Clear all data…</button>
-          <span className="demo-tag">Demo only</span>
+          <span className="demo-tag">Irreversible</span>
         </>
         : <div className="danger-confirm">
           <strong>Clear every roster and check-in?</strong>
-          <p>This empties every table: imported rosters, check-ins, walk-in entries, sessions, jobs and swimmers. The system is left exactly as it is on a fresh install. Download anything worth keeping first — this cannot be undone.</p>
+          <p>This empties every table: imported rosters, check-ins, walk-in entries, sessions, jobs and swimmers — including volunteer hours already earned. There is no undo and no backup. <strong>Export the signup file and the hour ledger first</strong> if this meet’s credit still matters.</p>
           <label>
             <span>Type RESET to confirm</span>
             <input value={resetConfirm} onChange={(event) => setResetConfirm(event.target.value)} placeholder="RESET" autoComplete="off" />
@@ -792,7 +792,7 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode
     </div>}
   </section>;
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup, demoMode }) {
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup, resetAllowed }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -857,7 +857,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, 
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, demoMode }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, resetAllowed }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",
