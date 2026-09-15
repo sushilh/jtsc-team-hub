@@ -746,7 +746,7 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode
         </>
         : <div className="danger-confirm">
           <strong>Clear every roster and check-in?</strong>
-          <p>This deletes all imported signup rows, their check-ins, and any walk-in entries, leaving an empty system. Download anything worth keeping first — this cannot be undone.</p>
+          <p>This empties every table: imported rosters, check-ins, walk-in entries, sessions, jobs and swimmers. The system is left exactly as it is on a fresh install. Download anything worth keeping first — this cannot be undone.</p>
           <label>
             <span>Type RESET to confirm</span>
             <input value={resetConfirm} onChange={(event) => setResetConfirm(event.target.value)} placeholder="RESET" autoComplete="off" />

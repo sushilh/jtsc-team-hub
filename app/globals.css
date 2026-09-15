@@ -458,6 +458,9 @@ a { color: inherit; text-decoration: none; }
 .magnetic-btn:hover { box-shadow: 0 12px 28px rgba(120,29,66,0.25); }
 
 /* ── Tab slide transitions ── */
+/* The panel slides in from 24px right; clip so that never widens the page or turns
+   the hub into a containing block for the fixed background. */
+.club-hub { overflow-x: clip; }
 [data-motion="on"] .club-hub > section[role="tabpanel"] { animation: tabSlideIn 0.35s cubic-bezier(.4,0,.2,1); }
 [data-motion="on"] .club-hub > section[role="tabpanel"][hidden] { display: none; }
 

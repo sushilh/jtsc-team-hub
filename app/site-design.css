@@ -974,3 +974,64 @@ html { scrollbar-gutter: stable; }
 
 /* Marks controls that exist only on demo builds. */
 .demo-tag { display: inline-block; margin-left: 9px; padding: 3px 9px; border-radius: 999px; background: #f0ead2; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #8a6d1f; vertical-align: middle; }
+
+/* ── MOBILE REPAIRS ──────────────────────────────────────────────────────────
+   Appended last so these win over the desktop grids defined earlier. The desk
+   is worked on a phone, so the check-in page is the priority here. */
+@media (max-width: 860px) {
+  /* The aside kept a 320px minimum and sat on top of the check-in card. */
+  .volunteer-grid { grid-template-columns: minmax(0, 1fr); }
+  .on-deck-card, .expected-card { max-width: none; min-width: 0; }
+
+  /* Decorative background: never let it widen the document. */
+  .floating-shapes { width: 100%; max-width: 100%; left: 0; right: auto; }
+  .floating-shapes .shape { max-width: 70vw; max-height: 70vw; }
+
+  /* Four tabs do not fit; make the row scroll deliberately instead of clipping. */
+  .club-header nav {
+    display: flex; flex-wrap: nowrap; width: 100%;
+    overflow-x: auto; scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .club-header nav::-webkit-scrollbar { display: none; }
+  .club-header nav button {
+    flex: 0 0 auto; scroll-snap-align: start;
+    min-height: 44px; padding: 10px 14px; font-size: 12px; white-space: nowrap;
+  }
+
+  /* Row actions moved into a wrapper, so the old direct-child rule stopped matching. */
+  .signup-person { grid-template-columns: 38px minmax(0, 1fr) auto; row-gap: 10px; }
+  .signup-person-copy { grid-column: 2 / -1; }
+  .signup-credit { grid-column: 2; justify-self: start; }
+  .signup-person-actions { grid-column: 3; align-self: center; }
+  .signup-person-actions button { min-height: 40px; white-space: nowrap; }
+  .signup-person-copy > span, .signup-person-copy small { overflow-wrap: anywhere; }
+
+  /* Everything else that assumed a wide row. */
+  .signup-pickers { grid-template-columns: 1fr; }
+  .ledger-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ledger-switch { width: 100%; }
+  .ledger-switch button { flex: 1; }
+  .pending-banner { flex-direction: column; align-items: stretch; }
+  .pending-banner .admin-primary { width: 100%; }
+  .report-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .report-head > div:last-child { display: flex; gap: 9px; }
+  .report-head select { flex: 1; min-width: 0; }
+  .danger-confirm input { max-width: none; }
+
+  /* Tables stay readable by scrolling in their own box rather than the page. */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-scroll table { min-width: 520px; }
+
+  /* Comfortable tap targets throughout the desk. */
+  .signup-toolbar select, .signup-toolbar input, .signup-pickers select { min-height: 46px; font-size: 16px; }
+}
+
+@media (max-width: 420px) {
+  /* Stack the row so a long name and its button never fight for the same line. */
+  .signup-person { grid-template-columns: 38px minmax(0, 1fr); }
+  .signup-person-actions { grid-column: 2; justify-self: start; }
+  .signup-person-actions { flex-direction: row; gap: 8px; }
+  .signup-person-actions button { flex: 1; }
+  .ledger-tiles { grid-template-columns: 1fr 1fr; }
+}
