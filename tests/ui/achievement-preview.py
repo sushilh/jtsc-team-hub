@@ -22,10 +22,15 @@ if os.environ.get("JTSC_CHROMIUM_EXECUTABLE"):
     launch_options["executable_path"] = os.environ["JTSC_CHROMIUM_EXECUTABLE"]
 
 
-def same_pixels(first, second):
+def same_pixels(first, second, tolerance=0):
     first_image = Image.open(BytesIO(first)).convert("RGB")
     second_image = Image.open(BytesIO(second)).convert("RGB")
-    return first_image.size == second_image.size and ImageChops.difference(first_image, second_image).getbbox() is None
+    if first_image.size != second_image.size:
+        return False
+    difference = ImageChops.difference(first_image, second_image)
+    if tolerance:
+        difference = difference.point(lambda value: 0 if value <= tolerance else value)
+    return difference.getbbox() is None
 
 
 with sync_playwright() as playwright:
@@ -53,6 +58,8 @@ with sync_playwright() as playwright:
             """)
             page.goto(base_url + "/parent-guide", wait_until="networkidle")
             page.get_by_role("tab", name="Achievement studio", exact=True).click()
+            # The lazily mounted studio loads its logo before pixel comparisons.
+            page.wait_for_load_state("networkidle")
             page.evaluate("document.fonts.ready")
             studio = page.locator("#panel-studio")
             swimmer = studio.get_by_role("combobox", name="Swimmer name", exact=True)
@@ -74,9 +81,11 @@ with sync_playwright() as playwright:
                 page.mouse.move(0, 0)
                 visible = frame.screenshot(path=str(output / f"{motion}-{tag}.png"), animations="disabled")
                 overlay.evaluate("element => { element.style.visibility = 'hidden'; }")
-                uncovered = frame.screenshot(animations="disabled")
+                uncovered = frame.screenshot(path=str(output / f"{motion}-{tag}-uncovered.png"), animations="disabled")
                 overlay.evaluate("element => { element.style.removeProperty('visibility'); }")
-                assert same_pixels(visible, uncovered), f"{tag}: stale transition image hides the current card"
+                # Browser edge antialiasing can vary a few color levels when a
+                # transparent layer is hidden. Export comparisons remain exact.
+                assert same_pixels(visible, uncovered, tolerance=8), f"{motion}/{tag}: stale transition image hides the current card"
 
             change_swimmer("Asakevich, Graham")
             check_visible_card("initial-name-change")
