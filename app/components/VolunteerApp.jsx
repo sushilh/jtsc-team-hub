@@ -128,13 +128,7 @@ function VolunteerApp() {
       .sort((a, b) => a.jobName.localeCompare(b.jobName, "en", { sensitivity: "base" }) || String(a.eventStart).localeCompare(String(b.eventStart))),
     [data, selectedEventDate, selectedEventTitle],
   );
-  const importedWalkinSwimmers = useMemo(() => {
-    const imported = (data?.signupSwimmers ?? [])
-      .filter((item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle)
-      .map((item) => item.swimmerName);
-    return [...new Set([...imported, ...(data?.swimmers ?? []).map((item) => item.name)])].filter(Boolean).sort(byName);
-  }, [data, selectedEventDate, selectedEventTitle]);
-  const selectedImportedJob = importedWalkinJobs.find((job) => `${job.jobName}|||${job.eventStart}|||${job.eventEnd}` === signupWalkinJob);
+  const selectedImportedJob = importedWalkinJobs.find((job) => String(job.sourceId) === signupWalkinJob);
   const volunteerOptions = useMemo(
     () => [...new Set(meetRows
       .filter((row) => !swimmerPick || row.swimmerName === swimmerPick)
@@ -170,7 +164,8 @@ function VolunteerApp() {
   const sessionIsToday = session?.sessionDate === clubToday;
   const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0 && sessionIsToday);
   const signupWalkinReady = Boolean(selectedProgress && canCheckInSelectedMeet && signupWalkinName.trim()
-    && signupWalkinSwimmer && selectedImportedJob && Number(signupWalkinHours) >= 0.25);
+    && signupWalkinSwimmer.trim() && selectedImportedJob
+    && Number(signupWalkinHours) >= 0.25 && Number(signupWalkinHours) <= 24);
 
   function mutationWasSaved(result, payload, before) {
     if (payload.action === "signup_walkin") {
@@ -274,9 +269,10 @@ function VolunteerApp() {
       action: "signup_walkin",
       eventDate: selectedEventDate,
       eventTitle: selectedEventTitle,
+      sourceId: selectedImportedJob.sourceId,
       jobName: selectedImportedJob.jobName,
-      swimmerName: signupWalkinSwimmer,
-      volunteerName: signupWalkinName,
+      swimmerName: signupWalkinSwimmer.trim(),
+      volunteerName: signupWalkinName.trim(),
       creditedHours: Number(signupWalkinHours),
     }, `${signupWalkinName.trim()} is checked in for ${selectedImportedJob.jobName}.`, "signup-walkin");
     if (saved) {
@@ -465,26 +461,24 @@ function VolunteerApp() {
           <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss message">×</button>
         </div>}
 
-        <details className="walkin-panel" open={!data?.signupDates.length || Boolean(selectedProgress && importedWalkinJobs.length && canCheckInSelectedMeet)}>
-          <summary>Walk-in volunteer <span>Add someone using an imported job or a manual session</span></summary>
+        <details className="walkin-panel" open={!data?.signupDates.length}>
+          <summary>Walk-in volunteer <span>Add a parent and swimmer who are not on the signup</span></summary>
           {selectedProgress && importedWalkinJobs.length > 0 && <form className="signup-walkin-form" noValidate onSubmit={signupWalkinCheckIn}>
-            <div className="walkin-form-heading"><strong>Use a job from this signup</strong><span>Choose the meet’s existing job, then add the walk-in.</span></div>
+            <div className="walkin-form-heading"><strong>Add a walk-in to this meet</strong><span>Enter the parent and swimmer’s names, then choose a job.</span></div>
+            <p className="field-help">{selectedEventTitle} · {displayDate(selectedEventDate)}</p>
             {!canCheckInSelectedMeet && <p className="past-meets-note">{selectedMeetClosed ? "An admin closed this meet’s check-in." : `Check-in opens ${displayDate(selectedEventDate)}.`}</p>}
             <div className="form-row">
-              <label className="field"><span>Walk-in volunteer name</span><input value={signupWalkinName} onChange={(event) => setSignupWalkinName(event.target.value)} placeholder="First and last name" autoComplete="name" /></label>
-              <label className="field"><span>Walk-in swimmer</span><select value={signupWalkinSwimmer} onChange={(event) => setSignupWalkinSwimmer(event.target.value)}>
-                <option value="">Select swimmer</option>
-                {importedWalkinSwimmers.map((name) => <option value={name} key={name}>{name}</option>)}
-              </select></label>
+              <label className="field"><span>Parent / volunteer name</span><input value={signupWalkinName} maxLength={100} onChange={(event) => setSignupWalkinName(event.target.value)} placeholder="Parent’s first and last name" autoComplete="off" /></label>
+              <label className="field"><span>Swimmer name</span><input value={signupWalkinSwimmer} maxLength={160} onChange={(event) => setSignupWalkinSwimmer(event.target.value)} placeholder="Swimmer’s first and last name" autoComplete="off" /></label>
             </div>
             <label className="field job-select-field"><span>Walk-in job</span><select value={signupWalkinJob} onChange={(event) => {
               const next = event.target.value; setSignupWalkinJob(next);
-              const picked = importedWalkinJobs.find((job) => `${job.jobName}|||${job.eventStart}|||${job.eventEnd}` === next);
+              const picked = importedWalkinJobs.find((job) => String(job.sourceId) === next);
               setSignupWalkinHours(picked ? String(picked.creditPossible) : "");
             }}>
               <option value="">Choose from {importedWalkinJobs.length} imported jobs…</option>
               {importedWalkinJobs.map((job) => {
-                const key = `${job.jobName}|||${job.eventStart}|||${job.eventEnd}`;
+                const key = String(job.sourceId);
                 return <option value={key} key={key}>{job.jobName} · {shiftTime(job.eventStart, job.eventEnd)} · {job.creditPossible} {job.creditUnits || "hrs"}</option>;
               })}
             </select></label>

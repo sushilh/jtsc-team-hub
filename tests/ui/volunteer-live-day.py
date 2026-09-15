@@ -6,11 +6,14 @@ import re
 import tempfile
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from urllib.parse import urlparse
 
 from playwright.sync_api import sync_playwright
 
 
 BASE_URL = os.environ.get("JTSC_BASE_URL", "http://127.0.0.1:3011")
+if urlparse(BASE_URL).hostname not in {"127.0.0.1", "localhost", "::1"}:
+    raise RuntimeError("This regression resets fixture data and may only run on localhost.")
 ADMIN_PIN = os.environ["JTSC_TEST_ADMIN_PIN"]
 REAL_SIGNUP = os.environ.get("JTSC_SIGNUP_FILE", "")
 HEADERS = [
@@ -190,19 +193,38 @@ with sync_playwright() as playwright:
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)
 
-        # A walk-in can use an imported job instead of requiring the desk to
-        # recreate a manual session. It is stored in the same roster and can
-        # be checked out from the normal on-deck flow.
+        # The original roster stays visible. A brand-new parent and swimmer
+        # use the separate walk-in form and join On deck now immediately.
+        before_walkin = page.request.get(f"{BASE_URL}/api/public").json()["signupRows"]
+        assert page.locator("article.signup-person").count() == 3
+        page.locator(".walkin-panel summary").click()
         walkin = page.locator("form.signup-walkin-form")
-        walkin.get_by_label("Walk-in volunteer name").fill("Eve Helper")
-        walkin.get_by_label("Walk-in swimmer").select_option(label="Family, Alice")
-        walkin.get_by_label("Walk-in job").select_option(label=re.compile("^Timer"))
+        walkin.get_by_label("Parent / volunteer name").fill("Eve Helper")
+        walkin.get_by_label("Swimmer name", exact=True).fill("Brand New Swimmer")
+        job_select = walkin.get_by_label("Walk-in job")
+        timer_value = job_select.locator("option").filter(has_text="Timer").first.get_attribute("value")
+        job_select.select_option(value=timer_value)
         walkin.get_by_label("Walk-in hours").fill("4")
         walkin.get_by_role("button", name="Check in walk-in").click()
         page.get_by_text("Eve Helper is checked in for Timer.").wait_for()
+        page.locator(".on-deck-card").get_by_text("Eve Helper", exact=True).wait_for()
+        assert page.locator("article.signup-person").count() == 4
+        after_walkin = page.request.get(f"{BASE_URL}/api/public").json()["signupRows"]
+        assert [row for row in after_walkin if row["volunteerName"] != "Eve Helper"] == before_walkin
+        eve_saved = next(row for row in after_walkin if row["volunteerName"] == "Eve Helper")
+        assert eve_saved["swimmerName"] == "Brand New Swimmer"
+        assert eve_saved["creditedValue"] == 4
         eve = page.locator("article.signup-person").filter(has_text="Eve Helper")
         eve.get_by_role("button", name="Check out").click()
         eve.get_by_text("Completed").wait_for()
+
+        # Uploading the identical XLS/CSV again must retain appended walk-ins.
+        before_repeat = page.request.get(f"{BASE_URL}/api/public").json()["signupRows"]
+        open_admin(page)
+        upload_from_admin(page, today_file)
+        assert page.request.get(f"{BASE_URL}/api/public").json()["signupRows"] == before_repeat
+        page.goto(f"{BASE_URL}/volunteers")
+        wait_ready(page)
 
         alice = page.locator("article.signup-person").filter(has_text="Alice Helper")
         alice.get_by_role("button", name="Check in").click()
@@ -233,6 +255,12 @@ with sync_playwright() as playwright:
         })
         assert closed_checkin.status == 409
         assert "closed by an admin" in closed_checkin.json()["error"]
+        closed_walkin = post_json(page, "/api/checkins", {
+            "action": "signup_walkin", "eventDate": today.isoformat(), "eventTitle": meet_title,
+            "jobName": "Timer", "volunteerName": "Another New Parent",
+            "swimmerName": "Another New Swimmer", "creditedHours": 4,
+        })
+        assert closed_walkin.status == 409
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)
         bob = page.locator("article.signup-person").filter(has_text="Bob Helper")
@@ -265,6 +293,7 @@ with sync_playwright() as playwright:
         page.set_viewport_size({"width": 390, "height": 844})
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)
+        page.locator(".walkin-panel summary").click()
         assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
         page.screenshot(path="/tmp/jtsc-volunteer-live-day.png", full_page=True)
 

@@ -66,6 +66,8 @@ Each import also has a scoped **Clear roster** action. It requires an explicit `
 
 The admin accepts TeamUnify Job Signup `.xls`, `.xlsx`, and `.csv` exports up to 5 MB / 2,500 rows. Public volunteer names are normalized so email addresses and phone numbers are never used as display names. Downloaded signup workbooks retain the original twelve columns and apply completed credit in the source format.
 
+Signed-up volunteers continue to use the expected-volunteer list. For a parent who did not sign up, expand **Walk-in volunteer**, type the parent and swimmer names (both may be new), select the meet's job and shift, and check in. Meet-day scheduling and admin open/close controls apply. Walk-ins join **On deck now**, persist in reports and exports, and survive repeat or corrected signup uploads.
+
 Studio photos and captions stay in the browser. Caption drafts are templates based on entered details, not AI-generated claims or automatic social posts. Switching tabs retains the studio draft, but reloading the page clears it. Admin state is remounted when returning to the admin tab to recheck the session.
 
 ## Learn More
