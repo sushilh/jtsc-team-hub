@@ -920,3 +920,18 @@ html { scrollbar-gutter: stable; }
   .guide-card, .guide-role-grid > div, .guide-example, .guide-volunteer-intro { box-shadow: none; break-inside: avoid; }
   .guide-footer { min-height: 70px; }
 }
+
+/* Going-live reset: deliberately understated until opened, then explicit. */
+.danger-zone { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.danger-link { padding: 0; border: 0; background: none; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.danger-link:hover { color: #a32f3f; }
+.danger-confirm { padding: 16px; border: 1px solid #e4c3c9; border-radius: 12px; background: #fdf6f7; }
+.danger-confirm strong { display: block; font-size: 14px; color: #8c2436; }
+.danger-confirm p { margin: 7px 0 13px; font-size: 12px; line-height: 1.55; color: #6d5259; }
+.danger-confirm label { display: block; margin-bottom: 13px; }
+.danger-confirm label span { display: block; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: #8c2436; }
+.danger-confirm input { width: 100%; max-width: 220px; padding: 9px 12px; border: 1px solid #e0bfc6; border-radius: 8px; font-size: 14px; font-weight: 700; letter-spacing: .08em; }
+.danger-actions { display: flex; gap: 9px; align-items: center; }
+.danger-primary { padding: 9px 16px; border: 0; border-radius: 8px; background: #a32f3f; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .05em; cursor: pointer; transition: .18s ease; }
+.danger-primary:hover:not(:disabled) { background: #8c2436; }
+.danger-primary:disabled { opacity: .45; cursor: default; }

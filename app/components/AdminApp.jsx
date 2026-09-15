@@ -192,7 +192,11 @@ function AdminApp() {
         kind: "success",
         text: result.duplicate
           ? `${imported.fileName || file.name} was already imported. No duplicate rows were added.`
-          : `${imported.assignedCount} assigned volunteers are ready to check in across ${imported.eventCount} events.`,
+          : [
+            `${imported.assignedCount} assigned volunteers are ready to check in across ${imported.eventCount} events.`,
+            imported.keptCheckins ? `${imported.keptCheckins} check-in${imported.keptCheckins === 1 ? "" : "s"} already recorded at the desk ${imported.keptCheckins === 1 ? "was" : "were"} kept.` : "",
+            imported.droppedCheckins ? `${imported.droppedCheckins} earlier check-in${imported.droppedCheckins === 1 ? " no longer matches a shift in this file and was" : "s no longer match a shift in this file and were"} set aside.` : "",
+          ].filter(Boolean).join(" "),
       });
       await load();
       window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
@@ -569,9 +573,11 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SignupImportPanel({ signupImports, busy, importSignup }) {
+function SignupImportPanel({ signupImports, busy, importSignup, mutate }) {
   const [file, setFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState("");
   async function submit(event) {
     event.preventDefault();
     if (!file) {
@@ -588,17 +594,18 @@ function SignupImportPanel({ signupImports, busy, importSignup }) {
     <div className="signup-import-copy">
       <span className="panel-kicker">MEET ROSTER</span>
       <h2>Import Job Signup</h2>
-      <p>Upload the club’s <strong>.xls or .xlsx</strong> export. Assigned names, swimmer / account names, jobs, times, slots, and credit will become the check-in list.</p>
+      <p>Upload the club’s <strong>.xls, .xlsx or .csv</strong> export. Assigned names, swimmer / account names, jobs, times, slots, and credit will become the check-in list.</p>
       <ul>
         <li>Unfilled slots stay in the saved workbook.</li>
         <li>Uploading the same file twice will not duplicate volunteers.</li>
+        <li>Re-uploading a corrected file keeps check-ins already taken at the desk.</li>
         <li>Download keeps the original 12 columns in the same order.</li>
       </ul>
     </div>
     <form className="signup-upload-form" noValidate onSubmit={submit}>
       <label>
         <span>Job Signup file</span>
-        <input type="file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => {
+        <input type="file" accept=".xls,.xlsx,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => {
           setFile(event.target.files?.[0] ?? null);
           setLocalMessage("");
         }} />
@@ -614,6 +621,29 @@ function SignupImportPanel({ signupImports, busy, importSignup }) {
         <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
       </div>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
     </div>
+    {signupImports.length > 0 && <div className="danger-zone">
+      {!resetOpen
+        ? <button type="button" className="danger-link" onClick={() => setResetOpen(true)}>Clear all imported rosters…</button>
+        : <div className="danger-confirm">
+          <strong>Clear every imported roster?</strong>
+          <p>This deletes all signup rows and their check-ins so the club can start fresh. Download anything worth keeping first — this cannot be undone.</p>
+          <label>
+            <span>Type RESET to confirm</span>
+            <input value={resetConfirm} onChange={(event) => setResetConfirm(event.target.value)} placeholder="RESET" autoComplete="off" />
+          </label>
+          <div className="danger-actions">
+            <button type="button" className="danger-primary" disabled={busy || resetConfirm.trim().toUpperCase() !== "RESET"}
+              onClick={async () => {
+                if (await mutate({ action: "reset_signup_data", confirm: resetConfirm }, "Every imported roster was cleared.")) {
+                  setResetOpen(false);
+                  setResetConfirm("");
+                  window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
+                }
+              }}>Clear rosters</button>
+            <button type="button" className="bulk-toggle" onClick={() => { setResetOpen(false); setResetConfirm(""); }}>Cancel</button>
+          </div>
+        </div>}
+    </div>}
   </section>;
 }
 function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup }) {
@@ -681,7 +711,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, 
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",
