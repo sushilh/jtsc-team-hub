@@ -56,15 +56,30 @@ export function initialMeetBlocks(sessionCount = 7): MeetBlock[] {
 
   // Small meets: full-width sessions, then the livestream panel as a band beneath.
   // Big meet: a narrow session column beside a tall livestream panel.
+  //
+  // Sizes are capped rather than stretched to fill. A single session grown to
+  // fill the column just spreads its own contents out and reads as a mistake,
+  // so small layouts keep readable block sizes and centre the group instead,
+  // which puts the leftover space above and below as deliberate margin.
+  const REGION_TOP = SESSION_TOP;
+  const REGION_BOTTOM = 1495;
+  const BAND_GAP = 28;
   const geometry = compact
-    ? { width: WIDE_COLUMN, height: count === 1 ? 300 : count === 2 ? 240 : 200, gap: count === 2 ? 18 : 16 }
-    : { width: NARROW_COLUMN, height: 112, gap: 10 };
+    ? { width: WIDE_COLUMN, height: count <= 2 ? 240 : 200, gap: count === 2 ? 18 : 16, band: count <= 2 ? 320 : 240 }
+    : { width: NARROW_COLUMN, height: 112, gap: 10, band: 0 };
+
+  const groupHeight = compact
+    ? count * geometry.height + (count - 1) * geometry.gap + BAND_GAP + geometry.band
+    : 0;
+  const top = compact
+    ? REGION_TOP + Math.max(0, Math.round((REGION_BOTTOM - REGION_TOP - groupHeight) / 2))
+    : SESSION_TOP;
 
   const sessions: MeetBlock[] = Array.from({ length: count }, (_, i) => {
     const date = compact ? addDays("2026-07-23", i) : ["2026-07-23", "2026-07-24", "2026-07-24", "2026-07-25", "2026-07-25", "2026-07-26", "2026-07-26"][i];
     return {
       id: `session-${i}`, label: `Session ${i + 1}`, kind: "session",
-      x: COLUMN_LEFT, y: SESSION_TOP + i * (geometry.height + geometry.gap),
+      x: COLUMN_LEFT, y: top + i * (geometry.height + geometry.gap),
       w: geometry.width, h: geometry.height, fontSize: 20,
       date,
       day: compact ? `DAY ${i + 1}` : `DAY ${i === 0 ? 1 : Math.floor((i + 1) / 2) + 1}`,
@@ -76,20 +91,23 @@ export function initialMeetBlocks(sessionCount = 7): MeetBlock[] {
     };
   });
 
-  const sessionsBottom = SESSION_TOP + count * geometry.height + (count - 1) * geometry.gap;
+  const sessionsBottom = top + count * geometry.height + (count - 1) * geometry.gap;
   const qr: MeetBlock[] = [];
   if (compact) {
-    const bandTop = sessionsBottom + 28;
-    const bandHeight = 1495 - bandTop;
+    const bandTop = sessionsBottom + BAND_GAP;
+    const bandHeight = geometry.band;
     const code = Math.min(240, bandHeight - 56);
     const codeX = COLUMN_LEFT + WIDE_COLUMN - 30 - code;
     const copyWidth = codeX - COLUMN_LEFT - 60;
+    // Centre the text stack against the QR so neither floats in the panel.
+    const stack = 62 + 8 + 40 + 12 + 76;
+    const textTop = bandTop + Math.max(24, Math.round((bandHeight - stack) / 2));
     qr.push(
       { id: "qr-panel", label: "Livestream panel", kind: "panel", x: COLUMN_LEFT, y: bandTop, w: WIDE_COLUMN, h: bandHeight, fontSize: 20 },
-      text("qr-title", "QR heading", "WATCH LIVE!", COLUMN_LEFT + 30, bandTop + 28, copyWidth, 62, 38),
-      text("qr-prompt", "QR instruction", "SCAN TO VIEW", COLUMN_LEFT + 30, bandTop + 96, copyWidth, 40, 24),
-      { id: "qr", label: "QR code", kind: "qr", x: codeX, y: bandTop + (bandHeight - code) / 2, w: code, h: code, fontSize: 20 },
-      text("qr-copy", "QR supporting text", "CAN'T MAKE IT TO THE POOL?\nCATCH ALL THE ACTION LIVE ONLINE!", COLUMN_LEFT + 30, bandTop + 146, copyWidth, bandHeight - 176, 26),
+      text("qr-title", "QR heading", "WATCH LIVE!", COLUMN_LEFT + 30, textTop, copyWidth, 62, 38),
+      text("qr-prompt", "QR instruction", "SCAN TO VIEW", COLUMN_LEFT + 30, textTop + 70, copyWidth, 40, 24),
+      { id: "qr", label: "QR code", kind: "qr", x: codeX, y: bandTop + Math.round((bandHeight - code) / 2), w: code, h: code, fontSize: 20 },
+      text("qr-copy", "QR supporting text", "CAN'T MAKE IT TO THE POOL?\nCATCH ALL THE ACTION LIVE ONLINE!", COLUMN_LEFT + 30, textTop + 122, copyWidth, 76, 26),
     );
   } else {
     qr.push(
