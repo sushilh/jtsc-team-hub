@@ -47,6 +47,7 @@ function VolunteerApp() {
   const [jobId, setJobId] = useState("");
   const [hours, setHours] = useState("");
   const [signupDate, setSignupDate] = useState("");
+  const [showPastMeets, setShowPastMeets] = useState(false);
   const [swimmerPick, setSwimmerPick] = useState("");
   const [volunteerPick, setVolunteerPick] = useState("");
   const [query, setQuery] = useState("");
@@ -65,8 +66,9 @@ function VolunteerApp() {
         const keys = result.signupDates.map((item) => `${item.eventDate}|||${item.eventTitle}`);
         if (keys.includes(current)) return current;
         const todayKey = keys.find((key) => key.startsWith(`${localIsoDate()}|||`));
+        // Oldest-first, so this lands on the next meet rather than the furthest away one.
         const upcoming = [...result.signupDates].reverse().find((item) => item.eventDate >= localIsoDate());
-        return todayKey || (upcoming ? `${upcoming.eventDate}|||${upcoming.eventTitle}` : keys[0]) || "";
+        return todayKey || (upcoming ? `${upcoming.eventDate}|||${upcoming.eventTitle}` : "");
       });
       setSignupCredits((current) => ({
         ...Object.fromEntries(result.signupRows.map((row) => [row.id, current[row.id] ?? String(row.creditedValue ?? row.creditPossible)])),
@@ -125,6 +127,11 @@ function VolunteerApp() {
     });
   }, [meetRows, query, swimmerPick, volunteerPick]);
 
+  // A check-in desk is always working today's meet, so past ones are out of the way
+  // by default. They stay reachable: a shift checked in yesterday still needs checking out.
+  const currentMeets = (data?.signupDates ?? []).filter((item) => item.eventDate >= localIsoDate());
+  const pastMeets = (data?.signupDates ?? []).filter((item) => item.eventDate < localIsoDate());
+  const visibleMeets = showPastMeets ? [...currentMeets, ...pastMeets] : currentMeets;
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
   );
@@ -224,7 +231,7 @@ function VolunteerApp() {
         </div>
 
         {!data ? <div className="loading-state"><i /><span>Preparing the meet roster…</span></div>
-          : data.signupDates.length ? <>
+          : visibleMeets.length ? <>
             <div className="signup-toolbar">
               <label className="field">
                 <span>Meet date and event</span>
@@ -232,8 +239,8 @@ function VolunteerApp() {
                   setSignupDate(event.target.value);
                   setQuery(""); setSwimmerPick(""); setVolunteerPick("");
                 }}>
-                  {data.signupDates.map((item) => <option key={`${item.eventDate}-${item.eventTitle}`} value={`${item.eventDate}|||${item.eventTitle}`}>
-                    {displayDate(item.eventDate)} · {item.eventTitle}
+                  {visibleMeets.map((item) => <option key={`${item.eventDate}-${item.eventTitle}`} value={`${item.eventDate}|||${item.eventTitle}`}>
+                    {displayDate(item.eventDate)} · {item.eventTitle}{item.eventDate < localIsoDate() ? " (past)" : ""}
                   </option>)}
                 </select>
               </label>
@@ -265,6 +272,12 @@ function VolunteerApp() {
                 onClick={() => { setSwimmerPick(""); setVolunteerPick(""); setQuery(""); }}
               >Show everyone</button>}
             </div>
+
+            {pastMeets.length > 0 && <p className="past-meets-note">
+              {showPastMeets
+                ? <>Past meets are listed above. <button type="button" onClick={() => setShowPastMeets(false)}>Hide them</button></>
+                : <>{pastMeets.length} past {pastMeets.length === 1 ? "meet is" : "meets are"} hidden. <button type="button" onClick={() => setShowPastMeets(true)}>Show past meets</button></>}
+            </p>}
 
             <div className="signup-result-head" aria-live="polite">
               <span><strong>{signupRows.length}</strong> matching {signupRows.length === 1 ? "assignment" : "assignments"}</span>
@@ -328,7 +341,15 @@ function VolunteerApp() {
               {!signupRows.length && <div className="deck-empty"><span>⌕</span><strong>No matching signup</strong><small>Try a last name, swimmer / account name, or job.</small></div>}
               {signupRows.length > 120 && <p className="signup-limit">Showing the first 120 matches. Add a name or job to narrow the list.</p>}
             </div>
-          </> : data.unassignedMeets?.length ? <div className="empty-state">
+          </> : pastMeets.length && !showPastMeets ? <div className="empty-state">
+            <strong>No meet today</strong>
+            <span>
+              {`The most recent roster is ${displayDate(pastMeets[0].eventDate)} · ${pastMeets[0].eventTitle}. `}
+              <button type="button" className="inline-link" onClick={() => setShowPastMeets(true)}>Open it anyway</button>
+              {" — or import the roster for the next meet."}
+            </span>
+          </div>
+          : data.unassignedMeets?.length ? <div className="empty-state">
             <strong>Nobody has signed up yet</strong>
             <span>
               {data.unassignedMeets.map((item) => `${item.openCount} open ${item.openCount === 1 ? "shift" : "shifts"} for ${item.eventTitle}`).join(", ")}
