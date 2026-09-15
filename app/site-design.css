@@ -547,7 +547,10 @@ html { scrollbar-gutter: stable; }
 .import-history-row > div { min-width: 0; display: grid; gap: 4px; }
 .import-history-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .import-history-row span, .import-history-row small { color: var(--muted); font-size: 11px; }
+.import-history-actions { display: flex !important; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
+.import-history-actions .danger-link { font-size: 10px; white-space: nowrap; }
 .import-history-row .export-button { min-height: 40px; height: auto; padding: 10px 13px; display: inline-flex; align-items: center; border-radius: 9px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.import-history > .import-clear-confirm { grid-column: 1 / -1; margin: -2px 0 12px; }
 .panel-empty.compact { min-height: 90px; }
 .meet-checkin-controls { grid-column: 1 / -1; min-width: 0; display: grid; border-top: 1px solid var(--line); }
 .meet-checkin-head { min-height: 64px; padding: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; }

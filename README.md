@@ -34,7 +34,7 @@ This starter does not use `wrangler.jsonc`.
 Meet books are parsed heuristically in the browser using PDF.js. Review all detected values before importing. Select up to seven sessions and eight events for a single poster; scanned/password-protected PDFs need a readable copy or pasted text. Files are not uploaded to a server. QR codes are uploaded images, not generated from URLs; a square white-margin container avoids stretching, but users must scan the final export to verify the supplied code. Drafts and images are held in memory and reset on page reload. Layout undo/redo covers component edits, not image replacements or theme changes.
 
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
-- `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, preserved corrections, same-format `.xls` download, walk-in sessions, hour adjustments, and CSV reports
+- `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, scoped roster clearing, preserved corrections, same-format `.xls` download, walk-in sessions, hour adjustments, and CSV reports
 - Classic and Signature card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
 - editable, locally generated captions with separate copy buttons for Instagram and Facebook
 
@@ -61,6 +61,8 @@ The combined Team Hub Worker is the authoritative volunteer backend. `app/api/[.
 Admin access is verified in the Worker. Its signed `jtsc_admin` cookie is host-only, HTTP-only, SameSite=Strict, and expires after twelve hours. Failed PIN attempts are throttled. Mutations reject cross-site browser requests and all API responses are uncached. Clearing persisted data is disabled unless a deployment explicitly enables `ALLOW_DATA_RESET` or `DEMO_MODE`.
 
 Roster replacement is staged: every new row is inserted inactive, then D1 atomically swaps only matching event-date + event-title scopes. A corrected file therefore cannot empty or partially replace the live desk if an insertion fails, and a repeated meet title on another date remains independent. Check-in uses the `America/Chicago` club date and follows the scheduled day by default. In Sessions & jobs, an admin can manually open or close each imported meet, or return it to its schedule; the override is persisted in D1 and closing never prevents an already checked-in volunteer from checking out. `ALLOW_EARLY_CHECKIN=true` remains an optional deployment-wide override for scheduled meets.
+
+Each import also has a scoped **Clear roster** action. It requires an explicit `CLEAR` confirmation and removes only that file's assignments, attendance, earned credit, and meet override; other imports and manual sessions are left alone. The all-data reset remains disabled on production deployments.
 
 The admin accepts TeamUnify Job Signup `.xls`, `.xlsx`, and `.csv` exports up to 5 MB / 2,500 rows. Public volunteer names are normalized so email addresses and phone numbers are never used as display names. Downloaded signup workbooks retain the original twelve columns and apply completed credit in the source format.
 

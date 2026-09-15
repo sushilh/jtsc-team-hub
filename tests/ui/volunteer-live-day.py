@@ -93,6 +93,17 @@ def set_meet_checkin(page, event_date, event_title, verb):
     page.locator(".admin-notice.success").wait_for()
 
 
+def clear_import_from_admin(page, file_name):
+    open_admin(page)
+    page.get_by_role("button", name="Sessions & jobs").click()
+    row = page.locator(".import-history-row").filter(has_text=file_name)
+    row.get_by_role("button", name="Clear roster…").click()
+    confirmation = page.locator(".import-clear-confirm")
+    confirmation.get_by_label("Type CLEAR to confirm").fill("CLEAR")
+    confirmation.get_by_role("button", name="Clear roster", exact=True).click()
+    page.locator(".admin-notice.success").wait_for()
+
+
 with sync_playwright() as playwright:
     executable = os.environ.get("JTSC_CHROMIUM_EXECUTABLE")
     browser = playwright.chromium.launch(headless=True, executable_path=executable or None)
@@ -156,6 +167,10 @@ with sync_playwright() as playwright:
         wait_ready(page)
         page.get_by_role("button", name="Closed").first.wait_for()
         assert page.get_by_role("button", name="Closed").first.is_disabled()
+        clear_import_from_admin(page, os.path.basename(REAL_SIGNUP))
+        cleared = page.request.get(f"{BASE_URL}/api/admin").json()
+        assert cleared["signupImports"] == []
+        assert cleared["signupDates"] == []
 
     open_admin(page)
     reset = post_json(page, "/api/admin", {"action": "reset_signup_data", "confirm": "RESET"})

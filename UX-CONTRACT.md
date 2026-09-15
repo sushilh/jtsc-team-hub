@@ -49,6 +49,7 @@ The New Parent Information Guide is a read-only peer tab with the stable `parent
 |---|---|---|---|---|---|
 | Import roster | Admin chooses one signup file and imports | One stable busy button; duplicate submissions blocked | Stay in Sessions & jobs; assigned/open counts and preserved check-ins reported | New rows stay inactive until every insert succeeds; an interrupted completed upload resumes activation | File picker area |
 | Open/close imported meet | Admin selects Open check-in, Close check-in, or Use schedule | Selected meet action reads Saving; all meet-control mutations disabled | Stay in Sessions & jobs; persisted status and public desk refresh | Server keeps prior mode on failure; persistent panel feedback allows retry | Same meet control |
+| Clear imported roster | Admin selects Clear roster for one file and confirms `CLEAR` | Confirmation remains open; action reads busy and duplicate submits are blocked | Stay in Sessions & jobs; that file and its scoped check-ins/credit disappear, other imports remain | Failed request leaves the import and confirmation intact for retry | Confirmation action |
 | Check in expected volunteer | Check in on a roster row for today | Row action reads Saving; other mutation actions disabled | Stay on roster; row becomes On deck and appears in On deck now | Reload authoritative data after any error; if the requested state exists, confirm it instead of inviting a duplicate | Same row action |
 | Check out expected volunteer | Check out on row or On deck now | Same row-pending contract | Stay; row becomes Completed and credit is earned | Reload and reconcile completed state | Same row context |
 | Undo desk check-in | Undo on a check-in made by this desk | Same row-pending contract | Return assignment to expected list | File-originated completion cannot be undone | Same row context |
@@ -64,6 +65,8 @@ Volunteer display names may be inferred from the file's Volunteer Info field, bu
 Admin form validation is app-owned. Dates must be real `YYYY-MM-DD` values, times must be valid 24-hour values, and end time must be later than start time. Missing sessions/entries return explicit 404 or conflict responses. Unexpected server details are not exposed to the browser.
 
 Admin PIN failures are keyed by a one-way value derived from the Cloudflare client address and limited to eight failures in fifteen minutes. The signed admin cookie remains host-only, HTTP-only, SameSite=Strict, and twelve hours. Clearing all volunteer data is disabled unless `ALLOW_DATA_RESET` or `DEMO_MODE` is explicitly true; local demos retain typed `RESET` confirmation.
+
+Clearing one imported roster is a separate, admin-only destructive action. It requires typing `CLEAR`, removes only that import's saved assignments, check-ins, earned credit, and meet settings, and cannot be undone; other imports, sessions, jobs, and swimmers are retained.
 
 ## Verification and migration scope
 

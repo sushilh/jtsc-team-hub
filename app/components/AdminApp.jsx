@@ -743,6 +743,8 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
   const [resetOpen, setResetOpen] = useState(false);
   const [resetConfirm, setResetConfirm] = useState("");
   const [controlBusy, setControlBusy] = useState("");
+  const [clearImportId, setClearImportId] = useState("");
+  const [clearImportConfirm, setClearImportConfirm] = useState("");
   async function submit(event) {
     event.preventDefault();
     // React clears currentTarget once the event finishes dispatching, so the form
@@ -835,10 +837,34 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
     </div>
     <div className="import-history">
       <div className="import-history-head"><strong>Recent imports</strong><span>{signupImports.length}</span></div>
-      {signupImports.length ? signupImports.map((item) => <div className="import-history-row" key={item.id}>
-        <div><strong>{item.fileName}</strong><span>{item.assignedCount} assigned · {item.eventCount} events · {item.rowCount} rows</span><small>Uploaded {stamp(item.uploadedAt)}</small></div>
-        <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
-      </div>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
+      {signupImports.length ? signupImports.map((item) => <Fragment key={item.id}>
+        <div className="import-history-row">
+          <div><strong>{item.fileName}</strong><span>{item.assignedCount} assigned · {item.eventCount} events · {item.rowCount} rows</span><small>Uploaded {stamp(item.uploadedAt)}</small></div>
+          <div className="import-history-actions">
+            <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
+            <button type="button" className="danger-link" onClick={() => { setClearImportId(item.id); setClearImportConfirm(""); }}>Clear roster…</button>
+          </div>
+        </div>
+        {clearImportId === item.id && <div className="danger-confirm import-clear-confirm">
+          <strong>Clear {item.fileName}?</strong>
+          <p>This permanently removes this file’s saved assignments, check-ins, earned credit, and meet open/close setting. Other imports and manual sessions stay intact. There is no undo.</p>
+          <label>
+            <span>Type CLEAR to confirm</span>
+            <input value={clearImportConfirm} onChange={(event) => setClearImportConfirm(event.target.value)} placeholder="CLEAR" autoComplete="off" />
+          </label>
+          <div className="danger-actions">
+            <button type="button" className="danger-primary" disabled={busy || clearImportConfirm.trim().toUpperCase() !== "CLEAR"}
+              onClick={async () => {
+                if (await mutate({ action: "clear_signup_import", importId: item.id, confirm: clearImportConfirm }, `${item.fileName} was cleared.`)) {
+                  setClearImportId("");
+                  setClearImportConfirm("");
+                  window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
+                }
+              }}>Clear roster</button>
+            <button type="button" className="bulk-toggle" onClick={() => { setClearImportId(""); setClearImportConfirm(""); }}>Cancel</button>
+          </div>
+        </div>}
+      </Fragment>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
     </div>
     {resetAllowed && <div className="danger-zone">
       {!resetOpen
