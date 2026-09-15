@@ -75,6 +75,17 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
     return () => window.removeEventListener("hashchange", readHash);
   }, []);
 
+  useEffect(() => {
+    const nav = navRef.current;
+    const selected = nav?.querySelector<HTMLElement>(`#tab-${active}`);
+    if (!nav || !selected) return;
+    const left = selected.offsetLeft - (nav.clientWidth - selected.offsetWidth) / 2;
+    nav.scrollTo({
+      left: Math.max(0, left),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  }, [active]);
+
   function selectTab(tab: Tab) {
     setActive(tab);
     setVisited(current => current.includes(tab) ? current : [...current, tab]);
