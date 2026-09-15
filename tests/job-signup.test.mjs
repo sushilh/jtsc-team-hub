@@ -10,7 +10,7 @@ import {
   usableVolunteerInfo,
   validateSignupHeaders,
 } from "../lib/job-signup.mjs";
-import { clubIsoDate, isResetAllowed, signupScopeKey } from "../lib/volunteer-service.mjs";
+import { clubIsoDate, isResetAllowed, isSignupMeetOpen, signupScopeKey } from "../lib/volunteer-service.mjs";
 
 function sampleWorkbook() {
   const sheet = XLSX.utils.aoa_to_sheet([
@@ -99,6 +99,15 @@ test("the destructive reset is disabled unless a deployment opts in", () => {
   assert.equal(isResetAllowed({}), false);
   assert.equal(isResetAllowed({ DEMO_MODE: "false" }), false);
   assert.equal(isResetAllowed({ ALLOW_DATA_RESET: "true" }), true);
+});
+
+test("admin check-in controls override the meet schedule", () => {
+  const now = new Date("2026-09-15T18:00:00Z");
+  assert.equal(isSignupMeetOpen("2026-09-15", "scheduled", {}, now), true);
+  assert.equal(isSignupMeetOpen("2026-09-19", "scheduled", {}, now), false);
+  assert.equal(isSignupMeetOpen("2026-09-19", "open", {}, now), true);
+  assert.equal(isSignupMeetOpen("2026-09-15", "closed", { ALLOW_EARLY_CHECKIN: "true" }, now), false);
+  assert.equal(isSignupMeetOpen("2026-09-19", "scheduled", { ALLOW_EARLY_CHECKIN: "true" }, now), true);
 });
 
 test("a corrected re-import keeps desk check-ins on shifts that still exist", () => {

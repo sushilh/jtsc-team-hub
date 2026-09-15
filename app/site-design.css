@@ -504,6 +504,7 @@ html { scrollbar-gutter: stable; }
 .signup-status.ready { background: var(--maroon-soft); color: var(--maroon); }
 .signup-status.live { background: #dff0ea; color: #166048; }
 .signup-status.done { background: #eceae7; color: #5d5c5b; }
+.signup-status.closed { background: #fff1d8; color: #75521a; }
 .signup-credit { display: grid; gap: 5px; }
 .signup-credit > span:first-child { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .signup-credit > span:last-child { height: 42px; display: flex; align-items: center; overflow: hidden; border: 1px solid #cbc7c4; border-radius: 9px; background: white; }
@@ -524,6 +525,7 @@ html { scrollbar-gutter: stable; }
 
 /* ── Admin signup import ── */
 .signup-import-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(240px, .8fr) minmax(260px, .8fr) minmax(360px, 1.35fr); gap: 28px; align-items: start; border-top: 4px solid var(--maroon); }
+.signup-import-panel > .import-history { grid-column: 3; grid-row: 1; }
 .signup-import-copy h2 { margin: 7px 0 12px; font-family: var(--font-display), sans-serif; font-size: 27px; }
 .signup-import-copy p, .signup-import-copy li { color: var(--muted); font-size: 14px; line-height: 1.55; }
 .signup-import-copy p { margin: 0; }
@@ -547,6 +549,28 @@ html { scrollbar-gutter: stable; }
 .import-history-row span, .import-history-row small { color: var(--muted); font-size: 11px; }
 .import-history-row .export-button { min-height: 40px; height: auto; padding: 10px 13px; display: inline-flex; align-items: center; border-radius: 9px; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .panel-empty.compact { min-height: 90px; }
+.meet-checkin-controls { grid-column: 1 / -1; min-width: 0; display: grid; border-top: 1px solid var(--line); }
+.meet-checkin-head { min-height: 64px; padding: 14px 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.meet-checkin-head > div { display: grid; gap: 4px; }
+.meet-checkin-head strong { font-size: 14px; }
+.meet-checkin-head div span, .meet-checkin-note { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.meet-checkin-head > span { min-width: 24px; min-height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--maroon-soft); color: var(--maroon); font-size: 10px; font-weight: 800; }
+.meet-checkin-row { min-height: 78px; padding: 12px 0; display: grid; grid-template-columns: minmax(190px, 1fr) minmax(110px, auto) minmax(210px, auto); align-items: center; gap: 16px; border-top: 1px solid var(--line); }
+.meet-checkin-copy { min-width: 0; display: grid; gap: 4px; }
+.meet-checkin-copy strong { overflow-wrap: anywhere; font-size: 13px; }
+.meet-checkin-copy span { color: var(--muted); font-size: 11px; }
+.meet-checkin-status { justify-self: start; padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+.meet-checkin-status.is-open { background: #dff0ea; color: #166048; }
+.meet-checkin-status.is-closed { background: #eceae7; color: #5d5c5b; }
+.meet-checkin-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.meet-checkin-actions button { min-height: 42px; padding: 9px 13px; border-radius: 9px; font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.meet-checkin-actions .admin-primary { height: 42px; color: white; }
+.checkin-close { border: 1px solid var(--gold); background: #fff9ed; color: #6d4b13; }
+.checkin-close:hover:not(:disabled) { background: #f8e8c7; }
+.schedule-link { border: 1px solid var(--line); background: white; color: var(--maroon); }
+.schedule-link:hover:not(:disabled) { border-color: var(--maroon); background: #fcf8fa; }
+.meet-checkin-actions button:disabled { cursor: default; opacity: .55; }
+.meet-checkin-note { margin: 0; padding: 10px 0 0; border-top: 1px solid var(--line); }
 
 /* ── Login page ── */
 .login-page {
@@ -654,7 +678,7 @@ html { scrollbar-gutter: stable; }
   .club-header nav { width: 100%; margin-top: 8px; }
   .club-header button { flex: 1; min-height: 56px; justify-content: center; padding: 12px; }
   .signup-import-panel { grid-template-columns: 1fr 1fr; }
-  .import-history { grid-column: 1 / -1; }
+  .signup-import-panel > .import-history { grid-column: 1 / -1; grid-row: auto; }
 }
 @media (max-width: 800px) {
   .club-header { padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; }
@@ -696,7 +720,10 @@ html { scrollbar-gutter: stable; }
   .hero { margin-top: 26px; }
   .field-row { grid-template-columns: 1fr; }
   .signup-toolbar, .signup-import-panel { grid-template-columns: 1fr; }
-  .import-history { grid-column: auto; }
+  .signup-import-panel > .import-history { grid-column: auto; }
+  .meet-checkin-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .meet-checkin-status { justify-self: end; }
+  .meet-checkin-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .signup-result-head { align-items: flex-start; flex-direction: column; }
   .signup-result-head small { text-align: left; }
   .signup-person { grid-template-columns: 40px minmax(0, 1fr) 88px; gap: 11px; }
@@ -1041,4 +1068,7 @@ html { scrollbar-gutter: stable; }
   .signup-person-actions { flex-direction: row; gap: 8px; }
   .signup-person-actions button { flex: 1; }
   .ledger-tiles { grid-template-columns: 1fr 1fr; }
+  .meet-checkin-row { grid-template-columns: 1fr; gap: 9px; }
+  .meet-checkin-status { justify-self: start; }
+  .meet-checkin-actions { grid-column: auto; flex-wrap: wrap; }
 }

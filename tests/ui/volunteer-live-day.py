@@ -84,6 +84,15 @@ def upload_from_admin(page, path):
     page.locator(".admin-notice.success").wait_for()
 
 
+def set_meet_checkin(page, event_date, event_title, verb):
+    open_admin(page)
+    page.get_by_role("button", name="Sessions & jobs").click()
+    shown_date = datetime.fromisoformat(event_date).strftime("%b %d, %Y").replace(" 0", " ")
+    label = f"{verb} check-in for {event_title} on {shown_date}"
+    page.get_by_role("button", name=label, exact=True).click()
+    page.locator(".admin-notice.success").wait_for()
+
+
 with sync_playwright() as playwright:
     executable = os.environ.get("JTSC_CHROMIUM_EXECUTABLE")
     browser = playwright.chromium.launch(headless=True, executable_path=executable or None)
@@ -128,6 +137,25 @@ with sync_playwright() as playwright:
         wait_ready(page)
         page.get_by_role("button", name="Not open").first.wait_for()
         assert page.get_by_role("button", name="Not open").first.is_disabled()
+        selected_date, selected_title = page.locator(".signup-toolbar select").input_value().split("|||", 1)
+        set_meet_checkin(page, selected_date, selected_title, "Open")
+        opened = page.request.get(f"{BASE_URL}/api/public").json()
+        opened_meet = next(item for item in opened["signupDates"]
+                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title)
+        assert opened_meet["checkinMode"] == "open" and opened_meet["checkinOpen"] is True
+        page.goto(f"{BASE_URL}/volunteers")
+        wait_ready(page)
+        assert page.get_by_role("button", name="Check in").first.is_enabled()
+        set_meet_checkin(page, selected_date, selected_title, "Close")
+        page.screenshot(path="/tmp/jtsc-admin-meet-controls.png", full_page=True)
+        closed = page.request.get(f"{BASE_URL}/api/public").json()
+        closed_meet = next(item for item in closed["signupDates"]
+                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title)
+        assert closed_meet["checkinMode"] == "closed" and closed_meet["checkinOpen"] is False
+        page.goto(f"{BASE_URL}/volunteers")
+        wait_ready(page)
+        page.get_by_role("button", name="Closed").first.wait_for()
+        assert page.get_by_role("button", name="Closed").first.is_disabled()
 
     open_admin(page)
     reset = post_json(page, "/api/admin", {"action": "reset_signup_data", "confirm": "RESET"})
@@ -139,6 +167,7 @@ with sync_playwright() as playwright:
     today_file = make_csv(today, meet_title, [
         ("Alice Helper", "Timer", 5),
         ("Bob Helper", "Console Operator", 5),
+        ("Dana Helper", "Concessions", 4),
     ])
     tomorrow_file = make_csv(tomorrow, meet_title, [("Charlie Helper", "Runner", 3)])
     try:
@@ -165,11 +194,28 @@ with sync_playwright() as playwright:
         page.get_by_text(re.compile("saved status was confirmed")).wait_for()
         bob.get_by_text("On deck").wait_for()
 
+        # An admin can close a live meet without trapping volunteers who are already
+        # on deck. New check-ins are rejected by the server, while check-out stays live.
+        set_meet_checkin(page, today.isoformat(), meet_title, "Close")
+        public = page.request.get(f"{BASE_URL}/api/public").json()
+        dana_row = next(row for row in public["signupRows"] if row["volunteerName"] == "Dana Helper")
+        closed_checkin = post_json(page, "/api/checkins", {
+            "action": "signup_checkin", "id": dana_row["id"], "creditedHours": 4,
+        })
+        assert closed_checkin.status == 409
+        assert "closed by an admin" in closed_checkin.json()["error"]
+        page.goto(f"{BASE_URL}/volunteers")
+        wait_ready(page)
+        bob = page.locator("article.signup-person").filter(has_text="Bob Helper")
+        assert bob.get_by_role("button", name="Check out").is_enabled()
+        bob.get_by_role("button", name="Check out").click()
+        bob.get_by_text("Completed").wait_for()
+
         open_admin(page)
         upload_from_admin(page, tomorrow_file)
         public = page.request.get(f"{BASE_URL}/api/public").json()
         same_title_rows = [row for row in public["signupRows"] if row["eventTitle"] == meet_title]
-        assert len(same_title_rows) == 3
+        assert len(same_title_rows) == 4
         assert {row["eventDate"] for row in same_title_rows} == {today.isoformat(), tomorrow.isoformat()}
         assert next(row for row in same_title_rows if row["volunteerName"] == "Alice Helper")["completed"] is True
         future_row = next(row for row in same_title_rows if row["eventDate"] == tomorrow.isoformat())

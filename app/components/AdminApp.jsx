@@ -614,6 +614,7 @@ function AdminApp() {
           sessions: sessions2,
           jobs: jobs2,
           signupImports: data?.signupImports ?? [],
+          signupDates: data?.signupDates ?? [],
           busy,
           mutate,
           bulkAddJobs,
@@ -736,11 +737,12 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SignupImportPanel({ signupImports, busy, importSignup, mutate, resetAllowed }) {
+function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mutate, resetAllowed }) {
   const [file, setFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
   const [resetConfirm, setResetConfirm] = useState("");
+  const [controlBusy, setControlBusy] = useState("");
   async function submit(event) {
     event.preventDefault();
     // React clears currentTarget once the event finishes dispatching, so the form
@@ -754,6 +756,23 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, resetAll
     if (await importSignup(file)) {
       setFile(null);
       form?.reset();
+    }
+  }
+  async function setMeetCheckin(meet, checkinMode) {
+    const key = `${meet.eventDate}|||${meet.eventTitle}`;
+    setControlBusy(key);
+    const verb = checkinMode === "open" ? "opened" : checkinMode === "closed" ? "closed" : "returned to its schedule";
+    try {
+      if (await mutate({
+        action: "set_signup_meet_checkin",
+        eventDate: meet.eventDate,
+        eventTitle: meet.eventTitle,
+        checkinMode
+      }, `${meet.eventTitle} check-in was ${verb}.`)) {
+        window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
+      }
+    } finally {
+      setControlBusy("");
     }
   }
   return <section className="panel signup-import-panel">
@@ -780,6 +799,40 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, resetAll
       <p className="upload-hint">{file ? `${file.name} is ready to import.` : "Maximum file size: 5 MB"}</p>
       {localMessage && <p className="upload-error" role="status">{localMessage}</p>}
     </form>
+    <div className="meet-checkin-controls">
+      <div className="meet-checkin-head">
+        <div><strong>Check-in controls</strong><span>Override the meet date when the desk needs to open early or close.</span></div>
+        <span>{signupDates.length}</span>
+      </div>
+      {signupDates.length ? signupDates.map((meet) => {
+        const key = `${meet.eventDate}|||${meet.eventTitle}`;
+        const isPending = controlBusy === key;
+        const status = meet.checkinMode === "open"
+          ? "Manually open"
+          : meet.checkinMode === "closed"
+            ? "Manually closed"
+            : meet.checkinOpen ? "Open today" : "Follows schedule";
+        return <div className="meet-checkin-row" key={key}>
+          <div className="meet-checkin-copy">
+            <strong>{meet.eventTitle}</strong>
+            <span>{dateLabel(meet.eventDate)} · {meet.assignedCount} assigned</span>
+          </div>
+          <span className={`meet-checkin-status ${meet.checkinOpen ? "is-open" : "is-closed"}`}>{status}</span>
+          <div className="meet-checkin-actions">
+            <button type="button" className={meet.checkinOpen ? "checkin-close" : "admin-primary"}
+              disabled={busy} aria-busy={isPending}
+              aria-label={`${meet.checkinOpen ? "Close" : "Open"} check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)}`}
+              onClick={() => void setMeetCheckin(meet, meet.checkinOpen ? "closed" : "open")}>
+              {isPending ? "Saving…" : meet.checkinOpen ? "Close check-in" : "Open check-in"}
+            </button>
+            {meet.checkinMode !== "scheduled" && <button type="button" className="schedule-link" disabled={busy}
+              aria-label={`Use scheduled check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)}`}
+              onClick={() => void setMeetCheckin(meet, "scheduled")}>Use schedule</button>}
+          </div>
+        </div>;
+      }) : <div className="panel-empty compact"><span>〰</span>Import a signup file to control meet check-in.</div>}
+      <p className="meet-checkin-note">Closing blocks new check-ins. Volunteers already on deck can still check out.</p>
+    </div>
     <div className="import-history">
       <div className="import-history-head"><strong>Recent imports</strong><span>{signupImports.length}</span></div>
       {signupImports.length ? signupImports.map((item) => <div className="import-history-row" key={item.id}>
@@ -815,7 +868,7 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, resetAll
     </div>}
   </section>;
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup, resetAllowed }) {
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, signupDates, busy, mutate, bulkAddJobs, importSignup, resetAllowed }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -880,7 +933,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, 
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, resetAllowed }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, signupDates, busy, importSignup, mutate, resetAllowed }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",

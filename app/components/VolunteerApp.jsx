@@ -72,7 +72,7 @@ function VolunteerApp() {
         if (keys.includes(current)) return current;
         const todayKey = keys.find((key) => key.startsWith(`${localIsoDate()}|||`));
         // Oldest-first, so this lands on the next meet rather than the furthest away one.
-        const upcoming = [...result.signupDates].reverse().find((item) => item.eventDate >= localIsoDate());
+        const upcoming = [...result.signupDates].reverse().find((item) => item.checkinOpen || item.eventDate >= localIsoDate());
         return todayKey || (upcoming ? `${upcoming.eventDate}|||${upcoming.eventTitle}` : "");
       });
       setSignupCredits((current) => ({
@@ -140,15 +140,17 @@ function VolunteerApp() {
 
   // A check-in desk is always working today's meet, so past ones are out of the way
   // by default. They stay reachable: a shift checked in yesterday still needs checking out.
-  const currentMeets = (data?.signupDates ?? []).filter((item) => item.eventDate >= clubToday);
-  const pastMeets = (data?.signupDates ?? []).filter((item) => item.eventDate < clubToday);
+  const currentMeets = (data?.signupDates ?? []).filter((item) => item.checkinOpen || item.eventDate >= clubToday);
+  const pastMeets = (data?.signupDates ?? []).filter((item) => !item.checkinOpen && item.eventDate < clubToday);
   const visibleMeets = showPastMeets ? [...currentMeets, ...pastMeets] : currentMeets;
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
   );
   const importedActive = (data?.signupRows ?? []).filter((row) => row.checkedInAt && !row.completed);
   const manualActive = (data?.activeEntries ?? []).filter((entry) => entry.sessionId === Number(sessionId));
-  const canCheckInSelectedMeet = selectedEventDate === clubToday;
+  const canCheckInSelectedMeet = Boolean(selectedProgress?.checkinOpen);
+  const selectedMeetClosed = selectedProgress?.checkinMode === "closed";
+  const selectedMeetManuallyOpen = selectedProgress?.checkinMode === "open";
   const sessionIsToday = session?.sessionDate === clubToday;
   const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0 && sessionIsToday);
 
@@ -336,9 +338,13 @@ function VolunteerApp() {
                 <i aria-hidden="true">·</i>
                 <b>{selectedProgress.assignedCount}</b> expected
               </span>}
-              <small>{canCheckInSelectedMeet
-                ? "Credit comes from the signup file and can be adjusted before check-in."
-                : `This roster is view-only. Check-in opens ${displayDate(selectedEventDate)}.`}</small>
+              <small>{selectedMeetClosed
+                ? "Check-in is closed by an admin. Volunteers already on deck can still check out."
+                : selectedMeetManuallyOpen
+                  ? "An admin opened check-in for this meet. Credit can be adjusted before check-in."
+                  : canCheckInSelectedMeet
+                    ? "Credit comes from the signup file and can be adjusted before check-in."
+                    : `This roster is view-only. Check-in opens ${displayDate(selectedEventDate)}.`}</small>
             </div>
 
             <div className="signup-list">
@@ -350,8 +356,8 @@ function VolunteerApp() {
                   <div className="signup-person-copy">
                     <div className="signup-name-line">
                       <strong>{row.volunteerName}</strong>
-                      <span className={`signup-status ${row.completed ? "done" : active ? "live" : "ready"}`}>
-                        {row.completed ? "Completed" : active ? "On deck" : canCheckInSelectedMeet ? "Ready" : "Upcoming"}
+                      <span className={`signup-status ${row.completed ? "done" : active ? "live" : selectedMeetClosed ? "closed" : "ready"}`}>
+                        {row.completed ? "Completed" : active ? "On deck" : selectedMeetClosed ? "Closed" : canCheckInSelectedMeet ? "Ready" : "Upcoming"}
                       </span>
                     </div>
                     <span>{row.jobName} · {shiftTime(row.eventStart, row.eventEnd)} · {row.slot}</span>
@@ -375,7 +381,7 @@ function VolunteerApp() {
                         type="button"
                         disabled={busyId !== null || (!active && !canCheckInSelectedMeet)}
                         onClick={() => void (active ? signupCheckOut(row) : signupCheckIn(row))}
-                      >{busyId === `signup-${row.id}` ? "Saving…" : active ? "Check out" : canCheckInSelectedMeet ? "Check in" : "Not open"}</button>}
+                      >{busyId === `signup-${row.id}` ? "Saving…" : active ? "Check out" : canCheckInSelectedMeet ? "Check in" : selectedMeetClosed ? "Closed" : "Not open"}</button>}
                     {/* Only a check-in made at this desk can be undone; rows the file marked
                         completed have no checkedInAt and stay exactly as the file recorded them. */}
                     {row.checkedInAt && <button
