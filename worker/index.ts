@@ -23,7 +23,7 @@ interface ExecutionContext {
 // browser that cached one of those failures can recover without manual cache
 // clearing. The worker maps this public prefix back to the build's /assets/
 // directory below.
-const PUBLIC_ASSET_PREFIX = "/jtsc-card-assets-20260908/";
+const PUBLIC_ASSET_PREFIX = "/jtsc-card-assets-20260914/";
 
 async function fetchAsset(request: Request, env: Env, pathname: string): Promise<Response> {
   const assetUrl = new URL(request.url);

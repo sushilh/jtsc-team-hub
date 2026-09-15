@@ -8,7 +8,7 @@ const spaceGrotesk = Space_Grotesk({ variable: "--font-display", subsets: ["lati
 const dmSans = DM_Sans({ variable: "--font-body", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://jtsc-achievement-card-studio.lion-sushilh.chatgpt.site"),
+  metadataBase: new URL("https://jtsc-team-hub.sushilh.workers.dev"),
   title: { default: "JTSC Team Hub", template: "%s · Jenks Trojan Swim Club" },
   description: "Volunteer check-in, meet administration, and swimmer achievement cards in one JTSC team hub.",
   openGraph: {

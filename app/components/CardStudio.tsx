@@ -11,6 +11,20 @@ import { drawMultiEventCard } from "../../lib/multi-event-card";
 type CardFormat = "portrait" | "square";
 type CardTemplate = "classic" | "signature" | "race";
 
+const celebrationColors = ["#741b38", "#c9963a", "#4db6a0", "#f0c347", "#54C7DB", "#ffffff"];
+const celebrationParticles = Array.from({ length: 18 }, (_, index) => {
+  const angleJitter = Math.sin((index + 1) * 12.9898) * 0.2;
+  const distance = 60 + ((index * 47) % 80);
+  const angle = (index / 18) * Math.PI * 2 + angleJitter;
+  return {
+    x: Math.cos(angle) * distance,
+    y: Math.sin(angle) * distance,
+    color: celebrationColors[index % celebrationColors.length],
+    size: 4 + ((index * 7) % 5),
+    delay: ((index * 11) % 15) / 100,
+  };
+});
+
 type CardDrawingState = {
   name: string;
   classYear: string;
@@ -378,21 +392,9 @@ function drawCard(
 
 /** Burst of colored particles on card export */
 function CelebrationBurst() {
-  const colors = ["#741b38", "#c9963a", "#4db6a0", "#f0c347", "#54C7DB", "#ffffff"];
-  const particles = useMemo(() => Array.from({ length: 18 }, (_, i) => {
-    const angle = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-    const distance = 60 + Math.random() * 80;
-    return {
-      x: Math.cos(angle) * distance,
-      y: Math.sin(angle) * distance,
-      color: colors[i % colors.length],
-      size: 4 + Math.random() * 4,
-      delay: Math.random() * 0.15,
-    };
-  }), []);
   return (
     <div className="celebration-burst" aria-hidden="true">
-      {particles.map((p, i) => (
+      {celebrationParticles.map((p, i) => (
         <span key={i} className="particle" style={{
           "--bx": `${p.x}px`, "--by": `${p.y}px`,
           background: p.color,
@@ -622,7 +624,10 @@ export default function CardStudio() {
               onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setDragOver(true); }}
               onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragOver(false); }}
               onDrop={event => { event.preventDefault(); setDragOver(false); if (event.dataTransfer.files.length !== 1) { setPhotoError("Drop one swimmer photo at a time."); return; } void preparePhoto(event.dataTransfer.files[0]); }}>
-              <span className="upload-thumbnail" aria-hidden="true">{photoUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={photoUrl} alt="" /> : <span className="upload-icon">↑</span>}</span>
+              <span className="upload-thumbnail" aria-hidden="true">{photoUrl ? <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photoUrl} alt="" />
+              </> : <span className="upload-icon">↑</span>}</span>
               <span><b>{photoLoading ? "Processing photo…" : photo ? "Replace photo" : "Choose a photo"}</b><small>{dragOver ? "Release to add your photo" : "or drag and drop it here"}</small></span>
               <b className="button-arrow" aria-hidden="true">↗</b>
             </button>

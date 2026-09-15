@@ -20,6 +20,7 @@ See `DESIGN.md`. Existing runtime CSS is the canonical token source. No new fram
 | Scrollbar | app/site-design.css | DESIGN.md | Global baseline, platform forced colors | Computed styles |
 | Date | Native date input in CardStudio | Existing date-only helper | Platform-owned popup accepted | Existing date unit tests |
 | Select/Listbox | Native select in MeetDayStudio | Existing studio controls | Platform-owned popup accepted | No select added or modified in this feature |
+| Navigation | ClubHub route-backed tabs | This contract | Five peer tools; horizontally scrollable on narrow screens | Keyboard and narrow-width route checks |
 
 ## Event-list flow ledger
 
@@ -36,6 +37,8 @@ Six is the presentation limit, visible in the editor; additional input is not si
 ## Navigation, recovery and data scope
 
 ClubHub retains studio state across tabs. No event data is put in the URL, sent to a server, or persisted on disk. A page-unload warning protects edited event lists; reload otherwise clears local drafts. Removal is reversible locally, not a deletion of a shared record. This feature does not call any volunteer mutation endpoint. Local edits/export work after the app and assets load even when offline; no remote save or retry is represented.
+
+The New Parent Information Guide is a read-only peer tab with the stable `parents` hash and a bookmarkable `/parent-guide` route. It is transcribed and reorganized from the four club handout photographs supplied on September 14, 2026. Internal guide links use section anchors; external team-store, GoMotion, email, and telephone links retain native browser navigation. Selecting another Team Hub tab keeps the established in-page tab behavior.
 
 ## Verification and migration scope
 

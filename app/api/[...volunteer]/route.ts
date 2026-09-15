@@ -1,4 +1,4 @@
-import { proxyVolunteerRequest } from "../../../lib/volunteer-proxy.mjs";
+import { handleVolunteerRequest } from "../../../lib/volunteer-service.mjs";
 
-export const GET = (request: Request) => proxyVolunteerRequest(request);
-export const POST = (request: Request) => proxyVolunteerRequest(request);
+export const GET = (request: Request) => handleVolunteerRequest(request);
+export const POST = (request: Request) => handleVolunteerRequest(request);

@@ -40,3 +40,20 @@ test("Cloudflare worker versions browser assets and does not cache missing files
   assert.match(worker, /replaceAll\("\/assets\/", PUBLIC_ASSET_PREFIX\)/);
   assert.match(worker, /headers\.set\("Cache-Control", "no-store"\)/);
 });
+
+test("team hub includes the photographed New Parent Information Guide as a tab and route", async () => {
+  const [hub, guide, route] = await Promise.all([
+    readFile(new URL("../app/components/ClubHub.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ParentGuide.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/parent-guide/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(hub, /id: "parents", label: "Parent guide"/);
+  assert.match(hub, /panel-parents/);
+  assert.match(route, /initialTab="parents"/);
+  assert.match(route, /New Parent Guide \| JTSC/);
+  assert.match(guide, /New Parent Information Guide/);
+  assert.match(guide, /Short Course/);
+  assert.match(guide, /Meet-day expectations/);
+  assert.match(guide, /Volunteer requirements & roles/);
+  assert.match(guide, /Guide updated September 14, 2026/);
+});

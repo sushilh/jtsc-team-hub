@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-const ExperienceContext = createContext({ motion: false, paused: false, toggleMotion: () => {}, notify: (_message: string) => {} });
+const ExperienceContext = createContext({ motion: false, paused: false, toggleMotion: () => {}, notify: (message: string) => { void message; } });
 export const useStudioExperience = () => useContext(ExperienceContext);
 
 /** One feedback and motion owner for both studios; critical errors remain inline. */

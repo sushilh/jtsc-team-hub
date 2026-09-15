@@ -178,6 +178,32 @@ function AdminApp() {
     setAuthenticated(false);
     setData(null);
   }
+  async function importSignup(file) {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/admin/signup-import", { method: "POST", body: form });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "The signup file could not be imported.");
+      const imported = result.import;
+      setMessage({
+        kind: "success",
+        text: result.duplicate
+          ? `${imported.fileName || file.name} was already imported. No duplicate rows were added.`
+          : `${imported.assignedCount} assigned volunteers are ready to check in across ${imported.eventCount} events.`,
+      });
+      await load();
+      window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
+      return true;
+    } catch (error) {
+      setMessage({ kind: "error", text: error instanceof Error ? error.message : "The signup file could not be imported." });
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
   const entries = useMemo(() => data?.entries ?? [], [data]);
   const sessions2 = data?.sessions ?? [];
   const jobs2 = data?.jobs ?? [];
@@ -229,6 +255,7 @@ function AdminApp() {
         ] }),
         jsx("p", { children: "Manage sessions, swimmers, volunteer hours, and meet reports." }),
         jsxs("form", {
+          noValidate: true,
           onSubmit: login,
           children: [jsxs("label", { children: [jsx("span", { children: "Admin access code" }), jsx("input", {
             type: "password",
@@ -440,9 +467,11 @@ function AdminApp() {
         tab === "sessions" && jsx(SessionsPanel, {
           sessions: sessions2,
           jobs: jobs2,
+          signupImports: data?.signupImports ?? [],
           busy,
           mutate,
-          bulkAddJobs
+          bulkAddJobs,
+          importSignup
         }),
         tab === "swimmers" && jsx(SwimmersPanel, {
           swimmers: swimmers2,
@@ -540,7 +569,54 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate, bulkAddJobs }) {
+function SignupImportPanel({ signupImports, busy, importSignup }) {
+  const [file, setFile] = useState(null);
+  const [localMessage, setLocalMessage] = useState("");
+  async function submit(event) {
+    event.preventDefault();
+    if (!file) {
+      setLocalMessage("Choose the Job Signup Excel file first.");
+      return;
+    }
+    setLocalMessage("");
+    if (await importSignup(file)) {
+      setFile(null);
+      event.currentTarget.reset();
+    }
+  }
+  return <section className="panel signup-import-panel">
+    <div className="signup-import-copy">
+      <span className="panel-kicker">MEET ROSTER</span>
+      <h2>Import Job Signup</h2>
+      <p>Upload the club’s <strong>.xls or .xlsx</strong> export. Assigned names, swimmer / account names, jobs, times, slots, and credit will become the check-in list.</p>
+      <ul>
+        <li>Unfilled slots stay in the saved workbook.</li>
+        <li>Uploading the same file twice will not duplicate volunteers.</li>
+        <li>Download keeps the original 12 columns in the same order.</li>
+      </ul>
+    </div>
+    <form className="signup-upload-form" noValidate onSubmit={submit}>
+      <label>
+        <span>Job Signup file</span>
+        <input type="file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => {
+          setFile(event.target.files?.[0] ?? null);
+          setLocalMessage("");
+        }} />
+      </label>
+      <button className="admin-primary" disabled={busy || !file}>{busy ? "Importing…" : "Import signup file →"}</button>
+      <p className="upload-hint">{file ? `${file.name} is ready to import.` : "Maximum file size: 5 MB"}</p>
+      {localMessage && <p className="upload-error" role="status">{localMessage}</p>}
+    </form>
+    <div className="import-history">
+      <div className="import-history-head"><strong>Recent imports</strong><span>{signupImports.length}</span></div>
+      {signupImports.length ? signupImports.map((item) => <div className="import-history-row" key={item.id}>
+        <div><strong>{item.fileName}</strong><span>{item.assignedCount} assigned · {item.eventCount} events · {item.rowCount} rows</span><small>Uploaded {stamp(item.uploadedAt)}</small></div>
+        <a className="export-button" href={`/api/admin/signup-export?importId=${item.id}`}>Download .xls ↓</a>
+      </div>) : <div className="panel-empty compact"><span>〰</span>No signup file imported yet.</div>}
+    </div>
+  </section>;
+}
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -605,7 +681,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate, bulkAdd
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",
@@ -614,6 +690,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate, bulkAdd
           children: "NEW MEET"
         }), jsx("h2", { children: "Create a session" })] })
       }), jsxs("form", {
+        noValidate: true,
         onSubmit: createSession,
         className: "admin-form",
         children: [
@@ -663,6 +740,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, busy, mutate, bulkAdd
           children: "ASSIGNMENTS"
         }), jsx("h2", { children: "Add a volunteer job" })] })
       }), jsxs("form", {
+        noValidate: true,
         onSubmit: addJob,
         className: "admin-form",
         children: [
@@ -883,6 +961,7 @@ function SwimmersPanel({ swimmers: swimmers2, busy, mutate }) {
           children: "ROSTER"
         }), jsx("h2", { children: "Add a swimmer" })] })
       }), jsxs("form", {
+        noValidate: true,
         onSubmit: submit,
         className: "admin-form single",
         children: [

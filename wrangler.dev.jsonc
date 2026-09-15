@@ -2,5 +2,12 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "jtsc-achievement-card-studio-local",
   "main": "./worker/index.ts",
-  "compatibility_date": "2026-05-15"
+  "compatibility_date": "2026-05-15",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jtsc-volunteer-crew",
+      "database_id": "5b8010c6-1094-453d-9e18-ae9066a27199"
+    }
+  ]
 }

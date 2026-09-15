@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StudioExperience from "./StudioExperience";
 import CardStudio from "./CardStudio";
 import MeetDayStudio from "./MeetDayStudio";
 import VolunteerApp from "./VolunteerApp";
 import AdminApp from "./AdminApp";
+import ParentGuide from "./ParentGuide";
 
 const tabs = [
   { id: "studio", label: "Achievement studio" },
   { id: "meet-day", label: "Meet Day Studio" },
   { id: "volunteers", label: "Volunteer check-in" },
   { id: "admin", label: "Volunteer admin" },
+  { id: "parents", label: "Parent guide" },
 ] as const;
 type Tab = typeof tabs[number]["id"];
 
@@ -51,11 +53,8 @@ function useScrollReveal() {
 export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab }) {
   const [active, setActive] = useState<Tab>(initialTab);
   const [visited, setVisited] = useState<Tab[]>([initialTab]);
-  const [mounted, setMounted] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const revealRef = useScrollReveal();
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     function readHash() {
@@ -80,7 +79,7 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
   return <StudioExperience>
     <FloatingShapes />
     <div className="club-hub" ref={revealRef}>
-      <header className="club-header" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.5s ease" }}>
+      <header className="club-header">
         <div className="club-identity">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/jenks-trojan-logo.png" alt="Jenks Trojan" width="34" height="40" style={{ filter: "drop-shadow(0 2px 4px rgba(116,27,56,0.15))" }} />
@@ -114,6 +113,7 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
       <section id="panel-meet-day" role="tabpanel" aria-labelledby="tab-meet-day" hidden={active !== "meet-day"}>{visited.includes("meet-day") && <MeetDayStudio />}</section>
       <section id="panel-volunteers" role="tabpanel" aria-labelledby="tab-volunteers" hidden={active !== "volunteers"}>{visited.includes("volunteers") && <VolunteerApp />}</section>
       <section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" hidden={active !== "admin"}>{active === "admin" && <AdminApp />}</section>
+      <section id="panel-parents" role="tabpanel" aria-labelledby="tab-parents" hidden={active !== "parents"}>{visited.includes("parents") && <ParentGuide />}</section>
     </div>
   </StudioExperience>;
 }
