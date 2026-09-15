@@ -82,7 +82,7 @@
   .studio-shell .canvas-stage canvas { width: min(100%,360px); max-height: none; }
 }
 
-/* Canvas frame: crossfade overlay sits on top of the main canvas */
+/* Only the running transition exposes the previous card; finished/canceled fades stay hidden. */
 .canvas-frame { position: relative; display: inline-block; }
 .canvas-frame canvas { display: block; }
-.preview-crossfade { position: absolute; inset: 0; width: 100% !important; height: 100% !important; pointer-events: none; background: transparent !important; box-shadow: none !important; }
+.preview-crossfade { position: absolute; inset: 0; opacity: 0; width: 100% !important; height: 100% !important; pointer-events: none; background: transparent !important; box-shadow: none !important; }

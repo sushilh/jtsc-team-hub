@@ -492,19 +492,20 @@ export default function CardStudio() {
   useEffect(() => {
     if (!canvasRef.current) return;
     const overlay = fadeCanvasRef.current;
+    let transition: Animation | undefined;
     if (overlay && lastTemplate.current && lastTemplate.current !== template && motion) {
-      overlay.getAnimations().forEach(animation => animation.cancel());
       overlay.width = canvasRef.current.width;
       overlay.height = canvasRef.current.height;
       overlay.getContext("2d")?.drawImage(canvasRef.current, 0, 0);
-      overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease-out" });
+      transition = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease-out" });
     }
     lastTemplate.current = template;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
     drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    // Edits and motion changes must immediately uncover the current card.
+    return () => transition?.cancel();
   }, [name, classYear, headline, subline, eventName, time, events, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, motion]);
 
-  useEffect(() => { if (!motion) fadeCanvasRef.current?.getAnimations().forEach(animation => animation.cancel()); }, [motion]);
   useEffect(() => () => { uploadSequence.current += 1; }, []);
 
   useEffect(() => {
