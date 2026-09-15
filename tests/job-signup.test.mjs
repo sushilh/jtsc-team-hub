@@ -7,8 +7,10 @@ import {
   normalizeEventDate,
   parseSignupWorkbook,
   signupExportRows,
+  usableVolunteerInfo,
   validateSignupHeaders,
 } from "../lib/job-signup.mjs";
+import { clubIsoDate, isResetAllowed, signupScopeKey } from "../lib/volunteer-service.mjs";
 
 function sampleWorkbook() {
   const sheet = XLSX.utils.aoa_to_sheet([
@@ -56,6 +58,47 @@ test("header and date validation give predictable results", () => {
   assert.equal(normalizeEventDate("07/23/2026 3:00:00 PM"), "2026-07-23");
   assert.equal(normalizeEventDate("2026-09-19"), "2026-09-19");
   assert.throws(() => validateSignupHeaders(["Event Title", "Account"]), /Missing:/);
+});
+
+test("CSV signup exports use the same parser as Excel files", () => {
+  const csv = [
+    SIGNUP_HEADERS.join(","),
+    '"Fall Meet","09/19/2026 7:00:00 AM","09/19/2026 12:00:00 PM","Parent, Pat","Timer",5,0,"Hrs.","#1","NO","","Taylor Parent"',
+  ].join("\n");
+  const parsed = parseSignupWorkbook(new TextEncoder().encode(csv));
+  assert.equal(parsed.rows.length, 1);
+  assert.equal(parsed.rows[0].volunteerName, "Taylor Parent");
+  assert.equal(parsed.rows[0].jobName, "Timer");
+});
+
+test("volunteer display names never expose email addresses or phone numbers", () => {
+  assert.equal(usableVolunteerInfo("helper@example.com"), "");
+  assert.equal(usableVolunteerInfo("Ben Lenski (918) 555-1212"), "Ben Lenski");
+
+  const account = "Matute, Gorka\ngorka@example.com";
+  const sheet = XLSX.utils.aoa_to_sheet([
+    SIGNUP_HEADERS,
+    ["Fall Meet", "09/19/2026 7:00:00 AM", "09/19/2026 12:00:00 PM", account, "Timer", 5, 0, "Hrs.", "#1", "NO", "", "Gorka Matute"],
+    ["Fall Meet", "09/19/2026 7:00:00 AM", "09/19/2026 12:00:00 PM", account, "Runner", 3, 0, "Hrs.", "#2", "NO", "", ""],
+  ]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, "Job Signup(0)");
+  const parsed = parseSignupWorkbook(XLSX.write(workbook, { type: "array", bookType: "biff8" }));
+  assert.deepEqual(parsed.rows.map((row) => row.volunteerName), ["Gorka Matute", "Gorka Matute"]);
+});
+
+test("club date and import scope keep same-title meets on different dates separate", () => {
+  assert.equal(clubIsoDate(new Date("2026-09-16T04:30:00Z")), "2026-09-15");
+  assert.notEqual(
+    signupScopeKey({ eventDate: "2026-09-19", eventTitle: "Recurring Meet" }),
+    signupScopeKey({ eventDate: "2026-09-20", eventTitle: "Recurring Meet" }),
+  );
+});
+
+test("the destructive reset is disabled unless a deployment opts in", () => {
+  assert.equal(isResetAllowed({}), false);
+  assert.equal(isResetAllowed({ DEMO_MODE: "false" }), false);
+  assert.equal(isResetAllowed({ ALLOW_DATA_RESET: "true" }), true);
 });
 
 test("a corrected re-import keeps desk check-ins on shifts that still exist", () => {

@@ -6,8 +6,11 @@ import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { volunteerJobCatalog, volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
 
 function today() {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 function timeLabel(value) {
   const [hour, minute] = value.split(":").map(Number);
@@ -60,10 +63,9 @@ function AdminApp() {
   const [tab, setTab] = useState("overview");
   const [message, setMessage] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [reportSession, setReportSession] = useState("all");
   const [reportMeet, setReportMeet] = useState("all");
   const [ledgerView, setLedgerView] = useState("people");
-  const [hourEdits, setHourEdits] = useState({});
+  const [showPin, setShowPin] = useState(false);
   const load = useCallback(async () => {
     const response = await fetch("/api/admin", { cache: "no-store" });
     if (response.status === 401) {
@@ -75,7 +77,6 @@ function AdminApp() {
     if (!response.ok) throw new Error(result.error || "Unable to load admin data.");
     setAuthenticated(true);
     setData(result);
-    setHourEdits(Object.fromEntries(result.entries.map((entry) => [entry.id, String(entry.creditedHours)])));
   }, []);
   useEffect(() => {
     // Fetch restores the current upstream session, including its authorization state.
@@ -181,6 +182,14 @@ function AdminApp() {
     setData(null);
   }
   async function importSignup(file) {
+    if (!/\.(?:xlsx?|csv)$/i.test(file.name)) {
+      setMessage({ kind: "error", text: "Choose a Job Signup .xls, .xlsx, or .csv file." });
+      return false;
+    }
+    if (!file.size || file.size > 5 * 1024 * 1024) {
+      setMessage({ kind: "error", text: file.size ? "The signup file must be smaller than 5 MB." : "The signup file is empty." });
+      return false;
+    }
     setBusy(true);
     setMessage(null);
     try {
@@ -194,6 +203,8 @@ function AdminApp() {
         kind: "success",
         text: result.duplicate
           ? `${imported.fileName || file.name} was already imported. No duplicate rows were added.`
+          : result.resumed
+          ? `${imported.fileName || file.name} finished activating after an interrupted upload. The full roster is ready.`
           : imported.assignedCount === 0
           ? `${imported.rowCount} shifts were imported, but no volunteer names are in this file yet. Export the Job Signup again once parents have signed up, then re-import it here.`
           : [
@@ -213,9 +224,9 @@ function AdminApp() {
     }
   }
   const entries = useMemo(() => data?.entries ?? [], [data]);
-  const sessions2 = data?.sessions ?? [];
-  const jobs2 = data?.jobs ?? [];
-  const swimmers2 = data?.swimmers ?? [];
+  const sessions2 = useMemo(() => data?.sessions ?? [], [data]);
+  const jobs2 = useMemo(() => data?.jobs ?? [], [data]);
+  const swimmers2 = useMemo(() => data?.swimmers ?? [], [data]);
   // The overview has to count the signup roster, which is how a meet actually runs, as
   // well as walk-ins. Counting entries alone left these tiles frozen all meet long.
   const overviewStats = useMemo(() => {
@@ -240,12 +251,11 @@ function AdminApp() {
   const creditedTotal = overviewStats.hours;
   const activeCount = overviewStats.onDeck;
   const completedCount = overviewStats.completed;
-  const filteredEntries = reportSession === "all" ? entries : entries.filter((entry) => entry.sessionId === Number(reportSession));
 
   // The hour ledger has to cover both ways a shift gets credited: the signup roster,
   // which is the normal meet-day path, and walk-in entries recorded against a manual
   // session. Points-based jobs (donations) are counted apart from hours, never summed in.
-  const signupRows2 = data?.signupRows ?? [];
+  const signupRows2 = useMemo(() => data?.signupRows ?? [], [data]);
   const ledgerMeets = useMemo(() => {
     const seen = new Map();
     for (const row of signupRows2) {
@@ -380,15 +390,28 @@ function AdminApp() {
         jsxs("form", {
           noValidate: true,
           onSubmit: login,
-          children: [jsxs("label", { children: [jsx("span", { children: "Admin access code" }), jsx("input", {
-            type: "password",
-            inputMode: "numeric",
-            autoFocus: true,
-            value: pin,
-            onChange: (event) => setPin(event.target.value),
-            placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022"
-          })] }), jsxs("button", {
+          children: [jsx("label", { htmlFor: "admin-pin", children: jsx("span", { children: "Admin access code" }) }), jsxs("span", {
+            className: "login-secret",
+            children: [jsx("input", {
+              id: "admin-pin",
+              type: showPin ? "text" : "password",
+              inputMode: "numeric",
+              autoComplete: "current-password",
+              autoFocus: true,
+              value: pin,
+              onChange: (event) => setPin(event.target.value),
+              placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022"
+            }), jsx("button", {
+              type: "button",
+              className: "login-reveal",
+              onClick: () => setShowPin((current) => !current),
+              "aria-label": showPin ? "Hide admin access code" : "Show admin access code",
+              "aria-pressed": showPin,
+              children: showPin ? "Hide" : "Show"
+            })]
+          }), jsxs("button", {
             disabled: !pin || busy,
+            "aria-busy": busy,
             children: [busy ? "Checking\u2026" : "Enter admin portal", jsx("b", { children: "\u2192" })]
           })]
         }),
@@ -595,7 +618,7 @@ function AdminApp() {
           mutate,
           bulkAddJobs,
           importSignup,
-          resetAllowed: data?.resetAllowed !== false
+          resetAllowed: data?.resetAllowed === true
         }),
         tab === "swimmers" && jsx(SwimmersPanel, {
           swimmers: swimmers2,

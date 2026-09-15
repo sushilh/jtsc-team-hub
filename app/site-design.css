@@ -576,6 +576,13 @@ html { scrollbar-gutter: stable; }
   background: linear-gradient(135deg, var(--maroon), var(--maroon-dark));
   box-shadow: 0 4px 15px rgba(116, 27, 56, 0.3);
 }
+.login-secret { position: relative; display: block; }
+.login-card .login-secret input { width: 100%; padding-right: 74px; }
+.login-card form .login-secret .login-reveal {
+  position: absolute; right: 6px; top: 6px; width: 62px; height: 40px; padding: 0;
+  justify-content: center; border-radius: 9px; background: var(--maroon-soft); color: var(--maroon);
+  box-shadow: none; letter-spacing: .04em;
+}
 
 /* ── Metrics ── */
 .metric-grid { gap: 12px; border-bottom: none; }

@@ -4,7 +4,7 @@
 
 JTSC serves Oklahoma coaches and swim families in English/en-US. Dates are Gregorian date-only values, formatted without timezone shifts. Accessibility target: WCAG 2.2 AA for changed controls.
 
-The user's multi-event request (2026-09-09) authorizes one swimmer/achievement with several results. `README.md` documents browser-local drafts and the shared volunteer backend; `lib/volunteer-proxy.mjs` enforces existing API boundaries. No permission, retention, billing or legal policy changes are part of this feature. The public Cloudflare site and admin sign-in stay as authorized previously.
+The user's multi-event request (2026-09-09) authorizes one swimmer/achievement with several results. The volunteer requirements supplied through 2026-09-15 authorize imported Job Signup rosters, one-click meet-day check-in/out, admin-managed walk-in sessions, persisted credit, and same-format spreadsheet export. `README.md` documents browser-local studio drafts and the Cloudflare D1 volunteer backend; `lib/volunteer-service.mjs` owns the volunteer API and permission boundary. No billing or legal policy changes are part of this work.
 
 ## Visual contract
 
@@ -21,6 +21,9 @@ See `DESIGN.md`. Existing runtime CSS is the canonical token source. No new fram
 | Date | Native date input in CardStudio | Existing date-only helper | Platform-owned popup accepted | Existing date unit tests |
 | Select/Listbox | Native select in MeetDayStudio | Existing studio controls | Platform-owned popup accepted | No select added or modified in this feature |
 | Navigation | ClubHub route-backed tabs | This contract | Five peer tools; horizontally scrollable on narrow screens | Keyboard and narrow-width route checks |
+| Volunteer roster upload | SignupImportPanel + `lib/job-signup.mjs` | User-provided TeamUnify export | `.xls`, `.xlsx`, `.csv`; one file per action | Real workbook, duplicate, interrupted activation, export |
+| Volunteer mutations | VolunteerApp `postCheckin` + service API | User meet-day requirements | Imported assignment or walk-in | Success, conflict, lost-response reconciliation |
+| Admin authentication | AdminApp login + signed host-only cookie | Existing authorized admin portal | PIN with throttled failures | Reveal control, invalid PIN, throttle, session restore |
 
 ## Event-list flow ledger
 
@@ -40,6 +43,27 @@ ClubHub retains studio state across tabs. No event data is put in the URL, sent 
 
 The New Parent Information Guide is a read-only peer tab with the stable `parents` hash and a bookmarkable `/parent-guide` route. It is transcribed and reorganized from the four club handout photographs supplied on September 14, 2026. Internal guide links use section anchors; external team-store, GoMotion, email, and telephone links retain native browser navigation. Selecting another Team Hub tab keeps the established in-page tab behavior.
 
+## Volunteer meet-day flow ledger
+
+| Operation | Trigger | Pending | Success destination/feedback | Failure recovery | Focus |
+|---|---|---|---|---|---|
+| Import roster | Admin chooses one signup file and imports | One stable busy button; duplicate submissions blocked | Stay in Sessions & jobs; assigned/open counts and preserved check-ins reported | New rows stay inactive until every insert succeeds; an interrupted completed upload resumes activation | File picker area |
+| Check in expected volunteer | Check in on a roster row for today | Row action reads Saving; other mutation actions disabled | Stay on roster; row becomes On deck and appears in On deck now | Reload authoritative data after any error; if the requested state exists, confirm it instead of inviting a duplicate | Same row action |
+| Check out expected volunteer | Check out on row or On deck now | Same row-pending contract | Stay; row becomes Completed and credit is earned | Reload and reconcile completed state | Same row context |
+| Undo desk check-in | Undo on a check-in made by this desk | Same row-pending contract | Return assignment to expected list | File-originated completion cannot be undone | Same row context |
+| Add/check out walk-in | Manual form or On deck now | Form/row busy state | Clear the successful form; active list updates | Reload and compare new/removed entry identity | Form or row context |
+| Export signup | Download .xls for one import | Browser download | Original twelve-column order with completed credit applied | Non-200 response leaves source data unchanged | Link remains available |
+
+Roster activation scope is the exact Gregorian date-only value plus event title. A repeated title on another date is a separate meet and cannot deactivate or inherit attendance from the first. Corrected files preserve check-in state only when date, title, job, slot, and normalized volunteer name all match.
+
+Check-in uses `America/Chicago` as the club timezone. New expected and walk-in check-ins are allowed only on their scheduled date; future and past rosters remain viewable, while existing on-deck rows can still be checked out or undone. `ALLOW_EARLY_CHECKIN=true` is an explicit operational override and is off by default.
+
+Volunteer display names may be inferred from the file's Volunteer Info field, but public check-in and reports never display an email address or phone number as the person's name. When one exact account has one unambiguous supplied volunteer name, blank sibling shifts reuse that name; otherwise the account name remains the fallback. The unmodified source fields remain in D1 so same-format export can reproduce the original workbook columns.
+
+Admin form validation is app-owned. Dates must be real `YYYY-MM-DD` values, times must be valid 24-hour values, and end time must be later than start time. Missing sessions/entries return explicit 404 or conflict responses. Unexpected server details are not exposed to the browser.
+
+Admin PIN failures are keyed by a one-way value derived from the Cloudflare client address and limited to eight failures in fifteen minutes. The signed admin cookie remains host-only, HTTP-only, SameSite=Strict, and twelve hours. Clearing all volunteer data is disabled unless `ALLOW_DATA_RESET` or `DEMO_MODE` is explicitly true; local demos retain typed `RESET` confirmation.
+
 ## Verification and migration scope
 
-Run TypeScript, ESLint, npm test, DESIGN.md lint and strict premium audit. Browser tests in `tests/ui/multi-event.py` cover add, edit, error, remove, undo, maximum/empty rows, captions, template switching, portrait/square downloads, keyboard focus, narrow layout, tab retention and offline export. Compare Meet Day's existing inspector and caption flow. This slice changes achievement event controls and standardizes multiline fields through `AutoGrowTextarea`; unrelated admin behavior is not migrated. Static audit scans the app; browser verification is scoped to changed workflows.
+Run TypeScript, ESLint, npm test, DESIGN.md lint and strict premium audit. Browser tests in `tests/ui/multi-event.py` cover the achievement workflow. `tests/ui/volunteer-live-day.py` covers empty/load-failure recovery, admin login/reveal, the supplied signup workbook, same-format download, same-title meets on different dates, normal check-in/out, lost-response recovery, future-date blocking, invalid times, PIN throttling, and narrow layout. Static audit scans the app; browser verification is scoped to changed workflows.

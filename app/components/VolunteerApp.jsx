@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobHourOptions } from "../../lib/volunteer-jobs.mjs";
 
 function localIsoDate() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function displayDate(value) {
@@ -54,12 +57,14 @@ function VolunteerApp() {
   const [signupCredits, setSignupCredits] = useState({});
   const [notice, setNotice] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const response = await fetch(`/api/public?date=${localIsoDate()}`, { cache: "no-store" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to load the volunteer desk.");
+      setLoadFailed(false);
       setData(result);
       setSessionId((current) => current || result.sessions.find((session) => session.sessionDate === localIsoDate())?.id || result.sessions[0]?.id || "");
       setSignupDate((current) => {
@@ -73,14 +78,19 @@ function VolunteerApp() {
       setSignupCredits((current) => ({
         ...Object.fromEntries(result.signupRows.map((row) => [row.id, current[row.id] ?? String(row.creditedValue ?? row.creditPossible)])),
       }));
+      return result;
     } catch (error) {
+      setLoadFailed(true);
       setNotice({ kind: "error", text: error instanceof Error ? error.message : "Unable to load the volunteer desk." });
+      throw error;
     }
   }, []);
 
   useEffect(() => {
-    void load();
-    const refresh = () => void load();
+    // The fetch owns restoring the server-backed desk state after this route mounts.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load().catch(() => {});
+    const refresh = () => void load().catch(() => {});
     window.addEventListener("jtsc:refresh-volunteers", refresh);
     return () => window.removeEventListener("jtsc:refresh-volunteers", refresh);
   }, [load]);
@@ -98,6 +108,7 @@ function VolunteerApp() {
   }, [selectedJob]);
 
   const [selectedEventDate, selectedEventTitle] = signupDate.split("|||");
+  const clubToday = localIsoDate();
   const meetRows = useMemo(() => (data?.signupRows ?? []).filter(
     (row) => row.eventDate === selectedEventDate && row.eventTitle === selectedEventTitle,
   ), [data, selectedEventDate, selectedEventTitle]);
@@ -129,17 +140,40 @@ function VolunteerApp() {
 
   // A check-in desk is always working today's meet, so past ones are out of the way
   // by default. They stay reachable: a shift checked in yesterday still needs checking out.
-  const currentMeets = (data?.signupDates ?? []).filter((item) => item.eventDate >= localIsoDate());
-  const pastMeets = (data?.signupDates ?? []).filter((item) => item.eventDate < localIsoDate());
+  const currentMeets = (data?.signupDates ?? []).filter((item) => item.eventDate >= clubToday);
+  const pastMeets = (data?.signupDates ?? []).filter((item) => item.eventDate < clubToday);
   const visibleMeets = showPastMeets ? [...currentMeets, ...pastMeets] : currentMeets;
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
   );
   const importedActive = (data?.signupRows ?? []).filter((row) => row.checkedInAt && !row.completed);
   const manualActive = (data?.activeEntries ?? []).filter((entry) => entry.sessionId === Number(sessionId));
-  const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0);
+  const canCheckInSelectedMeet = selectedEventDate === clubToday;
+  const sessionIsToday = session?.sessionDate === clubToday;
+  const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0 && sessionIsToday);
+
+  function mutationWasSaved(result, payload, before) {
+    if (payload.action.startsWith("signup_")) {
+      const row = result.signupRows.find((item) => item.id === Number(payload.id));
+      if (!row) return false;
+      if (payload.action === "signup_checkin") return Boolean(row.checkedInAt && !row.completed);
+      if (payload.action === "signup_checkout") return Boolean(row.completed);
+      return !row.checkedInAt && !row.completed;
+    }
+    if (payload.action === "checkout") {
+      return !result.activeEntries.some((entry) => entry.id === Number(payload.id));
+    }
+    const previousIds = new Set((before?.activeEntries ?? []).map((entry) => entry.id));
+    return result.activeEntries.some((entry) => !previousIds.has(entry.id)
+      && entry.sessionId === Number(payload.sessionId)
+      && entry.volunteerName === String(payload.volunteerName).trim()
+      && entry.swimmerName === before?.swimmers?.find((swimmer) => swimmer.id === Number(payload.swimmerId))?.name
+      && entry.jobName === before?.sessions?.find((item) => item.id === Number(payload.sessionId))?.jobs
+        ?.find((job) => job.id === Number(payload.jobId))?.name);
+  }
 
   async function postCheckin(payload, successText, id) {
+    const before = data;
     setBusyId(id);
     setNotice(null);
     try {
@@ -150,10 +184,23 @@ function VolunteerApp() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The volunteer update could not be saved.");
-      setNotice({ kind: "success", text: successText });
       await load();
+      setNotice({ kind: "success", text: successText });
       return true;
     } catch (error) {
+      try {
+        const refreshed = await load();
+        if (mutationWasSaved(refreshed, payload, before)) {
+          setNotice({ kind: "success", text: `${successText} The connection was interrupted, but the saved status was confirmed.` });
+          return true;
+        }
+      } catch {
+        setNotice({
+          kind: "error",
+          text: "The connection was interrupted and the saved status could not be confirmed. Refresh the desk before trying again.",
+        });
+        return false;
+      }
       setNotice({ kind: "error", text: error instanceof Error ? error.message : "The volunteer update could not be saved." });
       return false;
     } finally {
@@ -230,7 +277,8 @@ function VolunteerApp() {
           <span className="live-pill"><i /> LIVE</span>
         </div>
 
-        {!data ? <div className="loading-state"><i /><span>Preparing the meet roster…</span></div>
+        {!data && loadFailed ? <div className="empty-state"><strong>The roster could not load</strong><span>Check the connection, then try again.</span><button type="button" className="inline-link" onClick={() => { setNotice(null); void load().catch(() => {}); }}>Retry loading</button></div>
+          : !data ? <div className="loading-state"><i /><span>Preparing the meet roster…</span></div>
           : visibleMeets.length ? <>
             <div className="signup-toolbar">
               <label className="field">
@@ -288,7 +336,9 @@ function VolunteerApp() {
                 <i aria-hidden="true">·</i>
                 <b>{selectedProgress.assignedCount}</b> expected
               </span>}
-              <small>Credit comes from the signup file and can be adjusted before check-in.</small>
+              <small>{canCheckInSelectedMeet
+                ? "Credit comes from the signup file and can be adjusted before check-in."
+                : `This roster is view-only. Check-in opens ${displayDate(selectedEventDate)}.`}</small>
             </div>
 
             <div className="signup-list">
@@ -301,7 +351,7 @@ function VolunteerApp() {
                     <div className="signup-name-line">
                       <strong>{row.volunteerName}</strong>
                       <span className={`signup-status ${row.completed ? "done" : active ? "live" : "ready"}`}>
-                        {row.completed ? "Completed" : active ? "On deck" : "Ready"}
+                        {row.completed ? "Completed" : active ? "On deck" : canCheckInSelectedMeet ? "Ready" : "Upcoming"}
                       </span>
                     </div>
                     <span>{row.jobName} · {shiftTime(row.eventStart, row.eventEnd)} · {row.slot}</span>
@@ -323,9 +373,9 @@ function VolunteerApp() {
                       : <button
                         className={active ? "checkout-button" : "roster-checkin-button"}
                         type="button"
-                        disabled={busyId !== null}
+                        disabled={busyId !== null || (!active && !canCheckInSelectedMeet)}
                         onClick={() => void (active ? signupCheckOut(row) : signupCheckIn(row))}
-                      >{busyId === `signup-${row.id}` ? "Saving…" : active ? "Check out" : "Check in"}</button>}
+                      >{busyId === `signup-${row.id}` ? "Saving…" : active ? "Check out" : canCheckInSelectedMeet ? "Check in" : "Not open"}</button>}
                     {/* Only a check-in made at this desk can be undone; rows the file marked
                         completed have no checkedInAt and stay exactly as the file recorded them. */}
                     {row.checkedInAt && <button
@@ -371,6 +421,7 @@ function VolunteerApp() {
                 {data.sessions.map((item) => <option value={item.id} key={item.id}>{item.title} · {item.sessionDate}</option>)}
               </select></label>}
               {session && <div className="session-strip"><div><strong>{session.title}</strong><span>{displayDate(session.sessionDate)}</span></div><div><strong>{displayTime(session.startTime)}–{displayTime(session.endTime)}</strong><span>{session.location}</span></div></div>}
+              {session && !sessionIsToday && <p className="past-meets-note">Walk-in check-in opens {displayDate(session.sessionDate)}.</p>}
               <div className="form-row">
                 <label className="field"><span>Your full name</span><input value={volunteerName} onChange={(event) => setVolunteerName(event.target.value)} placeholder="First and last name" autoComplete="name" /></label>
                 <label className="field"><span>Your swimmer</span><select value={swimmerId} onChange={(event) => setSwimmerId(Number(event.target.value) || "")}>

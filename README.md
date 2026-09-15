@@ -34,7 +34,7 @@ This starter does not use `wrangler.jsonc`.
 Meet books are parsed heuristically in the browser using PDF.js. Review all detected values before importing. Select up to seven sessions and eight events for a single poster; scanned/password-protected PDFs need a readable copy or pasted text. Files are not uploaded to a server. QR codes are uploaded images, not generated from URLs; a square white-margin container avoids stretching, but users must scan the final export to verify the supplied code. Drafts and images are held in memory and reset on page reload. Layout undo/redo covers component edits, not image replacements or theme changes.
 
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
-- existing sessions, roster, check-ins, hour adjustments, and CSV reports
+- `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, preserved corrections, same-format `.xls` download, walk-in sessions, hour adjustments, and CSV reports
 - Classic and Signature card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
 - editable, locally generated captions with separate copy buttons for Instagram and Facebook
 
@@ -52,13 +52,17 @@ Meet books are parsed heuristically in the browser using PDF.js. Review all dete
 - `npm test`: production build and regression tests
 - `npm run deploy:cloudflare`: build and publish the public `jtsc-team-hub` Worker using the separate Cloudflare configuration. Requires an authenticated Wrangler session. The existing Sites publication is not changed.
 
-The Cloudflare deployment serves only `dist/client` as public assets. Server modules and hosting metadata are not public assets. Its `ASSETS` binding also serves the versioned browser-asset URLs. Volunteer administration still requires the original service's admin sign-in; public check-in displays the shared roster and active attendance.
+The Cloudflare deployment serves `dist/client` as public assets and runs the built server worker for application routes and volunteer APIs. Server modules and hosting metadata are not public assets. Its `ASSETS` binding also serves the versioned browser-asset URLs. Volunteer administration requires the configured admin PIN; public check-in displays only active assigned roster rows and attendance.
 
 ## Volunteer data and authentication
 
-The original `https://jtsc-volunteer-crew.pages.dev` Cloudflare service remains the authoritative volunteer backend. The restored volunteer components were recovered from its retained production bundle. The combined website proxies only five allowlisted API endpoints to that service; it does not duplicate or migrate the D1 database. Keep the original service running. Updates from either website use the same records.
+The combined Team Hub Worker is the authoritative volunteer backend. `app/api/[...volunteer]/route.ts` passes Cloudflare bindings to `lib/volunteer-service.mjs`, and the `DB` binding points to the `jtsc-volunteer-crew` D1 database. The old Pages demo is not part of the live data path.
 
-Admin access is verified by the original service. Only its `jtsc_admin` cookie is forwarded; Sites cookies and authorization credentials are never forwarded. Mutations reject cross-site browser requests and all API responses are uncached. The combined site's current private audience is unchanged.
+Admin access is verified in the Worker. Its signed `jtsc_admin` cookie is host-only, HTTP-only, SameSite=Strict, and expires after twelve hours. Failed PIN attempts are throttled. Mutations reject cross-site browser requests and all API responses are uncached. Clearing persisted data is disabled unless a deployment explicitly enables `ALLOW_DATA_RESET` or `DEMO_MODE`.
+
+Roster replacement is staged: every new row is inserted inactive, then D1 atomically swaps only matching event-date + event-title scopes. A corrected file therefore cannot empty or partially replace the live desk if an insertion fails, and a repeated meet title on another date remains independent. Check-in uses the `America/Chicago` club date and opens only on the scheduled day unless `ALLOW_EARLY_CHECKIN=true` is deliberately configured.
+
+The admin accepts TeamUnify Job Signup `.xls`, `.xlsx`, and `.csv` exports up to 5 MB / 2,500 rows. Public volunteer names are normalized so email addresses and phone numbers are never used as display names. Downloaded signup workbooks retain the original twelve columns and apply completed credit in the source format.
 
 Studio photos and captions stay in the browser. Caption drafts are templates based on entered details, not AI-generated claims or automatic social posts. Switching tabs retains the studio draft, but reloading the page clears it. Admin state is remounted when returning to the admin tab to recheck the session.
 
