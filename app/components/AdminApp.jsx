@@ -216,9 +216,30 @@ function AdminApp() {
   const sessions2 = data?.sessions ?? [];
   const jobs2 = data?.jobs ?? [];
   const swimmers2 = data?.swimmers ?? [];
-  const creditedTotal = entries.reduce((sum, entry) => sum + Number(entry.creditedHours), 0);
-  const activeCount = entries.filter((entry) => !entry.checkedOutAt).length;
-  const completedCount = entries.filter((entry) => entry.checkedOutAt).length;
+  // The overview has to count the signup roster, which is how a meet actually runs, as
+  // well as walk-ins. Counting entries alone left these tiles frozen all meet long.
+  const overviewStats = useMemo(() => {
+    const roster = data?.signupRows ?? [];
+    const done = roster.filter((row) => row.completed);
+    const onDeck = roster.filter((row) => row.checkedInAt && !row.completed);
+    const credit = (row) => Number(row.creditedValue ?? row.creditEarned ?? 0);
+    return {
+      hours: done.filter((row) => row.creditUnits !== "Pts.").reduce((sum, row) => sum + credit(row), 0)
+        + entries.filter((entry) => entry.checkedOutAt).reduce((sum, entry) => sum + Number(entry.creditedHours), 0),
+      points: done.filter((row) => row.creditUnits === "Pts.").reduce((sum, row) => sum + credit(row), 0),
+      onDeck: onDeck.length + entries.filter((entry) => !entry.checkedOutAt).length,
+      completed: done.length + entries.filter((entry) => entry.checkedOutAt).length,
+      // Swimmers come from the roster once one is imported; the swimmer table is only
+      // used by the walk-in flow and stays empty on a signup-driven meet.
+      people: new Set([
+        ...roster.map((row) => row.swimmerName).filter(Boolean),
+        ...entries.map((entry) => entry.swimmerName).filter(Boolean),
+      ]).size || swimmers2.length,
+    };
+  }, [data, entries, swimmers2]);
+  const creditedTotal = overviewStats.hours;
+  const activeCount = overviewStats.onDeck;
+  const completedCount = overviewStats.completed;
   const filteredEntries = reportSession === "all" ? entries : entries.filter((entry) => entry.sessionId === Number(reportSession));
 
   // The hour ledger has to cover both ways a shift gets credited: the signup roster,
@@ -310,20 +331,24 @@ function AdminApp() {
     }
     return [...totals.values()].sort((a, b) => b.hours - a.hours || b.points - a.points);
   }, [creditLedger]);
+  // Same correction as the tiles: the breakdown covers completed roster shifts as well
+  // as walk-ins, so it reflects the meet rather than only manual entries.
   const jobTotals = useMemo(() => {
     const totals = new Map();
+    const add = (jobName, hours) => {
+      const current = totals.get(jobName) ?? { people: 0, hours: 0 };
+      totals.set(jobName, { people: current.people + 1, hours: current.hours + hours });
+    };
+    for (const row of (data?.signupRows ?? [])) {
+      if (!row.completed || row.creditUnits === "Pts.") continue;
+      add(row.jobName, Number(row.creditedValue ?? row.creditEarned ?? 0));
+    }
     for (const entry of entries) {
-      const current = totals.get(entry.jobName) ?? {
-        people: 0,
-        hours: 0
-      };
-      totals.set(entry.jobName, {
-        people: current.people + 1,
-        hours: current.hours + Number(entry.creditedHours)
-      });
+      if (!entry.checkedOutAt) continue;
+      add(entry.jobName, Number(entry.creditedHours));
     }
     return [...totals.entries()].sort((a, b) => b[1].hours - a[1].hours);
-  }, [entries]);
+  }, [data, entries]);
   if (authenticated === null) return jsxs("main", {
     className: "admin-loading",
     children: [jsx("span", { className: "spinner" }), "Loading volunteer desk\u2026"]
@@ -481,7 +506,7 @@ function AdminApp() {
             jsx(Metric, {
               label: "Credited hours",
               value: creditedTotal.toFixed(1),
-              detail: "Across all sessions",
+              detail: overviewStats.points ? `Plus ${overviewStats.points} points \u00b7 roster and walk-ins` : "Roster and walk-ins",
               accent: true
             }),
             jsx(Metric, {
@@ -495,9 +520,9 @@ function AdminApp() {
               detail: "Checked out"
             }),
             jsx(Metric, {
-              label: "Active swimmers",
-              value: String(swimmers2.length),
-              detail: "Available at check-in"
+              label: "Swimmers covered",
+              value: String(overviewStats.people),
+              detail: "On this meet roster"
             })
           ]
         }), jsxs("div", {
