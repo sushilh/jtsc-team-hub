@@ -7,6 +7,7 @@ import { imageFilename, socialFormats, meetDetails, normalizeCardEvents } from "
 import EventResultsEditor from "./EventResultsEditor";
 import { eventNameMissing, type AchievementEvent } from "../../lib/achievement-events";
 import { drawMultiEventCard } from "../../lib/multi-event-card";
+import achievementAccounts from "../../lib/achievement-accounts.json";
 
 type CardFormat = "portrait" | "square";
 type CardTemplate = "classic" | "signature" | "race";
@@ -414,7 +415,7 @@ export default function CardStudio() {
   const uploadSequence = useRef(0);
   const exportLock = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState("Avery Thompson");
+  const [name, setName] = useState(achievementAccounts[0] ?? "");
   const [classYear, setClassYear] = useState("Class of 2027");
   const [achievementIndex, setAchievementIndex] = useState(0);
   const [headline, setHeadline] = useState<string>(initialAchievement.headline);
@@ -658,7 +659,7 @@ export default function CardStudio() {
           <div className="control-section details-section reveal">
             <span className="section-number">03</span>
             <div className="section-heading"><h2>Personalize the card</h2><span>Edits update live</span></div>
-            <label className="studio-field"><span>Swimmer name</span><input value={name} maxLength={32} onChange={(e) => setName(e.target.value)} /></label>
+            <label className="studio-field"><span>Swimmer name</span><select aria-label="Swimmer name" value={name} onChange={(e) => setName(e.target.value)}>{achievementAccounts.map(account => <option key={account} value={account}>{account}</option>)}</select></label>
             <label className="studio-field"><span>Achievement name</span><input value={headline.replaceAll("\n", " ")} maxLength={34} onChange={(e) => { setHeadline(e.target.value.toUpperCase()); setAchievementIndex(-1); }} /></label>
             <label className="studio-field"><span>Class / team</span><input value={classYear} maxLength={24} onChange={(e) => setClassYear(e.target.value)} /></label>
             <EventResultsEditor value={eventRows} onChange={setEventRows} />

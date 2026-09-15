@@ -37,7 +37,7 @@
 .studio-shell .section-heading h2 { font-family: var(--font-display), sans-serif; font-weight: 500; font-size: 24px; }
 .studio-shell .section-heading > span { font-size: 13px; }
 .studio-shell .studio-field > span, .studio-shell .photo-sliders label > span { font-size: 14px; font-weight: 600; }
-.studio-shell .studio-field input { height: 46px; border-radius: 4px; }
+.studio-shell .studio-field input, .studio-shell .studio-field select { height: 46px; border-radius: 4px; }
 .studio-shell .preview-panel { background: var(--stage-ink); color: var(--stage-text); border: 1px solid #a6843866; border-radius: 10px; padding: 24px; box-shadow: 0 12px 36px #1a0f1a1c, 0 2px 4px #1a0f1a12; position: sticky; top: 16px; isolation: isolate; }
 .studio-shell .preview-panel::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(ellipse at 90% 0%, #e8b9231a, transparent 52%), radial-gradient(ellipse at 0% 70%, #561122aa, transparent 65%); pointer-events: none; }
 .studio-shell .preview-toolbar { gap: 16px; }

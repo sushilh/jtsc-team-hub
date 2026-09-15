@@ -44,8 +44,13 @@ function useScrollReveal() {
       entries => { for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add("revealed"); observer.unobserve(entry.target); } },
       { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     );
-    el.querySelectorAll(".reveal").forEach(child => observer.observe(child));
-    return () => observer.disconnect();
+    const observeReveals = () => {
+      el.querySelectorAll(".reveal:not(.revealed)").forEach(child => observer.observe(child));
+    };
+    observeReveals();
+    const mutationObserver = new MutationObserver(observeReveals);
+    mutationObserver.observe(el, { childList: true, subtree: true });
+    return () => { mutationObserver.disconnect(); observer.disconnect(); };
   }, []);
   return ref;
 }
