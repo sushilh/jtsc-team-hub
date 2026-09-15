@@ -1,4 +1,5 @@
 import GuideMotion from "./GuideMotion";
+import { ArmMarkingDiagram, GearList, SeasonTimeline } from "./GuideGraphics";
 
 const guideSections = [
   { id: "guide-welcome", label: "Welcome to JTSC" },
@@ -75,16 +76,27 @@ export default function ParentGuide() {
               <p className="guide-card-label">SWIM SEASONS</p>
               <div className="season-row"><strong>Short Course <small>SCY</small></strong><span>September–February</span><p>25-yard, and sometimes 25-meter, pools. Meets are typically indoors and run fall through winter.</p></div>
               <div className="season-row"><strong>Long Course <small>LCM</small></strong><span>March–August</span><p>50-meter Olympic-length pools. Meets are often outdoors and run spring through summer.</p></div>
+              <SeasonTimeline />
               <p className="guide-note">Swimmers are encouraged to join both seasons. Breaks include Christmas, Spring Break, and about two weeks between seasons.</p>
             </div>
             <div className="guide-card">
               <p className="guide-card-label">WHAT TO BRING</p>
               <h3>Required for meets</h3>
-              <ul><li>Jenks team suit</li><li>Two team swim caps</li><li>Competition goggles</li></ul>
+              <GearList items={[
+                { icon: "suit", text: "Jenks team suit" },
+                { icon: "cap", text: "Two team swim caps" },
+                { icon: "goggles", text: "Competition goggles" },
+              ]} />
               <h3>For practice</h3>
-              <ul><li>Snug-fitting practice suit</li><li>Practice cap of any type</li></ul>
+              <GearList items={[
+                { icon: "suit", text: "Snug-fitting practice suit" },
+                { icon: "cap", text: "Practice cap of any type" },
+              ]} />
               <h3>Optional</h3>
-              <ul><li>Mirrored goggles for outdoor meets</li><li>Additional equipment for 7th grade and above—check with your coach</li></ul>
+              <GearList items={[
+                { icon: "goggles", text: "Mirrored goggles for outdoor meets" },
+                { icon: "plus", text: "Additional equipment for 7th grade and above—check with your coach" },
+              ]} />
             </div>
           </div>
           <div className="guide-info-band">
@@ -116,7 +128,7 @@ export default function ParentGuide() {
             <p><strong>NT</strong> No Time—the swimmer has not competed in the event yet. <strong>DQ</strong> Disqualified—an illegal move was performed and no time is recorded.</p>
           </div>
           <div className="guide-example">
-            <div><p className="guide-card-label">ARM-MARKING EXAMPLE</p><p>Write the swimmer&apos;s event information on an arm or leg before warmups. Volunteers and coaches can help if the heat or lane is not available yet.</p></div>
+            <div><p className="guide-card-label">ARM-MARKING EXAMPLE</p><p>Write the swimmer&apos;s event information on an arm or leg before warmups. Volunteers and coaches can help if the heat or lane is not available yet.</p><ArmMarkingDiagram /></div>
             <div className="guide-table-wrap"><table><thead><tr><th>Event</th><th>Heat</th><th>Lane</th><th>Stroke</th></tr></thead><tbody><tr><td>2</td><td>1</td><td>8</td><td>50 FR</td></tr><tr><td>12</td><td>2</td><td>5</td><td>25 FLY</td></tr><tr><td>22</td><td>3</td><td>1</td><td>50 BK</td></tr></tbody></table></div>
           </div>
         </section>
@@ -159,8 +171,16 @@ export default function ParentGuide() {
             </div>
           </div>
           <div className="guide-pack">
-            <div><p className="guide-card-label">PACK THE SWIM BAG</p><ul><li>Extra suit, goggles, and cap</li><li>Two or more towels</li><li>Sharpie for writing events</li><li>Change of clothes</li></ul></div>
-            <div><p className="guide-card-label">GOOD EXTRAS</p><ul><li>Sunscreen for outdoor meets</li><li>Healthy snacks and water</li></ul><p className="guide-note">Leave valuables at home. Swimmers and bags are packed closely together in the bleachers.</p></div>
+            <div><p className="guide-card-label">PACK THE SWIM BAG</p><GearList items={[
+              { icon: "bag", text: "Extra suit, goggles, and cap" },
+              { icon: "towel", text: "Two or more towels" },
+              { icon: "marker", text: "Sharpie for writing events" },
+              { icon: "shirt", text: "Change of clothes" },
+            ]} /></div>
+            <div><p className="guide-card-label">GOOD EXTRAS</p><GearList items={[
+              { icon: "sun", text: "Sunscreen for outdoor meets" },
+              { icon: "bottle", text: "Healthy snacks and water" },
+            ]} /><p className="guide-note">Leave valuables at home. Swimmers and bags are packed closely together in the bleachers.</p></div>
           </div>
         </section>
 

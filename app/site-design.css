@@ -1225,3 +1225,104 @@ html { scrollbar-gutter: stable; }
   .guide-motion-on .guide-hero .guide-lede,
   .guide-motion-on .guide-update { transform: none; }
 }
+
+/* ── GUIDE GRAPHICS ──────────────────────────────────────────────────────────
+   Inline SVG for the parent guide. Colours come from the brand tokens so these
+   never drift from the palette. Motion is gated on .guide-motion-on like the
+   rest of the depth layer, and each graphic is legible with motion off. */
+
+/* Arm-marking diagram. The table beside it stays the accessible source of the
+   numbers; this is the visual answer to "what does that actually look like". */
+.guide-arm-svg {
+  width: min(190px, 100%);
+  height: auto;
+  margin-top: 20px;
+  filter: drop-shadow(0 12px 22px rgba(32,34,35,.14));
+}
+.guide-arm-head {
+  font-family: var(--font-display), sans-serif;
+  font-size: 13px; font-weight: 700; opacity: .55;
+}
+.guide-arm-num {
+  font-family: var(--font-display), sans-serif;
+  font-size: 22px; font-weight: 700;
+}
+.guide-arm-stroke {
+  font-family: var(--font-display), sans-serif;
+  font-size: 13px; font-weight: 600; fill: var(--maroon);
+}
+
+/* The marks write themselves on, one row at a time, as the block scrolls in. */
+.guide-motion-on .guide-arm-svg .guide-arm-ink { opacity: 0; transition: opacity .3s ease; }
+.guide-motion-on .guide-rise.in-view .guide-arm-svg .guide-arm-ink { opacity: 1; }
+.guide-motion-on .guide-arm-svg .guide-arm-row {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity .42s ease, transform .42s cubic-bezier(.22,.8,.3,1);
+}
+.guide-motion-on .guide-rise.in-view .guide-arm-svg .guide-arm-row {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: calc(320ms + var(--row) * 170ms);
+}
+
+/* Season timeline. Two bands over a twelve-month scale starting in September,
+   so neither season wraps the year boundary. */
+.guide-timeline { margin: 20px 0 18px; }
+.guide-timeline-track {
+  position: relative;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--maroon-soft, #f6eef1);
+  overflow: hidden;
+}
+.guide-timeline-band {
+  position: absolute; top: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  transform-origin: left center;
+}
+.guide-timeline-band span {
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; white-space: nowrap; padding: 0 8px;
+}
+.guide-timeline-band.scy { background: var(--maroon); }
+.guide-timeline-band.scy span { color: #fff; }
+.guide-timeline-band.lcm { background: #4db6a0; }
+.guide-timeline-band.lcm span { color: #10322c; }
+.guide-timeline-months {
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  margin-top: 7px;
+}
+.guide-timeline-months span {
+  text-align: center; font-size: 10px; font-weight: 700;
+  color: var(--muted); letter-spacing: .04em;
+}
+/* The bands grow out from the start of their season. */
+.guide-motion-on .guide-timeline-band { transform: scaleX(0); }
+.guide-motion-on .guide-rise.in-view .guide-timeline-band {
+  transform: scaleX(1);
+  transition: transform .82s cubic-bezier(.22,.85,.28,1);
+}
+.guide-motion-on .guide-rise.in-view .guide-timeline-band.lcm { transition-delay: .18s; }
+
+/* Gear icons. One stroke grid, inheriting the list's colour. */
+.guide-gear-list { margin: 10px 0 0; padding: 0; list-style: none; }
+.guide-gear-list li {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 7px 0; line-height: 1.5;
+}
+.guide-gear-icon {
+  width: 20px; height: 20px; flex: none;
+  margin-top: 1px;
+  color: var(--maroon);
+  transition: transform .3s cubic-bezier(.22,.8,.3,1);
+}
+.guide-motion-on .guide-gear-list li:hover .guide-gear-icon {
+  transform: translateZ(12px) scale(1.14) rotate(-5deg);
+}
+
+@media (max-width: 860px) {
+  .guide-arm-svg { width: min(150px, 60%); display: block; margin-inline: auto; }
+  .guide-timeline-band span { font-size: 9px; letter-spacing: .03em; }
+  .guide-motion-on .guide-gear-list li:hover .guide-gear-icon { transform: none; }
+}
