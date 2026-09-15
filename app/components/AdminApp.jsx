@@ -569,7 +569,8 @@ function AdminApp() {
           busy,
           mutate,
           bulkAddJobs,
-          importSignup
+          importSignup,
+          demoMode: Boolean(data?.demoMode)
         }),
         tab === "swimmers" && jsx(SwimmersPanel, {
           swimmers: swimmers2,
@@ -766,7 +767,7 @@ function SignupImportPanel({ signupImports, busy, importSignup, mutate, demoMode
     </div>}
   </section>;
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup }) {
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, mutate, bulkAddJobs, importSignup, demoMode }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -831,7 +832,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, busy, 
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, demoMode: data?.demoMode }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, busy, importSignup, mutate, demoMode }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",
