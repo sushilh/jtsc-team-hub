@@ -1,3 +1,5 @@
+import GuideMotion from "./GuideMotion";
+
 const guideSections = [
   { id: "welcome", label: "Welcome to JTSC" },
   { id: "seasons-gear", label: "Seasons & gear" },
@@ -16,6 +18,7 @@ function SectionHeading({ number, title, eyebrow }: { number: string; title: str
 
 export default function ParentGuide() {
   return <main className="parent-guide">
+    <GuideMotion />
     <section className="guide-hero">
       <div className="guide-hero-copy">
         <p className="guide-kicker">New Parent Information Guide</p>

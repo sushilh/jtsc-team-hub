@@ -521,6 +521,11 @@ html { scrollbar-gutter: stable; }
 .walkin-panel summary::marker { color: var(--maroon); }
 .walkin-panel summary span { margin-left: auto; color: var(--muted); font-family: var(--font-body), sans-serif; font-size: 12px; font-weight: 500; }
 .walkin-panel form { padding-top: 16px; }
+.signup-walkin-form { margin-bottom: 24px; padding: 18px; border: 1px solid rgba(116,27,56,.18); border-radius: 14px; background: rgba(116,27,56,.035); }
+.walkin-form-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 4px; }
+.walkin-form-heading strong { color: var(--maroon); font-family: var(--font-display), sans-serif; font-size: 18px; }
+.walkin-form-heading span, .field-help { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.field-help { align-self: end; max-width: 270px; margin: 0 0 10px; }
 .empty-state.compact { min-height: 110px; }
 
 /* ── Admin signup import ── */
@@ -733,6 +738,8 @@ html { scrollbar-gutter: stable; }
   .signup-person-copy { grid-column: 2 / -1; }
   .signup-credit { grid-column: 2; }
   .signup-person > button, .completed-mark { grid-column: 3; }
+  .walkin-form-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .field-help { max-width: none; margin-top: 8px; }
   .walkin-panel summary { align-items: flex-start; flex-direction: column; justify-content: center; gap: 3px; }
   .walkin-panel summary span { margin-left: 0; }
 }
@@ -1074,4 +1081,145 @@ html { scrollbar-gutter: stable; }
   .meet-checkin-row { grid-template-columns: 1fr; gap: 9px; }
   .meet-checkin-status { justify-self: start; }
   .meet-checkin-actions { grid-column: auto; flex-wrap: wrap; }
+}
+
+/* ── GUIDE DEPTH ─────────────────────────────────────────────────────────────
+   3D for the parent guide. Everything here is gated on .guide-motion-on, which
+   GuideMotion adds only when motion is allowed, so the guide is completely flat
+   and static when animation is paused or the OS asks for reduced motion.
+
+   Two constraints shaped this. The jump nav is position:sticky, so no ancestor
+   of it may get overflow or a transform — the perspective goes on individual
+   blocks, never on a wrapper. And 3D rotation pushes corners outward, so every
+   rotating element sits in a container that already clips or has room. */
+
+.guide-motion-on .guide-facts,
+.guide-motion-on .guide-focus-grid,
+.guide-motion-on .guide-split,
+.guide-motion-on .guide-terms,
+.guide-motion-on .guide-article { perspective: 1400px; perspective-origin: 50% 20%; }
+
+/* Blocks arrive from behind the page and settle forward. */
+.guide-motion-on .guide-rise {
+  opacity: 0;
+  transform: translate3d(0, 34px, -90px) rotateX(9deg);
+  transition:
+    opacity .62s cubic-bezier(.22,.8,.3,1) var(--rise-delay, 0ms),
+    transform .74s cubic-bezier(.22,.8,.3,1) var(--rise-delay, 0ms);
+  will-change: transform, opacity;
+}
+.guide-motion-on .guide-rise.in-view {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotateX(0deg);
+}
+/* Once settled, drop the hint so long pages do not hold hundreds of layers. */
+.guide-motion-on .guide-rise.in-view { will-change: auto; }
+
+/* Pointer tilt. The lift is real depth, not a shadow trick: the card rotates in
+   the container's perspective and rises toward the reader on Z. */
+.guide-motion-on .guide-tilt {
+  position: relative;
+  transform-style: preserve-3d;
+  transform:
+    perspective(900px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    translateZ(0);
+  transition: transform .4s cubic-bezier(.22,.8,.3,1), box-shadow .4s ease;
+}
+.guide-motion-on .guide-tilt:hover {
+  transform:
+    perspective(900px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    translateZ(18px);
+  box-shadow: 0 26px 50px -22px rgba(32,34,35,.34), 0 4px 12px rgba(32,34,35,.06);
+  transition: transform .12s ease-out, box-shadow .3s ease;
+}
+/* A soft highlight that tracks the cursor, which is what sells the surface as tilted. */
+.guide-motion-on .guide-tilt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+  background: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255,255,255,.5), rgba(255,255,255,0) 58%);
+}
+.guide-motion-on .guide-tilt:hover::after { opacity: 1; }
+
+/* The big stat numbers stand off their card face. */
+.guide-motion-on .guide-facts > div { transform-style: preserve-3d; }
+.guide-motion-on .guide-facts > div strong {
+  display: block;
+  transition: transform .4s cubic-bezier(.22,.8,.3,1);
+}
+.guide-motion-on .guide-facts > div:hover strong { transform: translateZ(34px); }
+
+/* Section numbers rotate in edge-on, like a lane marker turning to face you. */
+.guide-motion-on .guide-section-heading { perspective: 800px; }
+.guide-motion-on .guide-section-heading .guide-lane-number {
+  display: inline-block;
+  transform-origin: 50% 50%;
+  transform: rotateY(-58deg) translateZ(-30px);
+  opacity: 0;
+  transition: transform .8s cubic-bezier(.22,.9,.28,1) 80ms, opacity .6s ease 80ms;
+}
+.guide-motion-on .guide-section-heading.in-view .guide-lane-number {
+  transform: rotateY(0deg) translateZ(0);
+  opacity: 1;
+}
+
+/* Hero: the headline lifts while the date chip sinks, opening depth on scroll. */
+.guide-motion-on .guide-hero { perspective: 1200px; }
+.guide-motion-on .guide-hero h1 {
+  transform: translate3d(0, calc(var(--hero-depth, 0) * -14px), calc(var(--hero-depth, 0) * 46px));
+  transition: transform .18s linear;
+}
+.guide-motion-on .guide-hero .guide-lede {
+  transform: translate3d(0, 0, calc(var(--hero-depth, 0) * 18px));
+  transition: transform .18s linear;
+}
+.guide-motion-on .guide-update {
+  transform:
+    rotateX(calc(var(--hero-depth, 0) * 7deg))
+    translate3d(0, 0, calc(var(--hero-depth, 0) * -34px));
+  transition: transform .18s linear;
+}
+
+/* Jump links press into the page rather than just changing color. */
+.guide-motion-on .guide-jump nav a {
+  display: block;
+  transition: transform .26s cubic-bezier(.22,.8,.3,1), padding-left .26s ease;
+}
+.guide-motion-on .guide-jump nav a:hover { transform: translateX(5px) scale(1.012); }
+
+/* The callout floats a little above the prose around it. */
+.guide-motion-on .guide-callout {
+  transition: transform .45s cubic-bezier(.22,.8,.3,1), box-shadow .45s ease;
+}
+.guide-motion-on .guide-callout:hover {
+  transform: perspective(1000px) translateZ(14px) rotateX(1.4deg);
+  box-shadow: 0 22px 44px -20px rgba(116,27,56,.34);
+}
+
+/* Season rows step forward one at a time on hover. */
+.guide-motion-on .season-row { transition: transform .3s cubic-bezier(.22,.8,.3,1); }
+.guide-motion-on .guide-card:hover .season-row:hover { transform: translateX(6px); }
+
+@media (max-width: 860px) {
+  /* Phones: keep the arrival depth, drop the pointer effects that need a mouse,
+     and flatten rotation so nothing rotates into a neighbouring column. */
+  .guide-motion-on .guide-rise { transform: translate3d(0, 24px, -40px) rotateX(5deg); }
+  .guide-motion-on .guide-tilt:hover {
+    transform: none;
+    box-shadow: 0 14px 30px -18px rgba(32,34,35,.28);
+  }
+  .guide-motion-on .guide-tilt::after { display: none; }
+  .guide-motion-on .guide-hero h1,
+  .guide-motion-on .guide-hero .guide-lede,
+  .guide-motion-on .guide-update { transform: none; }
 }
