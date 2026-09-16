@@ -1,5 +1,7 @@
 # JTSC Team Hub
 
+Development handoff: [shared rules](AGENTS.md) · [change log](CHANGELOG.md) · [verified release checkpoints](RELEASES.md).
+
 A private website combining volunteer check-in, volunteer administration, and the achievement card studio for Jenks Trojan Swim Club.
 Upload a swimmer portrait, select an achievement, personalize the details, and
 download a high-resolution PNG for Instagram or Facebook. Photos never leave
