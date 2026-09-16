@@ -5,9 +5,10 @@ import { useStudioExperience } from "./StudioExperience";
 import SocialCaptions from "./SocialCaptions";
 import { imageFilename, socialFormats, meetDetails, normalizeCardEvents } from "../../lib/social-content.mjs";
 import EventResultsEditor from "./EventResultsEditor";
+import AutoGrowTextarea from "./AutoGrowTextarea";
 import { eventNameMissing, type AchievementEvent } from "../../lib/achievement-events";
 import { drawMultiEventCard } from "../../lib/multi-event-card";
-import { drawFinishLineCard } from "../../lib/finish-line-card";
+import { boundFinishRect, defaultPhotoRect, drawFinishLineCard, type FinishLayer, type FinishRect } from "../../lib/finish-line-card";
 import achievementMemberNames from "../../lib/achievement-members.json";
 
 type CardFormat = "portrait" | "square";
@@ -51,6 +52,9 @@ type CardDrawingState = {
   zoom: number;
   horizontalPosition: number;
   verticalPosition: number;
+  photoRect: FinishRect | null;
+  finishLayers: FinishLayer[];
+  layerImages: Record<string, HTMLImageElement>;
 };
 
 const achievements = [
@@ -256,7 +260,7 @@ function drawCard(
   canvas.height = height;
 
   if (state.template === "finish") {
-    drawFinishLineCard(ctx, width, height, state);
+    drawFinishLineCard(ctx, width, height, { ...state, photoRect: state.photoRect, layers: state.finishLayers, layerImages: state.layerImages });
     return;
   }
 
@@ -437,13 +441,6 @@ export default function CardStudio() {
   const eventName = events[0]?.eventName || "";
   const time = events[0]?.time || "";
   const invalidEvents = eventRows.some(eventNameMissing);
-  useEffect(() => {
-    const initial = eventRows.length === 1 && eventRows[0].eventName === "100Y Butterfly" && eventRows[0].time === "55.42";
-    if (initial) return;
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [eventRows]);
   const [meetName, setMeetName] = useState("");
   const [meetDate, setMeetDate] = useState("");
   const [format, setFormat] = useState<CardFormat>("portrait");
@@ -454,6 +451,17 @@ export default function CardStudio() {
   const [zoom, setZoom] = useState(1);
   const [horizontalPosition, setHorizontalPosition] = useState(0);
   const [verticalPosition, setVerticalPosition] = useState(0);
+  const [photoRect, setPhotoRect] = useState<FinishRect | null>(null);
+  const [finishLayers, setFinishLayers] = useState<FinishLayer[]>([]);
+  const [layerImages, setLayerImages] = useState<Record<string, HTMLImageElement>>({});
+  const [selectedFinishId, setSelectedFinishId] = useState<string | null>("photo");
+  const [layerError, setLayerError] = useState("");
+  const [layerLoading, setLayerLoading] = useState(false);
+  const [resetSnapshot, setResetSnapshot] = useState<{ photoRect: FinishRect | null; layers: FinishLayer[]; images: Record<string, HTMLImageElement> } | null>(null);
+  const [removedLayer, setRemovedLayer] = useState<{ layer: FinishLayer; index: number; image?: HTMLImageElement } | null>(null);
+  const layerFileRef = useRef<HTMLInputElement>(null);
+  const layerUploadSequence = useRef(0);
+  const gestureRef = useRef<{ id: string; mode: "move" | "resize"; startX: number; startY: number; rect: FinishRect } | null>(null);
   const [exporting, setExporting] = useState<CardTemplate | null>(null);
   const [exportNotice, setExportNotice] = useState("");
   const [photoError, setPhotoError] = useState("");
@@ -462,10 +470,107 @@ export default function CardStudio() {
   const [photoName, setPhotoName] = useState("");
   const [celebration, setCelebration] = useState(0);
   const stageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const initial = eventRows.length === 1 && eventRows[0].eventName === "100Y Butterfly" && eventRows[0].time === "55.42";
+    if (initial && !photoRect && finishLayers.length === 0) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [eventRows, photoRect, finishLayers]);
+  const cardHeight = socialFormats[format].height;
+  const selectedLayer = finishLayers.find(layer => layer.id === selectedFinishId);
+  const selectedRect = selectedFinishId === "photo" ? photoRect ?? defaultPhotoRect(cardHeight) : selectedLayer ?? null;
+
+  function updateFinishRect(id: string, next: FinishRect) {
+    const bounded = boundFinishRect(next);
+    if (id === "photo") setPhotoRect(bounded);
+    else setFinishLayers(current => current.map(layer => layer.id === id ? { ...layer, ...bounded } : layer));
+  }
+
+  function addFinishLayer(kind: FinishLayer["kind"]) {
+    setResetSnapshot(null);
+    setRemovedLayer(null);
+    const id = `finish-${crypto.randomUUID()}`;
+    setFinishLayers(current => [...current, {
+      id, kind, x: .11, y: .16 + (current.length % 4) * .07,
+      w: kind === "image" ? .28 : .4, h: kind === "image" ? .22 : .075,
+      text: kind === "text" ? "YOUR MESSAGE" : "", color: "#fffaf3",
+      background: kind === "panel" ? "#efc76f" : "transparent", fontSize: 42,
+    }]);
+    setSelectedFinishId(id);
+    if (kind === "image") layerFileRef.current?.click();
+  }
+
+  async function onLayerFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !selectedLayer || selectedLayer.kind !== "image") return;
+    setLayerError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size === 0 || file.size > 20 * 1024 * 1024) {
+      setLayerError("Choose a non-empty JPG, PNG, or WebP image under 20 MB."); return;
+    }
+    const id = selectedLayer.id;
+    const sequence = ++layerUploadSequence.current;
+    const url = URL.createObjectURL(file);
+    setLayerLoading(true);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const image = await Promise.race([
+        loadImage(url),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("Image timeout")), 15000); }),
+      ]);
+      if (sequence === layerUploadSequence.current) {
+        setLayerImages(current => ({ ...current, [id]: image }));
+        notify("Image added to Finish Line. Drag it to place it.");
+      }
+    } catch { if (sequence === layerUploadSequence.current) setLayerError("That image could not be opened. Try another JPG, PNG, or WebP."); }
+    finally { clearTimeout(timeout); URL.revokeObjectURL(url); if (sequence === layerUploadSequence.current) setLayerLoading(false); }
+  }
+
+  function canvasPoint(event: React.PointerEvent<HTMLCanvasElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return { x: (event.clientX - bounds.left) / bounds.width, y: (event.clientY - bounds.top) / bounds.height, handleX: 28 / bounds.width, handleY: 28 / bounds.height };
+  }
+
+  function onFinishPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (template !== "finish") return;
+    const point = canvasPoint(event);
+    const targets = [
+      ...finishLayers.filter(layer => !layer.hidden).slice().reverse().map(layer => ({ id: layer.id, rect: layer })),
+      { id: "photo", rect: photoRect ?? defaultPhotoRect(cardHeight) },
+    ];
+    const hit = targets.find(({ rect }) => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
+    setSelectedFinishId(hit?.id ?? null);
+    if (!hit) return;
+    const resize = point.x >= hit.rect.x + hit.rect.w - point.handleX && point.y >= hit.rect.y + hit.rect.h - point.handleY;
+    gestureRef.current = { id: hit.id, mode: resize ? "resize" : "move", startX: point.x, startY: point.y, rect: { x: hit.rect.x, y: hit.rect.y, w: hit.rect.w, h: hit.rect.h } };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function onFinishPointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
+    const gesture = gestureRef.current;
+    if (!gesture) return;
+    const point = canvasPoint(event);
+    const dx = point.x - gesture.startX, dy = point.y - gesture.startY;
+    updateFinishRect(gesture.id, gesture.mode === "move"
+      ? { ...gesture.rect, x: gesture.rect.x + dx, y: gesture.rect.y + dy }
+      : { ...gesture.rect, w: Math.max(.06, Math.min(1 - gesture.rect.x, gesture.rect.w + dx)), h: Math.max(.04, Math.min(1 - gesture.rect.y, gesture.rect.h + dy)) });
+  }
+
+  function onFinishKeyDown(event: React.KeyboardEvent<HTMLCanvasElement>) {
+    if (template !== "finish" || !selectedFinishId || !selectedRect) return;
+    const steps: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    const step = steps[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const amount = event.shiftKey ? 10 : 1;
+    updateFinishRect(selectedFinishId, { ...selectedRect, x: selectedRect.x + step[0] * amount / 1080, y: selectedRect.y + step[1] * amount / cardHeight });
+  }
 
   /** Parallax tilt + spotlight on pointer move over the canvas stage */
   const handleStageMouse = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!motion || event.pointerType !== "mouse") return;
+    if (!motion || template === "finish" || event.pointerType !== "mouse") return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
@@ -479,7 +584,7 @@ export default function CardStudio() {
     const rotateX = ((cy - y) / cy) * 8;
     const frame = event.currentTarget.querySelector<HTMLElement>(".canvas-frame");
     if (frame) frame.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  }, [motion]);
+  }, [motion, template]);
 
   const handleStageLeave = useCallback(() => {
     if (stageRef.current) {
@@ -487,6 +592,8 @@ export default function CardStudio() {
       if (frame) frame.style.transform = "rotateX(0) rotateY(0)";
     }
   }, []);
+
+  useEffect(() => { if (template === "finish") handleStageLeave(); }, [template, handleStageLeave]);
 
   /** Magnetic button hover: shift toward cursor */
   const handleMagneticMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
@@ -513,10 +620,10 @@ export default function CardStudio() {
     }
     lastTemplate.current = template;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages });
     // Edits and motion changes must immediately uncover the current card.
     return () => transition?.cancel();
-  }, [name, classYear, headline, subline, eventName, time, events, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, motion]);
+  }, [name, classYear, headline, subline, eventName, time, events, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages, motion]);
 
   useEffect(() => () => { uploadSequence.current += 1; }, []);
 
@@ -586,7 +693,7 @@ export default function CardStudio() {
     setExporting(targetTemplate);
     setExportNotice("");
     try {
-    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition });
+    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages });
     exportCanvas.toBlob((blob) => {
       if (!blob) { exportLock.current = false; setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");
@@ -698,10 +805,48 @@ export default function CardStudio() {
               </button>
             ))}
           </div>
+          {template === "finish" && <div className="finish-editor" aria-label="Finish Line layout editor">
+            <div className="finish-editor-heading"><div><b>Edit Finish Line</b><span id="finish-edit-help">Drag an element to move it. Drag its lower-right corner to resize. Arrow keys move the selected element; Shift moves it 10 pixels.</span></div><div className="finish-reset-actions">{removedLayer && <button type="button" onClick={() => { const { layer, index, image } = removedLayer; setFinishLayers(current => { const next = [...current]; next.splice(index, 0, layer); return next; }); if (image) setLayerImages(current => ({ ...current, [layer.id]: image })); setSelectedFinishId(layer.id); setRemovedLayer(null); }}>Undo remove</button>}{resetSnapshot && <button type="button" onClick={() => { setPhotoRect(resetSnapshot.photoRect); setFinishLayers(resetSnapshot.layers); setLayerImages(resetSnapshot.images); setResetSnapshot(null); }}>Undo reset</button>}<button type="button" onClick={() => { setResetSnapshot({ photoRect, layers: finishLayers, images: layerImages }); setRemovedLayer(null); layerUploadSequence.current += 1; setLayerLoading(false); setPhotoRect(null); setFinishLayers([]); setLayerImages({}); setSelectedFinishId("photo"); setLayerError(""); }}>Reset layout</button></div></div>
+            <div className="finish-add-row" role="group" aria-label="Add Finish Line elements">
+              <button type="button" onClick={() => addFinishLayer("text")}>+ Text</button>
+              <button type="button" onClick={() => addFinishLayer("image")}>+ Image</button>
+              <button type="button" onClick={() => addFinishLayer("panel")}>+ Color block</button>
+            </div>
+            <input ref={layerFileRef} className="visually-hidden" type="file" tabIndex={-1} accept="image/jpeg,image/png,image/webp" aria-label="Finish Line image" onChange={onLayerFileChange} />
+            <div className="finish-element-list" role="group" aria-label="Finish Line elements">
+              <button type="button" aria-pressed={selectedFinishId === "photo"} onClick={() => setSelectedFinishId("photo")}>Swimmer photo</button>
+              {finishLayers.map((layer, index) => <button key={layer.id} type="button" aria-pressed={selectedFinishId === layer.id} onClick={() => setSelectedFinishId(layer.id)}>{layer.hidden ? "Hidden · " : ""}{layer.kind === "text" ? layer.text || "Text" : layer.kind === "image" ? "Image" : "Color block"} {index + 1}</button>)}
+            </div>
+            {selectedRect && selectedFinishId && <div className="finish-inspector" aria-label={`Edit ${selectedFinishId === "photo" ? "swimmer photo" : selectedLayer?.kind ?? "element"}`}>
+              <div className="finish-position-grid">
+                {(["x", "y", "w", "h"] as const).map((key) => <label key={key}><span>{{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]} (px)</span><input type="number" min={key === "w" || key === "h" ? 1 : 0} max={key === "x" || key === "w" ? 1080 : cardHeight} value={Math.round(selectedRect[key] * (key === "x" || key === "w" ? 1080 : cardHeight))} onChange={event => { const value = Number(event.target.value); if (Number.isFinite(value)) updateFinishRect(selectedFinishId, { ...selectedRect, [key]: value / (key === "x" || key === "w" ? 1080 : cardHeight) }); }} /></label>)}
+              </div>
+              {selectedFinishId === "photo" && <p>The photo frame can move and change size; the Zoom and focus sliders above adjust the crop inside it.</p>}
+              {selectedLayer && <>
+                {selectedLayer.kind === "text" && <>
+                  <label className="finish-field"><span>Text</span><AutoGrowTextarea rows={2} maxLength={120} value={selectedLayer.text} onChange={event => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, text: event.target.value } : layer))} /></label>
+                  <label className="finish-field"><span>Text size (px)</span><input type="number" min="12" max="160" value={selectedLayer.fontSize} onChange={event => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, fontSize: Math.max(12, Math.min(160, Number(event.target.value) || 12)) } : layer))} /></label>
+                  <label className="finish-color"><span>Text color</span><input type="color" value={selectedLayer.color} onChange={event => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, color: event.target.value } : layer))} /></label>
+                </>}
+                {selectedLayer.kind === "panel" && <label className="finish-color"><span>Block color</span><input type="color" value={selectedLayer.background} onChange={event => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, background: event.target.value } : layer))} /></label>}
+                {selectedLayer.kind === "image" && <button type="button" className="finish-image-button" disabled={layerLoading} aria-busy={layerLoading} onClick={() => layerFileRef.current?.click()}>{layerLoading ? "Opening image…" : layerImages[selectedLayer.id] ? "Replace image" : "Choose image"} · JPG, PNG, WebP · 20 MB max</button>}
+                <div className="finish-layer-actions">
+                  <button type="button" onClick={() => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, hidden: !layer.hidden } : layer))}>{selectedLayer.hidden ? "Show" : "Hide"}</button>
+                  <button type="button" disabled={finishLayers[finishLayers.length - 1]?.id === selectedLayer.id} onClick={() => setFinishLayers(current => [...current.filter(layer => layer.id !== selectedLayer.id), selectedLayer])}>Bring forward</button>
+                  <button type="button" onClick={() => { const id = `finish-${crypto.randomUUID()}`; setFinishLayers(current => [...current, { ...selectedLayer, id, ...boundFinishRect({ ...selectedLayer, x: selectedLayer.x + .03, y: selectedLayer.y + .03 }) }]); if (selectedLayer.imageId || layerImages[selectedLayer.id]) setLayerImages(current => ({ ...current, [id]: current[selectedLayer.imageId ?? selectedLayer.id] })); setSelectedFinishId(id); }}>Duplicate</button>
+                  <button type="button" onClick={() => { setRemovedLayer({ layer: selectedLayer, index: finishLayers.findIndex(layer => layer.id === selectedLayer.id), image: layerImages[selectedLayer.id] }); layerUploadSequence.current += 1; setLayerLoading(false); setFinishLayers(current => current.filter(layer => layer.id !== selectedLayer.id)); setLayerImages(current => { const next = { ...current }; delete next[selectedLayer.id]; return next; }); setSelectedFinishId("photo"); }}>Remove</button>
+                </div>
+              </>}
+            </div>}
+            {layerError && <p className="finish-error" role="alert">{layerError}</p>}
+          </div>}
           <div ref={stageRef} className={`canvas-stage ${format}`} onPointerMove={handleStageMouse} onPointerLeave={handleStageLeave}>
             <div className="canvas-frame">
-              <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" />
+              <div className="canvas-surface">
+              <canvas ref={canvasRef} aria-label="Preview of the swimmer achievement card" aria-describedby={template === "finish" ? "finish-edit-help" : undefined} tabIndex={template === "finish" ? 0 : undefined} className={template === "finish" ? "finish-canvas" : ""} onPointerDown={onFinishPointerDown} onPointerMove={onFinishPointerMove} onPointerUp={() => { gestureRef.current = null; }} onPointerCancel={() => { gestureRef.current = null; }} onKeyDown={onFinishKeyDown} />
               <canvas ref={fadeCanvasRef} className="preview-crossfade" aria-hidden="true" />
+              {template === "finish" && selectedRect && <span aria-hidden="true" className="finish-selection" style={{ left: `${selectedRect.x * 100}%`, top: `${selectedRect.y * 100}%`, width: `${selectedRect.w * 100}%`, height: `${selectedRect.h * 100}%` }}><i /></span>}
+              </div>
               {photoLoading && <div className="preview-skeleton" aria-hidden="true"><span /></div>}
               {!photo && !photoLoading && <button type="button" className="preview-add-photo" onClick={() => fileRef.current?.click()}><span aria-hidden="true">↑</span> Add your swimmer photo</button>}
               {celebration > 0 && <span key={celebration} className="export-sparkles" aria-hidden="true">✦ <i>✦</i> ✦</span>}

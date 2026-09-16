@@ -13,7 +13,7 @@ async function moduleFrom(entry) {
 const model = await moduleFrom("lib/meet-day.ts");
 const { multiEventLayout, eventNameMissing, MAX_CARD_EVENTS } = await moduleFrom("lib/achievement-events.ts");
 const { drawMultiEventCard } = await moduleFrom("lib/multi-event-card.ts");
-const { drawFinishLineCard, finishLineLayout } = await moduleFrom("lib/finish-line-card.ts");
+const { drawFinishLineCard, finishLineLayout, defaultPhotoRect, boundFinishRect } = await moduleFrom("lib/finish-line-card.ts");
 
 test("multi-event captions preserve order, optional times, and legacy single-event input", () => {
   const events = [{ eventName: " 50Y Free ", time: " 24.31 " }, { eventName: "100Y Breast", time: "1:02.35" }, { eventName: "200Y IM", time: "" }, { eventName: " ", time: "" }];
@@ -53,6 +53,30 @@ test("Finish Line template keeps one to six results inside both export sizes", (
     drawFinishLineCard(ctx,1080,height,{name:"Avery Thompson",classYear:"Class of 2027",headline:"BROKE TEAM RECORD",subline:"OKLAHOMA STATE CHAMPIONSHIPS",meetName:"Winter Meet",meetDate:"2026-12-12",events,image:null,brandMark:null,zoom:1,horizontalPosition:0,verticalPosition:0});
     for (const event of events) for (const text of [event.eventName,event.time]) assert.equal(calls.filter(c=>c[0]==="fillText"&&c[1]===text).length,1);
     for (const call of calls.filter(c=>c[0]==="fillText")) assert.ok(call[3] > -1 && call[3] < height);
+  }
+});
+
+test("Finish Line photo and extra elements stay within either card format", () => {
+  assert.deepEqual(boundFinishRect({x: .9, y: -.2, w: .4, h: .02}), {x: .6, y: 0, w: .4, h: .04});
+  for (const height of [1080, 1350]) {
+    const original = defaultPhotoRect(height);
+    assert.ok(original.x + original.w < 1 && original.y + original.h < 1);
+    const calls = [];
+    const ctx = new Proxy({ measureText: value => ({width: value.length * 14}), createLinearGradient: () => ({addColorStop() {}}) }, { get: (o,p) => p in o ? o[p] : (...args) => calls.push([p,...args]), set: (o,p,v) => {o[p]=v;return true;} });
+    const layerImage = {naturalWidth: 200, naturalHeight: 100};
+    drawFinishLineCard(ctx, 1080, height, {
+      name: "Avery", classYear: "Class of 2027", headline: "STATE QUALIFIER", subline: "", events: [{eventName:"100 Free",time:"55.42"}],
+      meetName: "", meetDate: "", image: null, brandMark: null, zoom: 1, horizontalPosition: 0, verticalPosition: 0,
+      photoRect: {x:.1,y:.1,w:.3,h:.25},
+      layers: [
+        {id:"label",kind:"text",x:.2,y:.6,w:.35,h:.1,text:"NEW RECORD",color:"#ffffff",background:"transparent",fontSize:42},
+        {id:"image",kind:"image",x:.5,y:.2,w:.2,h:.2,text:"",color:"#ffffff",background:"transparent",fontSize:42},
+        {id:"hidden",kind:"panel",x:.1,y:.2,w:.2,h:.2,text:"",color:"#ffffff",background:"#ff0000",fontSize:42,hidden:true},
+      ], layerImages: {image:layerImage},
+    });
+    assert.ok(calls.some(call => call[0] === "translate" && call[1] === 270 && call[2] === height * .225));
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "NEW RECORD"));
+    assert.ok(calls.some(call => call[0] === "drawImage" && call[1] === layerImage));
   }
 });
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");

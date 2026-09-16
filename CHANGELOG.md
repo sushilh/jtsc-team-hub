@@ -4,6 +4,12 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-09-16 — Editable Finish Line card
+
+- Added drag-and-resize editing for the Finish Line photo frame and movable text, image, and color-block overlays. Numeric position/size inputs and arrow-key nudges provide non-drag controls; selection chrome stays out of PNG exports.
+- Added local image validation/replacement, layer visibility/order/duplicate/remove, Undo for removal and layout reset, and proportional positioning across portrait and square cards. Updated the Finish Line UX contract; no volunteer records or server data are changed.
+- Checked: `npm test` (38 passing, including new renderer/geometry coverage), `npx tsc --noEmit`, strict project UI audit (0 findings), DESIGN.md lint (0 errors), and Playwright Finish Line, achievement-preview, and multi-event flows including mobile, image failure recovery, keyboard, both PNG sizes, and preview/export pixel parity. `npm run lint` alone fails because ESLint scans unrelated untracked `brag-output/` vendor files; the full lint command passes with `brag-output/**` and `Claude outputs/**` excluded. Not pushed or deployed.
+
 ### 2026-09-16 — Shared change and release tracking
 
 - Added one working agreement for Codex and Claude, a change log, and a release checkpoint record so a future editor can find a tested starting point.

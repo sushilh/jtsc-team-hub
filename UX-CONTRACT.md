@@ -24,6 +24,7 @@ See `DESIGN.md`. Existing runtime CSS is the canonical token source. No new fram
 | Volunteer roster upload | SignupImportPanel + `lib/job-signup.mjs` | User-provided TeamUnify export | `.xls`, `.xlsx`, `.csv`; one file per action | Real workbook, duplicate, interrupted activation, export |
 | Volunteer mutations | VolunteerApp `postCheckin` + service API | User meet-day requirements | Imported assignment or walk-in | Success, conflict, lost-response reconciliation |
 | Admin authentication | AdminApp login + signed host-only cookie | Existing authorized admin portal | PIN with throttled failures | Reveal control, invalid PIN, throttle, session restore |
+| Finish Line canvas | CardStudio + `lib/finish-line-card.ts` | User's editable Finish Line request (2026-09-16) | Local-only photo frame and extra text/image/color blocks | Pointer, keyboard, narrow viewport, PNG parity |
 
 ## Event-list flow ledger
 
@@ -36,6 +37,10 @@ See `DESIGN.md`. Existing runtime CSS is the canonical token source. No new fram
 | Download | Template PNG button | Existing busy state | Browser download; size/status | Validation disables export; PNG failure keeps inputs | No navigation |
 
 Six is the presentation limit, visible in the editor; additional input is not silently truncated. Event names are free text up to 36 characters and times up to 16, preserving units and formatting as entered. A time is optional; a time without its event name blocks download. Entirely empty rows are excluded. Both event and time remain ordinary text inputs, not numeric conversions. Caption edits remain user's text until Regenerate is chosen.
+
+## Finish Line layout flow
+
+Only the Finish Line template exposes a direct canvas editor. Its photo frame can be moved and resized independently of the crop sliders. Text, local image, and color-block elements can be added, selected, moved, resized, reordered, hidden, duplicated, or removed. The output size toggle keeps element positions proportional to the selected format. Pointer dragging has numeric position/size inputs and arrow-key movement as alternatives; the visible selection outline is editing chrome and is never exported. Add and replace image accept one JPG, PNG, or WebP file up to 20 MB with inline validation; the previous image survives a failed replacement. Remove and reset have local Undo actions. These edits stay in the browser, survive switching Team Hub tabs, and are cleared by reload; an unload warning protects edited layouts. They do not mutate volunteer data or upload photos to a server.
 
 ## Navigation, recovery and data scope
 

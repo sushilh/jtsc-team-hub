@@ -1,5 +1,31 @@
 import { meetDetails } from "./social-content.mjs";
 
+export type FinishRect = { x: number; y: number; w: number; h: number }; // Fractions of the output card.
+export type FinishLayer = FinishRect & {
+  id: string;
+  kind: "text" | "image" | "panel";
+  text: string;
+  color: string;
+  background: string;
+  fontSize: number;
+  imageId?: string;
+  hidden?: boolean;
+};
+
+export function defaultPhotoRect(height: number): FinishRect {
+  const layout = finishLineLayout(height, 1);
+  return { x: 48 / 1080, y: layout.photoTop / height, w: 754 / 1080, h: layout.photoHeight / height };
+}
+
+export function boundFinishRect(rect: FinishRect): FinishRect {
+  const w = Math.max(.06, Math.min(1, rect.w));
+  const h = Math.max(.04, Math.min(1, rect.h));
+  return {
+    x: Math.max(0, Math.min(1 - w, rect.x)),
+    y: Math.max(0, Math.min(1 - h, rect.y)), w, h,
+  };
+}
+
 type FinishLineState = {
   name: string;
   classYear: string;
@@ -13,6 +39,9 @@ type FinishLineState = {
   zoom: number;
   horizontalPosition: number;
   verticalPosition: number;
+  photoRect?: FinishRect | null;
+  layers?: FinishLayer[];
+  layerImages?: Record<string, HTMLImageElement>;
 };
 
 export function finishLineLayout(height: number, eventCount: number) {
@@ -74,8 +103,11 @@ export function drawFinishLineCard(
   const deepMaroon = "#431326";
   const cream = "#fffaf3";
   const paleGold = "#efc76f";
-  const photoX = 48;
-  const photoWidth = 754;
+  const photoRect = boundFinishRect(state.photoRect ?? defaultPhotoRect(height));
+  const photoX = photoRect.x * width;
+  const photoWidth = photoRect.w * width;
+  const photoTop = photoRect.y * height;
+  const photoHeight = photoRect.h * height;
   const textRight = 802;
   const layout = finishLineLayout(height, state.events.length);
 
@@ -109,21 +141,21 @@ export function drawFinishLineCard(
 
   // A crisp cream frame echoes a printed meet photograph pinned to a record board.
   ctx.save();
-  ctx.translate(photoX + photoWidth / 2, layout.photoTop + layout.photoHeight / 2);
+  ctx.translate(photoX + photoWidth / 2, photoTop + photoHeight / 2);
   ctx.rotate(-.006);
   ctx.fillStyle = cream;
-  ctx.fillRect(-photoWidth / 2 - 8, -layout.photoHeight / 2 - 8, photoWidth + 16, layout.photoHeight + 16);
+  ctx.fillRect(-photoWidth / 2 - 8, -photoHeight / 2 - 8, photoWidth + 16, photoHeight + 16);
   ctx.beginPath();
-  ctx.rect(-photoWidth / 2, -layout.photoHeight / 2, photoWidth, layout.photoHeight);
+  ctx.rect(-photoWidth / 2, -photoHeight / 2, photoWidth, photoHeight);
   ctx.clip();
   if (state.image) {
-    drawCover(ctx, state.image, -photoWidth / 2, -layout.photoHeight / 2, photoWidth, layout.photoHeight, state.zoom, state.horizontalPosition, state.verticalPosition);
+    drawCover(ctx, state.image, -photoWidth / 2, -photoHeight / 2, photoWidth, photoHeight, state.zoom, state.horizontalPosition, state.verticalPosition);
   } else {
-    const placeholder = ctx.createLinearGradient(0, -layout.photoHeight / 2, 0, layout.photoHeight / 2);
+    const placeholder = ctx.createLinearGradient(0, -photoHeight / 2, 0, photoHeight / 2);
     placeholder.addColorStop(0, "#e8ddd8");
     placeholder.addColorStop(1, "#bfa9b1");
     ctx.fillStyle = placeholder;
-    ctx.fillRect(-photoWidth / 2, -layout.photoHeight / 2, photoWidth, layout.photoHeight);
+    ctx.fillRect(-photoWidth / 2, -photoHeight / 2, photoWidth, photoHeight);
     ctx.fillStyle = deepMaroon;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -189,4 +221,34 @@ export function drawFinishLineCard(
   ctx.textAlign = "right";
   ctx.fillStyle = cream;
   ctx.fillText(state.classYear.toUpperCase(), textRight, height - 34, 200);
+
+  for (const layer of state.layers ?? []) {
+    if (layer.hidden) continue;
+    const rect = boundFinishRect(layer);
+    const x = rect.x * width, y = rect.y * height, w = rect.w * width, h = rect.h * height;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    if (layer.kind === "panel") {
+      ctx.fillStyle = layer.background;
+      ctx.fillRect(x, y, w, h);
+    } else if (layer.kind === "image") {
+      const image = state.layerImages?.[layer.imageId ?? layer.id];
+      if (image) drawCover(ctx, image, x, y, w, h, 1, 0, 0);
+      else {
+        ctx.fillStyle = "#fffaf3"; ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = "#431326"; ctx.textAlign = "center";
+        ctx.font = '700 22px Arial, sans-serif';
+        ctx.fillText("ADD IMAGE", x + w / 2, y + h / 2, w - 12);
+      }
+    } else {
+      if (layer.background !== "transparent") { ctx.fillStyle = layer.background; ctx.fillRect(x, y, w, h); }
+      ctx.fillStyle = layer.color;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.font = `900 ${layer.fontSize}px "Arial Narrow", Impact, sans-serif`;
+      layer.text.split("\n").slice(0, 8).forEach((line, index) =>
+        ctx.fillText(line, x + 8, y + 6 + index * layer.fontSize * 1.1, Math.max(1, w - 16)));
+    }
+    ctx.restore();
+  }
 }

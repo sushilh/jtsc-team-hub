@@ -84,5 +84,39 @@
 
 /* Only the running transition exposes the previous card; finished/canceled fades stay hidden. */
 .canvas-frame { position: relative; display: inline-block; }
+.canvas-surface { position: relative; display: block; }
 .canvas-frame canvas { display: block; }
 .preview-crossfade { position: absolute; inset: 0; opacity: 0; width: 100% !important; height: 100% !important; pointer-events: none; background: transparent !important; box-shadow: none !important; }
+
+/* Finish Line's edit chrome sits outside the rasterized card and never enters exports. */
+.studio-shell .finish-editor { margin-top: 14px; padding: 16px; border: 1px solid var(--stage-line); border-radius: 6px; background: #ffffff0a; }
+.studio-shell .finish-editor-heading { display: flex; justify-content: space-between; align-items: start; gap: 14px; }
+.studio-shell .finish-editor-heading b { display: block; color: var(--stage-text); font-size: 16px; }
+.studio-shell .finish-editor-heading span { display: block; color: var(--stage-muted); font-size: 12px; line-height: 1.5; margin-top: 4px; }
+.studio-shell .finish-reset-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.studio-shell .finish-editor button { cursor: pointer; color: var(--stage-text); border: 1px solid var(--stage-line); background: #ffffff0a; border-radius: 4px; min-height: 40px; padding: 8px 12px; font-size: 12px; }
+.studio-shell .finish-editor button:hover:not(:disabled), .studio-shell .finish-editor button[aria-pressed="true"] { border-color: var(--gold); background: #e8b92320; }
+.studio-shell .finish-editor button:disabled { opacity: .45; cursor: not-allowed; }
+.studio-shell .finish-editor :focus-visible, .studio-shell .finish-canvas:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.studio-shell .finish-add-row, .studio-shell .finish-element-list, .studio-shell .finish-layer-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.studio-shell .finish-add-row button { border-color: #e8b92380; color: var(--gold); }
+.studio-shell .finish-element-list { padding-block: 12px; border-bottom: 1px solid var(--stage-line); }
+.studio-shell .finish-inspector { margin-top: 13px; }
+.studio-shell .finish-position-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.studio-shell .finish-position-grid label, .studio-shell .finish-field, .studio-shell .finish-color { display: flex; flex-direction: column; gap: 6px; color: var(--stage-muted); font-size: 12px; }
+.studio-shell .finish-position-grid input, .studio-shell .finish-field input, .studio-shell .finish-field textarea { width: 100%; color: var(--stage-text); background: #170e18; border: 1px solid var(--stage-line); border-radius: 4px; padding: 9px; font: inherit; font-size: 14px; }
+.studio-shell .finish-field { margin-top: 12px; }
+.studio-shell .finish-field textarea { resize: none; min-height: 64px; }
+.studio-shell .finish-color { flex-direction: row; align-items: center; margin-top: 12px; gap: 12px; }
+.studio-shell .finish-color input { width: 52px; height: 38px; border: 1px solid var(--stage-line); background: transparent; cursor: pointer; }
+.studio-shell .finish-inspector p, .studio-shell .finish-error { color: var(--stage-muted); font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
+.studio-shell .finish-error { color: #ffc2cf; }
+.studio-shell .finish-image-button { margin-top: 12px; }
+.studio-shell .canvas-stage .finish-canvas { animation: none; touch-action: none; cursor: move; }
+.finish-selection { position: absolute; box-sizing: border-box; border: 2px dashed #f4cb48; box-shadow: 0 0 0 1px #431326; pointer-events: none; }
+.finish-selection i { position: absolute; right: -7px; bottom: -7px; width: 18px; height: 18px; border-radius: 3px; background: #f4cb48; border: 2px solid #431326; }
+@media (max-width: 600px) {
+  .studio-shell .finish-editor { padding: 12px; }
+  .studio-shell .finish-editor-heading { flex-direction: column; }
+  .studio-shell .finish-position-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
