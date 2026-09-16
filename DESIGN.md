@@ -52,7 +52,7 @@ The editing rail is 360px with a 28px gap on desktop; the existing 800px breakpo
 
 ## Elevation & Depth
 
-The workspace uses borders and neutral canvas surfaces, with a small shadow only around the output. Signature export retains its glass-like maroon treatment; Classic uses white and Race Result uses dark/maroon with gold accents. Do not put gradients on editor controls.
+The workspace uses borders and neutral canvas surfaces, with a small shadow only around the output. Signature export retains its glass-like maroon treatment; Classic uses white and Race Result uses dark/maroon with gold accents. Finish Line uses a cream-framed swimmer photo, maroon record-board field, faint Trojan mark, and a vertical milestone headline; its reference image is not a reusable site asset. Do not put gradients on editor controls.
 
 ## Shapes
 

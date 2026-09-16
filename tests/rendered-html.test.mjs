@@ -28,8 +28,10 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /Photo horizontal focus/);
   assert.match(studio, /Classic Zone/);
   assert.match(studio, /JTSC Signature/);
+  assert.match(studio, /Finish Line/);
   assert.match(studio, /Classic PNG/);
   assert.match(studio, /Signature PNG/);
+  assert.match(studio, /Finish Line PNG/);
   assert.ok(assets.some((name) => name.startsWith("ClubHub-") && name.endsWith(".js")));
   assert.doesNotMatch(`${page}${layout}`, /codex-preview|react-loading-skeleton|Starter Project/);
 });

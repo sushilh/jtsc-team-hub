@@ -46,7 +46,7 @@
 .studio-shell .format-toggle { background: #ffffff08; border: 1px solid var(--stage-line); border-radius: 5px; padding: 3px; }
 .studio-shell .format-toggle button { color: var(--stage-muted); font-size: 12px; border: 0; border-radius: 3px; padding-inline: 12px; }
 .studio-shell .format-toggle button.active { background: var(--gold); color: var(--stage-ink); }
-.studio-shell .template-picker { gap: 10px; border: 0; margin-top: 20px; }
+.studio-shell .template-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; border: 0; margin-top: 20px; }
 .studio-shell .template-picker button { border: 1px solid var(--stage-line); border-radius: 5px; background: #ffffff06; padding: 14px; min-height: 78px; box-shadow: none; }
 .studio-shell .template-picker button b { color: var(--stage-text); font-size: 14px; }
 .studio-shell .template-picker button small { color: var(--stage-muted); font-size: 12px; }
@@ -76,7 +76,7 @@
   .studio-shell .studio-workspace { display: flex; gap: 20px; }
   .studio-shell .preview-panel { position: static; padding: 16px; }
   .studio-shell .control-section { padding: 22px; }
-  .studio-shell .template-picker { gap: 6px; }
+  .studio-shell .template-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .studio-shell .template-picker button { min-height: 66px; padding: 10px 7px; }
   .studio-shell .template-picker button b { font-size: 13px; }
   .studio-shell .canvas-stage canvas { width: min(100%,360px); max-height: none; }

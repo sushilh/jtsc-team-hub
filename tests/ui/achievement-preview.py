@@ -94,6 +94,7 @@ with sync_playwright() as playwright:
                 ("Classic Zone", "Classic PNG", "classic", "Hatkar, Reya"),
                 ("Race Result", "Race Result PNG", "race", "Hatkar, Saisha"),
                 ("JTSC Signature", "Signature PNG", "signature", "Asakevich, Graham"),
+                ("Finish Line", "Finish Line PNG", "finish", "Zeiler, Landon"),
             ]
             for format_label, height in [("Instagram · 4:5", 1350), ("Facebook · 1:1", 1080)]:
                 studio.get_by_role("button", name=format_label, exact=True).click()
@@ -116,14 +117,14 @@ with sync_playwright() as playwright:
             # Pause immediately during a transition, then edit and switch tabs.
             studio.get_by_role("button", name="Classic Zone", exact=False).click()
             studio.get_by_role("button", name="Pause animations", exact=True).click()
-            change_swimmer("Zeiler, Landon")
+            change_swimmer("Hatkar, Reya")
             check_visible_card("paused-name-change")
             page.get_by_role("tab", name="Parent guide", exact=True).click()
             page.get_by_role("tab", name="Achievement studio", exact=True).click()
-            expect(swimmer).to_have_value("Zeiler, Landon")
+            expect(swimmer).to_have_value("Hatkar, Reya")
             check_visible_card("return-to-studio")
             assert not errors, errors
             context.close()
-        print(f"PASS: selected names render visibly, all three designs and both PNG sizes match, motion/reduced motion/pause/tab return work. Screenshots: {output}")
+        print(f"PASS: selected names render visibly, all four designs and both PNG sizes match, motion/reduced motion/pause/tab return work. Screenshots: {output}")
     finally:
         browser.close()

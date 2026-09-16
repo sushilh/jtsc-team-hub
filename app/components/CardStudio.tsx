@@ -7,10 +7,17 @@ import { imageFilename, socialFormats, meetDetails, normalizeCardEvents } from "
 import EventResultsEditor from "./EventResultsEditor";
 import { eventNameMissing, type AchievementEvent } from "../../lib/achievement-events";
 import { drawMultiEventCard } from "../../lib/multi-event-card";
+import { drawFinishLineCard } from "../../lib/finish-line-card";
 import achievementMemberNames from "../../lib/achievement-members.json";
 
 type CardFormat = "portrait" | "square";
-type CardTemplate = "classic" | "signature" | "race";
+const cardTemplates = [
+  { id: "classic", label: "Classic Zone", description: "Original banner", downloadLabel: "Classic PNG" },
+  { id: "signature", label: "JTSC Signature", description: "Frosted glass", downloadLabel: "Signature PNG" },
+  { id: "race", label: "Race Result", description: "Time-first layout", downloadLabel: "Race Result PNG" },
+  { id: "finish", label: "Finish Line", description: "Bold vertical type", downloadLabel: "Finish Line PNG" },
+] as const;
+type CardTemplate = typeof cardTemplates[number]["id"];
 
 const celebrationColors = ["#741b38", "#c9963a", "#4db6a0", "#f0c347", "#54C7DB", "#ffffff"];
 const celebrationParticles = Array.from({ length: 18 }, (_, index) => {
@@ -248,8 +255,13 @@ function drawCard(
   canvas.width = width;
   canvas.height = height;
 
+  if (state.template === "finish") {
+    drawFinishLineCard(ctx, width, height, state);
+    return;
+  }
+
   if (state.events.length > 1) {
-    drawMultiEventCard(ctx, width, height, state);
+    drawMultiEventCard(ctx, width, height, { ...state, template: state.template as Exclude<CardTemplate, "finish"> });
     return;
   }
 
@@ -584,7 +596,8 @@ export default function CardStudio() {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(link.href), 30000);
-      setExportNotice(`${targetTemplate === "classic" ? "Classic" : targetTemplate === "race" ? "Race Result" : "Signature"} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
+      const templateLabel = cardTemplates.find(item => item.id === targetTemplate)?.label ?? "Card";
+      setExportNotice(`${templateLabel} PNG prepared at 1080 × ${socialFormats[format].height}. Check your downloads or save the image if your browser opens it.`);
       notify("PNG ready. Check your downloads, then copy your caption.");
       setCelebration(value => value + 1);
       exportLock.current = false;
@@ -679,15 +692,11 @@ export default function CardStudio() {
             </div>
           </div>
           <div className="template-picker" role="group" aria-label="Card template">
-            <button type="button" aria-pressed={template === "classic"} className={template === "classic" ? "active" : ""} onClick={() => setTemplate("classic")}>
-              <span className="template-swatch swatch-classic" aria-hidden="true" /><div><b>Classic Zone</b><small>Original banner</small></div><i aria-hidden="true">{template === "classic" ? "✓" : ""}</i>
-            </button>
-            <button type="button" aria-pressed={template === "signature"} className={template === "signature" ? "active" : ""} onClick={() => setTemplate("signature")}>
-              <span className="template-swatch swatch-signature" aria-hidden="true" /><div><b>JTSC Signature</b><small>Frosted glass</small></div><i aria-hidden="true">{template === "signature" ? "✓" : ""}</i>
-            </button>
-            <button type="button" aria-pressed={template === "race"} className={template === "race" ? "active" : ""} onClick={() => setTemplate("race")}>
-              <span className="template-swatch swatch-race" aria-hidden="true" /><div><b>Race Result</b><small>Time-first layout</small></div><i aria-hidden="true">{template === "race" ? "✓" : ""}</i>
-            </button>
+            {cardTemplates.map(item => (
+              <button key={item.id} type="button" aria-pressed={template === item.id} className={template === item.id ? "active" : ""} onClick={() => setTemplate(item.id)}>
+                <span className={`template-swatch swatch-${item.id}`} aria-hidden="true" /><div><b>{item.label}</b><small>{item.description}</small></div><i aria-hidden="true">{template === item.id ? "✓" : ""}</i>
+              </button>
+            ))}
           </div>
           <div ref={stageRef} className={`canvas-stage ${format}`} onPointerMove={handleStageMouse} onPointerLeave={handleStageLeave}>
             <div className="canvas-frame">
@@ -703,11 +712,11 @@ export default function CardStudio() {
           <div className="export-row">
             <div><b>Download any design</b><span>{socialFormats[format].label} · 1080 × {socialFormats[format].height} · PNG</span></div>
             <div className="download-options">
-              {(["classic", "signature", "race"] as const).map(design => <button key={design} type="button" className={`magnetic-btn ${design === "classic" ? "secondary-download" : ""}`} aria-busy={exporting === design} onClick={() => downloadCard(design)} disabled={exporting !== null || invalidEvents || photoLoading} onPointerMove={handleMagneticMove} onPointerLeave={handleMagneticLeave}><span className="download-icon" aria-hidden="true">{exporting === design ? "◌" : "↓"}</span>{design === "classic" ? "Classic PNG" : design === "race" ? "Race Result PNG" : "Signature PNG"}</button>)}
+              {cardTemplates.map(item => <button key={item.id} type="button" className={`magnetic-btn ${item.id === "classic" ? "secondary-download" : ""}`} aria-busy={exporting === item.id} onClick={() => downloadCard(item.id)} disabled={exporting !== null || invalidEvents || photoLoading} onPointerMove={handleMagneticMove} onPointerLeave={handleMagneticLeave}><span className="download-icon" aria-hidden="true">{exporting === item.id ? "◌" : "↓"}</span>{item.downloadLabel}</button>)}
             </div>
           </div>
           {invalidEvents && <p className="event-error" role="alert">Add a name for each event with a time before downloading.</p>}
-          <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic, Signature, or Race Result. Profile-grid previews may crop differently.</p>
+          <p className="export-help">Both sizes can be uploaded to Instagram and Facebook feeds. Choose a size above, then download Classic, Signature, Race Result, or Finish Line. Profile-grid previews may crop differently.</p>
           <p className="export-status" role="status">{exporting ? "Preparing your high-resolution PNG…" : photoLoading ? "Downloads will be ready when photo processing finishes." : exportNotice}</p>
         </div>
       </section>

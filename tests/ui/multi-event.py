@@ -1,16 +1,20 @@
 from pathlib import Path
 import struct
+import os
+import tempfile
 from playwright.sync_api import sync_playwright, expect
 
-out = Path('/Users/sushil/Documents/JTSC/work/qa/events')
-out.mkdir(parents=True, exist_ok=True)
+out = Path(tempfile.mkdtemp(prefix='jtsc-multi-event-'))
+launch_options = {'headless': True}
+if os.environ.get('JTSC_CHROMIUM_EXECUTABLE'):
+    launch_options['executable_path'] = os.environ['JTSC_CHROMIUM_EXECUTABLE']
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+    browser = p.chromium.launch(**launch_options)
     context = browser.new_context(viewport={'width':1440,'height':1000}, accept_downloads=True, reduced_motion='reduce')
     page = context.new_page()
     errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
-    page.goto('http://localhost:3000/')
+    page.goto(os.environ.get('JTSC_BASE_URL','http://localhost:3000').rstrip('/') + '/')
     page.wait_for_load_state('networkidle')
     print(page.locator('.event-results-editor').aria_snapshot())
     studio=page.locator('#panel-studio')
@@ -47,7 +51,7 @@ with sync_playwright() as p:
     for event in ['100Y Butterfly','200Y Breaststroke','500Y Freestyle']:
         assert event in studio.get_by_label('Instagram caption',exact=True).input_value()
         assert event in studio.get_by_label('Facebook caption',exact=True).input_value()
-    studio.locator('input[type=file]').set_input_files('/Users/sushil/Downloads/Screenshot 2026-09-08 at 8.19.06 PM.png')
+    studio.locator('input[type=file]').set_input_files(str(Path(__file__).resolve().parents[2] / 'public' / 'og.png'))
     expect(studio.get_by_role('button',name='Replace photo',exact=False)).to_be_visible()
     def download(label,path,size):
         with page.expect_download() as event: studio.get_by_role('button',name=label,exact=False).click()
@@ -55,7 +59,7 @@ with sync_playwright() as p:
         assert struct.unpack('>II',file.read_bytes()[16:24])==size
     for format,height in [('Instagram · 4:5',1350),('Facebook · 1:1',1080)]:
         studio.get_by_role('button',name=format,exact=True).click()
-        for label,slug in [('Classic PNG','classic'),('Signature PNG','signature'),('Race Result PNG','race')]:
+        for label,slug in [('Classic PNG','classic'),('Signature PNG','signature'),('Race Result PNG','race'),('Finish Line PNG','finish')]:
             download(label,f'{slug}-{height}.png',(1080,height))
     page.get_by_role('tab',name='Meet Day Studio').click()
     expect(page.get_by_role('textbox',name='Text (line breaks supported)',exact=True)).to_be_visible()
@@ -81,5 +85,5 @@ with sync_playwright() as p:
     expect(studio.get_by_role('button',name='Remove event 1',exact=True)).to_be_disabled()
     download('Signature PNG','one-event-offline.png',(1080,1080))
     assert not errors,errors
-    print('PASS: add/edit/remove/undo, max/blank/invalid/optional rows, focus/labels, captions, all six export combinations, tab retention, mobile, offline, single-event fallback. No JS errors.')
+    print('PASS: add/edit/remove/undo, max/blank/invalid/optional rows, focus/labels, captions, all eight export combinations, tab retention, mobile, offline, single-event fallback. No JS errors.')
     browser.close()

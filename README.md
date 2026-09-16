@@ -21,8 +21,8 @@ This starter does not use `wrangler.jsonc`.
 
 ## Product features
 
-- Multiple achievement events: add up to six event/time rows for any qualifier or milestone, remove/undo rows, and export the same ordered results in all three templates and both social sizes. Single-event layouts remain available. Times are optional; a time without an event name blocks export. Captions include all listed events.
-- Meet-deck interface with numbered tool tabs, condensed headings, neutral canvas surfaces, and responsive editing controls; no changes to the three achievement-card layouts.
+- Multiple achievement events: add up to six event/time rows for any qualifier or milestone, remove/undo rows, and export the same ordered results in all four templates and both social sizes. Single-event layouts remain available. Times are optional; a time without an event name blocks export. Captions include all listed events.
+- Meet-deck interface with numbered tool tabs, condensed headings, neutral canvas surfaces, and responsive editing controls.
 - Meet Day Studio: draggable/resizable text, sessions, photo, logo, QR, and panel blocks; editable dates, ages, warm-ups, and start times
 - Three live color themes, layer order controls, hide/delete/duplicate, layout undo/redo, and 1080×1620 PNG poster export
 - Global primary-color picker and validated hex input: updates the complete theme palette across the editor and every PNG format; reset or select a preset to restore its colors. Photos, QR images, and explicit per-block overrides are preserved.
@@ -35,7 +35,7 @@ Meet books are parsed heuristically in the browser using PDF.js. Review all dete
 
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
 - `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, scoped roster clearing, preserved corrections, same-format `.xls` download, imported-job walk-ins, manual walk-in sessions, hour adjustments, and CSV reports
-- Classic and Signature card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
+- Classic, Signature, Race Result, and Finish Line card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
 - editable, locally generated captions with separate copy buttons for Instagram and Facebook
 
 - state, sectionals, junior nationals, and national team presets

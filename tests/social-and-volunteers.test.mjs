@@ -23,7 +23,7 @@ test("captions use only supplied achievement facts, with separate platform copy"
 test("social exports have exact feed dimensions and unambiguous filenames", () => {
   assert.deepEqual([socialFormats.portrait.width, socialFormats.portrait.height], [1080, 1350]);
   assert.deepEqual([socialFormats.square.width, socialFormats.square.height], [1080, 1080]);
-  for (const template of ["classic", "signature"]) {
+  for (const template of ["classic", "signature", "race", "finish"]) {
     assert.equal(imageFilename(" Lily Nitzel ", template, "portrait"), `lily-nitzel-${template}-instagram-feed-1080x1350.png`);
     assert.equal(imageFilename("", template, "square"), `jtsc-swimmer-${template}-facebook-feed-1080x1080.png`);
   }
