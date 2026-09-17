@@ -4,6 +4,13 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-09-16 — Save volunteer-hour exports for later
+
+- Added a "Save export" button next to Export CSV on the Admin Reports tab. It stores the generated hour-ledger CSV in a new D1 table (`ledger_exports`) instead of only downloading it, and lists saved exports with a download link so a prior export is not lost once the browser tab closes. Saved exports are not cleared by the "Clear all data" reset — they are meant to survive a season reset as a standing record; flagging this in case that should instead be included in the reset scope.
+- Extracted the CSV-building logic (shared by the download button and the save action) out of `AdminApp.jsx` into a new tested library file, `lib/ledger-export.mjs`, per the "logic in lib, not components" rule.
+- Google Drive was considered as an alternate save target but not built — it needs a Google Cloud OAuth app, a consent flow, and stored refresh tokens, which is materially more setup than D1. Deferred until asked for.
+- Checked: `npm test` (41 passing, including 2 new `lib/ledger-export.mjs` tests), `npx tsc --noEmit` (clean), `npm run lint` (clean once `brag-output/**` and `Claude outputs/**` are excluded — the pre-existing, unrelated lint gap noted in `STATUS.md`), and a manual local-dev smoke test in the browser: logged into Admin, saved an export, confirmed it listed with correct totals and downloaded correctly, and confirmed the layout at 390px width. `tests/ui/*.py` Playwright suites were not run — none currently cover the Admin Reports tab. Not pushed or deployed.
+
 ### 2026-09-16 — Editable Finish Line card
 
 - Added drag-and-resize editing for the Finish Line photo frame and movable text, image, and color-block overlays. Numeric position/size inputs and arrow-key nudges provide non-drag controls; selection chrome stays out of PNG exports.

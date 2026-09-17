@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { volunteerJobCatalog, volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
+import { buildLedgerExport } from "../../lib/ledger-export.mjs";
 
 function today() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -44,11 +45,6 @@ function hoursBetween(start, end) {
   let minutes = eh * 60 + em - (sh * 60 + sm);
   if (minutes < 0) minutes += 1440;
   return Math.round(minutes / 60 * 100) / 100;
-}
-function csvCell(value) {
-  const text = String(value ?? "");
-  const safe = /^[\s]*[=+@-]/.test(text) ? `'${text}` : text;
-  return `"${safe.replaceAll('"', '""')}"`;
 }
 function Brand2() {
   return jsxs("div", {
@@ -227,6 +223,7 @@ function AdminApp() {
   const sessions2 = useMemo(() => data?.sessions ?? [], [data]);
   const jobs2 = useMemo(() => data?.jobs ?? [], [data]);
   const swimmers2 = useMemo(() => data?.swimmers ?? [], [data]);
+  const ledgerExports = useMemo(() => data?.ledgerExports ?? [], [data]);
   // The overview has to count the signup roster, which is how a meet actually runs, as
   // well as walk-ins. Counting entries alone left these tiles frozen all meet long.
   const overviewStats = useMemo(() => {
@@ -427,35 +424,19 @@ function AdminApp() {
     })]
   });
   function exportCsv() {
-    // Hours and points are different currencies, so they get their own columns
-    // rather than being added together.
-    const rows = creditLedger.map((row) => [
-      row.volunteerName,
-      row.swimmerName,
-      row.jobName,
-      row.meet,
-      row.meetDate,
-      row.units === "Hrs." ? row.credit : "",
-      row.units === "Pts." ? row.credit : "",
-      row.checkedInAt ?? "",
-      row.checkedOutAt ?? "",
-      row.adjusted ? "Yes" : "No",
-      row.source,
-    ]);
-    const totalHours = creditLedger.filter((row) => row.units === "Hrs.").reduce((sum, row) => sum + row.credit, 0);
-    const totalPoints = creditLedger.filter((row) => row.units === "Pts.").reduce((sum, row) => sum + row.credit, 0);
-    const csv = [
-      ["Volunteer", "Swimmer / account", "Job", "Meet", "Meet date", "Hours", "Points", "Check in", "Check out", "Credit adjusted", "Source"],
-      ...rows,
-      [],
-      ["TOTAL", "", "", "", "", totalHours, totalPoints, "", "", "", `${creditLedger.length} shifts`],
-    ].map((row) => row.map(csvCell).join(",")).join("\n");
     const label = reportMeet === "all" ? "all-meets" : reportMeet.split("|||")[0];
+    const { csv, fileName } = buildLedgerExport(creditLedger, label);
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    link.download = `JTSC-volunteer-hours-${label}.csv`;
+    link.download = fileName;
     link.click();
     URL.revokeObjectURL(link.href);
+  }
+  async function saveLedgerExport() {
+    const label = reportMeet === "all" ? "all-meets" : reportMeet.split("|||")[0];
+    const { csv, fileName, totalHours, totalPoints, rowCount } = buildLedgerExport(creditLedger, label);
+    await mutate({ action: "save_ledger_export", label, fileName, csv, rowCount, totalHours, totalPoints },
+      `Saved ${fileName} (${rowCount} ${rowCount === 1 ? "shift" : "shifts"}) for later.`);
   }
   return jsxs("main", {
     className: "admin-shell",
@@ -638,6 +619,8 @@ function AdminApp() {
                 {ledgerMeets.map((meet) => <option key={meet.key} value={meet.key}>{meet.eventDate} · {meet.eventTitle}</option>)}
               </select>
               <button className="export-button" onClick={exportCsv}>Export CSV ↓</button>
+              <button type="button" className="export-button" disabled={busy || !creditLedger.length}
+                onClick={() => void saveLedgerExport()}>Save export</button>
             </div>
           </div>
 
@@ -714,6 +697,20 @@ function AdminApp() {
             {!creditLedger.length && <PanelEmpty text={pendingTotals.shifts
               ? `Nobody has checked out yet. ${pendingTotals.shifts} ${pendingTotals.shifts === 1 ? "volunteer is" : "volunteers are"} on deck and will earn credit once checked out.`
               : "No completed shifts yet. Credit appears here once volunteers are checked out at the desk."} />}
+          </div>
+
+          <div className="import-history">
+            <div className="import-history-head"><strong>Saved exports</strong><span>{ledgerExports.length}</span></div>
+            {ledgerExports.length ? ledgerExports.map((item) => <div className="import-history-row" key={item.id}>
+              <div>
+                <strong>{item.fileName}</strong>
+                <span>{item.rowCount} {item.rowCount === 1 ? "shift" : "shifts"} · {item.totalHours.toFixed(2).replace(/\.?0+$/, "")} hrs{item.totalPoints ? ` · ${item.totalPoints.toFixed(2).replace(/\.?0+$/, "")} pts` : ""}</span>
+                <small>Saved {stamp(item.createdAt)}</small>
+              </div>
+              <div className="import-history-actions">
+                <a className="export-button" href={`/api/admin/ledger-export?id=${item.id}`}>Download ↓</a>
+              </div>
+            </div>) : <div className="panel-empty compact"><span>〰</span>Save an export above to keep a copy here for later — it stays even after a season reset.</div>}
           </div>
         </section>
       ]
