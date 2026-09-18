@@ -4,6 +4,7 @@ This is the recovery index for deployed code. A checkpoint is marked stable only
 
 | Status | Date (America/Chicago) | Git commit | Stable tag | Cloudflare Worker version | Verification |
 | --- | --- | --- | --- | --- | --- |
+| Current known-good production | 2026-09-17 | `7aa6254` | `stable/2026-09-17-2` | `58347ae9-6d80-47fb-9015-7c43ff3a1921` | Pushed `main`; live State Times hub workflow passed at 390px; root and `/state-times` served successfully; 53 automated tests, typecheck, lint |
 | Current known-good production | 2026-09-17 | `0df6f89` | `stable/2026-09-17` | `93c35509-c607-4364-b0d6-8afd8520660d` | Pushed `main`; live root and `/admin` returned HTTP 200; admin export changes deployed |
 | Current known-good production | 2026-09-16 | `db571e7` | `stable/2026-09-16` | `a9f12b4b-3eaf-4c80-ae3f-6d238d436587` | 37 automated tests; lint, typecheck, strict UI audit; live 390px browser test and 1080×1350 PNG download |
 
