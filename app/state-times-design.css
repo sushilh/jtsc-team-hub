@@ -1,0 +1,70 @@
+/* State Qualifying Times — scoped styles for app/components/StateTimesApp.tsx.
+   Reuses site-design.css tokens (--maroon, --gold, --aqua, --ink, --muted, --line,
+   --paper) for chrome; the chart series colors below are its own identity palette
+   (documented in DESIGN.md), not site theme tokens, same as the poster/card canvases. */
+
+.state-times { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; color: var(--ink); }
+
+.state-times-back { font-size: 13px; font-weight: 600; color: var(--maroon); text-decoration: none; }
+.state-times-back:hover { text-decoration: underline; }
+
+.state-times-hero { padding: 20px 0 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.state-times-kicker { margin: 14px 0 4px; font-size: 11px; letter-spacing: .14em; font-weight: 750; text-transform: uppercase; color: var(--maroon); }
+.state-times-hero h1 { margin: 0 0 10px; font-family: var(--font-display), sans-serif; font-size: clamp(28px, 4vw, 40px); }
+.state-times-lede { margin: 0; max-width: 620px; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+.state-times-controls { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 20px; }
+.state-times-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.state-times-field input[type="number"] {
+  width: 84px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px;
+  font-size: 15px; font-weight: 600; color: var(--ink); background: #fff;
+}
+.state-times-toggle { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: #f6f4f4; flex-wrap: wrap; }
+.state-times-toggle button {
+  padding: 7px 14px; border: 0; border-radius: 999px; background: none;
+  font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; transition: .18s ease;
+}
+.state-times-toggle button.active { background: #fff; color: var(--maroon); box-shadow: 0 1px 3px rgba(0,0,0,.09); }
+
+.state-times-legend { display: flex; flex-wrap: wrap; gap: 14px 20px; list-style: none; margin: 0 0 22px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--maroon-soft); }
+.state-times-legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.qt-swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.qt-swatch-record { width: 16px; height: 0; border-top: 2px dashed var(--ink); border-radius: 0; }
+
+.state-times-empty { padding: 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
+
+.state-times-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; margin-bottom: 28px; perspective: 900px; }
+.qt-card {
+  margin: 0; padding: 16px 10px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #fbfaf9); text-align: center;
+  box-shadow: 0 10px 24px -18px rgba(26, 10, 18, .35);
+  transform-style: preserve-3d; transform: rotateX(0deg) rotateY(0deg);
+  transition: transform .35s cubic-bezier(.2,.7,.3,1), box-shadow .35s ease;
+}
+.qt-card figcaption { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.qt-card svg { width: 100%; height: auto; overflow: visible; }
+.qt-floor { fill: var(--line); opacity: .55; }
+.qt-bar3d { transition: transform .2s ease; }
+.qt-bar-label { font-size: 9px; font-weight: 700; fill: var(--ink); font-family: var(--font-body), sans-serif; }
+.qt-record-line { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.qt-record-label { font-size: 9px; font-weight: 700; fill: var(--ink); font-family: var(--font-body), sans-serif; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .qt-card:hover { transform: rotateX(8deg) rotateY(-6deg) translateY(-3px); box-shadow: 0 22px 34px -20px rgba(26, 10, 18, .45); }
+  .qt-bar3d:hover { transform: translateY(-3px); }
+}
+
+.state-times-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.state-times-table th, .state-times-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.state-times-table th { color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.state-times-table td strong { color: var(--ink); }
+
+.state-times-footer { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); line-height: 1.6; }
+.state-times-footer ul { display: flex; flex-wrap: wrap; gap: 8px 16px; list-style: none; margin: 8px 0 0; padding: 0; }
+.state-times-footer a { color: var(--maroon); }
+
+@media (max-width: 480px) {
+  .state-times { padding: 24px 16px 48px; }
+  .state-times-field input[type="number"] { width: 100%; }
+  .state-times-controls { gap: 14px; }
+}

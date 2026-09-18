@@ -3,6 +3,7 @@ import { Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import "./site-design.css";
 import "./achievement-design.css";
+import "./state-times-design.css";
 
 const spaceGrotesk = Space_Grotesk({ variable: "--font-display", subsets: ["latin"] });
 const dmSans = DM_Sans({ variable: "--font-body", subsets: ["latin"] });

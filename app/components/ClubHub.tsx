@@ -7,12 +7,14 @@ import MeetDayStudio from "./MeetDayStudio";
 import VolunteerApp from "./VolunteerApp";
 import AdminApp from "./AdminApp";
 import ParentGuide from "./ParentGuide";
+import StateTimesApp from "./StateTimesApp";
 
 const tabs = [
   { id: "studio", label: "Achievement studio" },
   { id: "meet-day", label: "Meet Day Studio" },
   { id: "volunteers", label: "Volunteer check-in" },
   { id: "admin", label: "Volunteer admin" },
+  { id: "state-times", label: "State qualifying times" },
   { id: "parents", label: "Parent guide" },
 ] as const;
 type Tab = typeof tabs[number]["id"];
@@ -129,6 +131,7 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
       <section id="panel-meet-day" role="tabpanel" aria-labelledby="tab-meet-day" hidden={active !== "meet-day"}>{visited.includes("meet-day") && <MeetDayStudio />}</section>
       <section id="panel-volunteers" role="tabpanel" aria-labelledby="tab-volunteers" hidden={active !== "volunteers"}>{visited.includes("volunteers") && <VolunteerApp />}</section>
       <section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" hidden={active !== "admin"}>{active === "admin" && <AdminApp />}</section>
+      <section id="panel-state-times" role="tabpanel" aria-labelledby="tab-state-times" hidden={active !== "state-times"}>{visited.includes("state-times") && <StateTimesApp />}</section>
       <section id="panel-parents" role="tabpanel" aria-labelledby="tab-parents" hidden={active !== "parents"}>{visited.includes("parents") && <ParentGuide />}</section>
     </div>
   </StudioExperience>;
