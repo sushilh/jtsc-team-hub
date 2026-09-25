@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { volunteerJobCatalog, volunteerJobNames, defaultJobHours } from "../../lib/volunteer-jobs.mjs";
 import { buildLedgerExport } from "../../lib/ledger-export.mjs";
+import { buildCardPrefill, findNotablePerformances, formatEventName, parseMeetResultsWorkbook } from "../../lib/meet-report.mjs";
+import achievementMemberNames from "../../lib/achievement-members.json";
 
 function today() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -466,6 +468,11 @@ function AdminApp() {
               "reports",
               "Reports",
               "04"
+            ],
+            [
+              "meet-report",
+              "Meet Report",
+              "05"
             ]
           ].map(([value, label, index]) => jsxs("button", {
             className: tab === value ? "active" : "",
@@ -492,7 +499,7 @@ function AdminApp() {
           children: [jsxs("div", { children: [jsx("span", {
             className: "eyebrow dark",
             children: "JTSC OPERATIONS"
-          }), jsx("h1", { children: tab === "overview" ? "Meet-day overview" : tab === "sessions" ? "Sessions & assignments" : tab === "swimmers" ? "Swimmer roster" : "Volunteer reports" })] }), jsxs("div", {
+          }), jsx("h1", { children: tab === "overview" ? "Meet-day overview" : tab === "sessions" ? "Sessions & assignments" : tab === "swimmers" ? "Swimmer roster" : tab === "meet-report" ? "Meet report" : "Volunteer reports" })] }), jsxs("div", {
             className: "admin-date",
             children: [jsx("small", { children: "TODAY" }), jsx("strong", { children: dateLabel(today()) })]
           })]
@@ -712,10 +719,122 @@ function AdminApp() {
               </div>
             </div>) : <div className="panel-empty compact"><span>〰</span>Save an export above to keep a copy here for later — it stays even after a season reset.</div>}
           </div>
-        </section>
+        </section>,
+        tab === "meet-report" && jsx(MeetReportPanel, {})
       ]
     })]
   });
+}
+function MeetReportPanel() {
+  const [meetName, setMeetName] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [error, setError] = useState("");
+  const [performances, setPerformances] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+  const [copiedId, setCopiedId] = useState("");
+
+  async function onFile(file) {
+    if (!file) return;
+    setParsing(true);
+    setError("");
+    setPerformances([]);
+    setFileName("");
+    try {
+      const buffer = await file.arrayBuffer();
+      const swims = parseMeetResultsWorkbook(buffer);
+      if (!swims.length) throw new Error("No OK-JTSC individual swims were found in this file. Is this a Hy-Tek/GoMotion “Individual Events” export?");
+      setPerformances(findNotablePerformances(swims));
+      setFileName(file.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That file could not be read.");
+    } finally {
+      setParsing(false);
+    }
+  }
+
+  const visible = useMemo(() => {
+    return performances
+      .filter((item) => showAll || item.headline)
+      .slice()
+      .sort((a, b) => {
+        if (a.isNewRecord !== b.isNewRecord) return a.isNewRecord ? -1 : 1;
+        if (a.headline !== b.headline) return a.headline ? -1 : 1;
+        return a.swim.athlete.localeCompare(b.swim.athlete);
+      });
+  }, [performances, showAll]);
+
+  function createCard(performance, rowId) {
+    const prefill = buildCardPrefill(performance, { roster: achievementMemberNames, meetName });
+    try {
+      localStorage.setItem("jtsc:achievement-prefill", JSON.stringify(prefill));
+    } catch {
+      setCopiedId(rowId);
+      setError("Your browser blocked saving the card details (private browsing?) — open Achievement Studio and fill it in by hand instead.");
+      return;
+    }
+    window.location.assign("#studio");
+  }
+
+  const recordCount = performances.filter((item) => item.isNewRecord).length;
+  const headlineCount = performances.filter((item) => item.headline).length;
+
+  return <section className="panel meet-report-panel">
+    <div className="panel-head">
+      <div>
+        <span className="panel-kicker">MEET REPORT</span>
+        <h2>Notable performances</h2>
+      </div>
+    </div>
+    <p>Upload a Hy-Tek/GoMotion &ldquo;Individual Events&rdquo; meet-results export (.xls/.xlsx). New team records and top standards met (Zone Sectionals, Senior State) are matched automatically against the club&rsquo;s current data — then send any swim straight to Achievement Studio, pre-filled.</p>
+    <div className="meet-report-controls">
+      <label className="meet-report-field">
+        <span>Meet name (for the card)</span>
+        <input type="text" value={meetName} onChange={(event) => setMeetName(event.target.value)} placeholder="e.g. JTSC Fall Intrasquad" />
+      </label>
+      <label className="meet-report-upload">
+        <input type="file" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          onChange={(event) => void onFile(event.target.files?.[0] ?? null)} />
+        <span>{parsing ? "Reading file…" : fileName || "Choose a meet-results file →"}</span>
+      </label>
+    </div>
+    {error && <p className="upload-error" role="alert">{error}</p>}
+    {performances.length > 0 && <Fragment>
+      <div className="ledger-tiles">
+        <div className="ledger-tile"><b>{recordCount}</b><span>new team records</span></div>
+        <div className="ledger-tile"><b>{headlineCount}</b><span>headline swims</span></div>
+        <div className="ledger-tile"><b>{performances.length}</b><span>swims read</span></div>
+      </div>
+      <div className="ledger-switch" role="group" aria-label="Result filter">
+        <button type="button" className={!showAll ? "active" : ""} aria-pressed={!showAll} onClick={() => setShowAll(false)}>Notable only</button>
+        <button type="button" className={showAll ? "active" : ""} aria-pressed={showAll} onClick={() => setShowAll(true)}>Every standard met</button>
+      </div>
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>Swimmer</th><th>Event</th><th>Time</th><th>Why it&rsquo;s notable</th><th /></tr></thead>
+          <tbody>
+            {visible.map((item, index) => {
+              const rowId = `${item.swim.athlete}|${item.swim.stroke}|${item.swim.distance}|${index}`;
+              return <tr key={rowId}>
+                <td><strong>{item.swim.athlete}</strong><small>Age {item.swim.age}</small></td>
+                <td>{formatEventName(item.swim.stroke, item.swim.distance, item.swim.course)}</td>
+                <td>{item.swim.timeText}</td>
+                <td>
+                  {item.isNewRecord && <span className="meet-report-tag record">New record (was {item.oldRecord})</span>}
+                  {item.standardsMet.map((standard) => <span key={standard.id} className="meet-report-tag">{standard.name}</span>)}
+                  {!item.isNewRecord && !item.standardsMet.length && <span className="meet-report-tag muted">No standard on file</span>}
+                </td>
+                <td><button type="button" className="export-button" onClick={() => createCard(item, rowId)}>Create card →</button>
+                  {copiedId === rowId && <small className="meet-report-tag muted">Couldn&rsquo;t hand off — see note above</small>}
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+        {!visible.length && <PanelEmpty text="No notable swims in this filter yet. Try “Every standard met.”" />}
+      </div>
+    </Fragment>}
+  </section>;
 }
 function Metric({ label, value, detail, accent = false }) {
   return jsxs("div", {

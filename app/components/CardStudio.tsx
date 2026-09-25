@@ -487,6 +487,31 @@ export default function CardStudio() {
     observer.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
     return () => observer.disconnect();
   }, []);
+  // Picks up a swim handed off from Admin > Meet Report (see AdminApp.jsx's
+  // MeetReportPanel). Re-checks whenever this tab becomes visible, which also
+  // covers the first mount right after the hash-navigate from "Create card".
+  useEffect(() => {
+    // Hydrating several fields from one read of an external store (localStorage)
+    // on tab-becoming-visible, not reacting to React state — the direct setState
+    // calls are the sync itself, matching this codebase's existing pattern in
+    // AdminApp.jsx's initial-session-restore effect.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    let raw: string | null = null;
+    try { raw = localStorage.getItem("jtsc:achievement-prefill"); } catch { raw = null; }
+    if (!raw) return;
+    try { localStorage.removeItem("jtsc:achievement-prefill"); } catch { /* private browsing */ }
+    try {
+      const prefill = JSON.parse(raw) as { name?: string; milestone?: string; eventName?: string; time?: string; meetName?: string; meetDate?: string };
+      if (prefill.name) setName(prefill.name);
+      const index = achievements.findIndex(item => item.label === prefill.milestone);
+      if (index !== -1) chooseAchievement(index);
+      if (prefill.eventName || prefill.time) setEventRows([{ id: "prefill", eventName: prefill.eventName ?? "", time: prefill.time ?? "" }]);
+      if (prefill.meetName) setMeetName(prefill.meetName);
+      if (prefill.meetDate) setMeetDate(prefill.meetDate);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      notify(`Loaded ${prefill.name ?? "the swim"} from Meet Report.`);
+    } catch { /* malformed prefill, nothing to apply */ }
+  }, [visibilityTick, notify]);
   useEffect(() => {
     const initial = eventRows.length === 1 && eventRows[0].eventName === "100Y Butterfly" && eventRows[0].time === "55.42";
     if (initial && !photoRect && Object.keys(textRects).length === 0 && Object.keys(textStyles).length === 0 && finishLayers.length === 0) return;

@@ -1004,6 +1004,20 @@ html { scrollbar-gutter: stable; }
 .reports-panel td b { color: var(--maroon); font-weight: 800; }
 .reports-panel td small { display: block; margin-top: 2px; font-size: 10px; color: var(--muted); }
 
+.meet-report-panel > p { max-width: 720px; font-size: 13px; line-height: 1.6; color: var(--muted); margin: 8px 0 20px; }
+.meet-report-controls { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; }
+.meet-report-field { display: grid; gap: 8px; flex: 1; min-width: 220px; }
+.meet-report-field > span { color: var(--maroon); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.meet-report-field input[type="text"] { padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; font-size: 14px; color: var(--ink); background: white; }
+.meet-report-upload { position: relative; display: grid; place-items: center; flex: 1; min-width: 220px; min-height: 46px; padding: 11px 16px; border: 1px dashed #bfa8b2; border-radius: 9px; background: var(--maroon-soft); align-self: flex-end; }
+.meet-report-upload span { font-size: 13px; font-weight: 700; color: var(--maroon); }
+.meet-report-upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.meet-report-panel td strong { display: block; }
+.meet-report-panel td small { display: block; margin-top: 2px; font-size: 10px; color: var(--muted); }
+.meet-report-tag { display: inline-block; margin: 0 5px 5px 0; padding: 3px 9px; border-radius: 999px; background: var(--maroon-soft); font-size: 10px; font-weight: 700; letter-spacing: .03em; color: var(--maroon); white-space: nowrap; }
+.meet-report-tag.record { background: var(--maroon); color: white; }
+.meet-report-tag.muted { background: #f1eef0; color: var(--muted); font-weight: 600; }
+
 /* Past meets are hidden at the desk but never unreachable. */
 .past-meets-note { margin: -6px 0 16px; font-size: 12px; color: var(--muted); }
 .past-meets-note button, .inline-link { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--maroon); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -1062,6 +1076,8 @@ html { scrollbar-gutter: stable; }
   .report-head { flex-direction: column; align-items: stretch; gap: 12px; }
   .report-head > div:last-child { display: flex; gap: 9px; }
   .report-head select { flex: 1; min-width: 0; }
+  .meet-report-controls { flex-direction: column; }
+  .meet-report-field, .meet-report-upload { min-width: 0; }
   .danger-confirm input { max-width: none; }
 
   /* Tables stay readable by scrolling in their own box rather than the page. */
