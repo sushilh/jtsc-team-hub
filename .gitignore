@@ -48,3 +48,9 @@ test-signup-files/
 
 # Local worker secrets (never commit)
 .dev.vars
+
+# brag video working files (renders, composition, audio assets)
+brag-output/
+
+# Chat-session working folder (not part of the app)
+Claude outputs/

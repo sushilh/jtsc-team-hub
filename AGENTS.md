@@ -11,4 +11,20 @@ These rules apply to anyone changing this repository, including Codex and Claude
 7. If a release breaks, inspect `RELEASES.md` and compare against the stable tag. Make a new fix or revert commit; do not use `git reset --hard`, force-push, or roll back D1 data without explicit authorization. Database schema/data recovery is separate from a code rollback.
 8. End each handoff with the current branch/commit, changed behavior, checks and failures, deployment status, and any uncommitted files that were deliberately left alone.
 
+## Security and data constraints
+
+These are not style preferences. Breaking one of them is a defect even if every test passes.
+
+- Never commit secrets. `.dev.vars` (`ADMIN_PIN`, `DEMO_MODE`) is gitignored; production secrets are set with `wrangler secret put`.
+- Never commit real swimmer or volunteer data — signup workbooks, exports, or screenshots containing names. Use `test-signup-files/` (gitignored) for local samples.
+- Admin access fails closed. With no `ADMIN_PIN` configured the service returns 503; it must never fall through to an open admin. Keep the login throttle (8 failures / 15 minutes) and the same-origin guard on every mutating request.
+- Destructive actions (reset / clear all volunteer data) stay explicitly gated and clearly labeled. Do not widen who can reach them.
+- Upload limits (5 MB, 2500 rows) are a Worker protection, not a tuning knob.
+- A `stable/*` tag checkpoints code only. It does not back up or restore D1. Never roll back volunteer records without explicit authorization.
+
+## Where the conventions live
+
+- `CLAUDE.md` — architecture, layering, styling conventions, commands, and known gotchas. Read it before writing code.
+- `STATUS.md` — the shared, living state of the work: what is in flight, who has it, what is blocked. Read it at the start of a session and update it before you stop.
+
 `README.md` remains the product and setup guide. `DESIGN.md` and `UX-CONTRACT.md` remain the design and behavior contracts; this file does not replace them.
