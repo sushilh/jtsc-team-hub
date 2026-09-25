@@ -2,81 +2,78 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { COURSES, formatSwimTime, getQualifyingSeries, getTeamRecords, standardsForAge, STROKES } from "../../lib/state-qualifying-times.mjs";
+import { COURSES, formatSwimTime, getQualifyingSeries, getTeamRecords, parseSwimTime, standardsForAge, STROKES } from "../../lib/state-qualifying-times.mjs";
 
 type Gender = "girls" | "boys";
 type Point = { distance: number; seconds: number; timeText: string };
 type Series = { id: string; name: string; color: string; sourceUrl: string; ageGroupLabel: string; points: Point[] };
 type Standard = { id: string; name: string; color: string; sourceUrl: string };
 type TeamRecord = { distance: number; seconds: number; timeText: string };
+type Rung = { key: string; kind: "standard" | "record" | "you"; name: string; color?: string; seconds: number; timeText: string; met: boolean };
 
 const STROKE_LABELS: Record<string, string> = { Free: "Freestyle", Back: "Backstroke", Breast: "Breaststroke", Fly: "Butterfly", IM: "IM" };
 const COURSE_LABELS: Record<string, string> = { SCY: "Yards (SCY)", SCM: "Meters — Short Course (SCM)", LCM: "Meters — Long Course (LCM)" };
+// Full names live in the legend, table, and footer; the ladder rows are narrow
+// enough that the full standard names would clip, so rungs use these instead.
+const SHORT_STANDARD_NAMES: Record<string, string> = {
+  "10u-state": "10-Under State",
+  "14u-state": "14-Under State",
+  "regional": "Regional",
+  "11o-state-lc": "11-Over State",
+  "sr-state": "Senior State",
+};
 
 function eventLabel(stroke: string, distance: number) {
   return `${distance} ${stroke === "IM" ? "IM" : stroke}`;
 }
 
-/** Mixes `hex` toward white (positive amount) or black (negative), for the extruded faces. */
-function shade(hex: string, amount: number) {
-  const num = parseInt(hex.slice(1), 16);
-  const r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
-  const target = amount >= 0 ? 255 : 0;
-  const t = Math.abs(amount);
-  const mix = (channel: number) => Math.round(channel + (target - channel) * t);
-  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
-}
-
-const DEPTH_X = 8;
-const DEPTH_Y = 6;
-
-/** A 3D-extruded column: a front face, a top parallelogram, and a side parallelogram. */
-function Bar3D({ x, y, width, height, color, label, title }: { x: number; y: number; width: number; height: number; color: string; label: string; title: string }) {
-  if (height <= 0) return null;
-  const front = `M${x},${y + height} L${x},${y} L${x + width},${y} L${x + width},${y + height} Z`;
-  const top = `M${x},${y} L${x + DEPTH_X},${y - DEPTH_Y} L${x + width + DEPTH_X},${y - DEPTH_Y} L${x + width},${y} Z`;
-  const side = `M${x + width},${y} L${x + width + DEPTH_X},${y - DEPTH_Y} L${x + width + DEPTH_X},${y - DEPTH_Y + height} L${x + width},${y + height} Z`;
-  return <g className="qt-bar3d">
-    <title>{title}</title>
-    <path d={side} fill={shade(color, -0.32)} />
-    <path d={top} fill={shade(color, 0.4)} />
-    <path d={front} fill={color} />
-    <text x={x + width / 2} y={y - DEPTH_Y - 8} textAnchor="middle" className="qt-bar-label">{label}</text>
-  </g>;
-}
-
-function DistanceChart({ distance, stroke, entries, record }: { distance: number; stroke: string; entries: { standard: Standard; point?: Point }[]; record?: TeamRecord }) {
+/**
+ * One event's cuts as a ladder, slowest at top to fastest at bottom. A typed-in
+ * time drops into its sorted position and marks every standard it's already
+ * fast enough for — this answers "did my swimmer make this cut", which a bar's
+ * height alone doesn't.
+ */
+function EventLadder({ distance, stroke, entries, record, enteredTime, onEnteredTimeChange }: {
+  distance: number; stroke: string; entries: { standard: Standard; point?: Point }[]; record?: TeamRecord;
+  enteredTime: string; onEnteredTimeChange: (value: string) => void;
+}) {
   const present = entries.filter((entry): entry is { standard: Standard; point: Point } => Boolean(entry.point));
   if (!present.length && !record) return null;
-  const maxSeconds = Math.max(...present.map((entry) => entry.point.seconds), ...(record ? [record.seconds] : []));
-  const barWidth = 28;
-  const gap = 16;
-  const chartHeight = 108;
-  const recordGutter = record ? 36 : 0;
-  const padding = { top: 30, bottom: 20, side: 14 };
-  const width = Math.max(present.length, 1) * barWidth + Math.max(present.length - 1, 0) * gap;
-  const svgWidth = width + padding.side * 2 + DEPTH_X + recordGutter;
-  const svgHeight = chartHeight + padding.top + padding.bottom;
-  const baselineY = svgHeight - padding.bottom;
-  const recordY = record ? baselineY - (record.seconds / maxSeconds) * chartHeight : null;
+
+  const yourSeconds = enteredTime.trim() ? parseSwimTime(enteredTime.trim()) : null;
+  const invalid = enteredTime.trim().length > 0 && yourSeconds == null;
+
+  const rungs: Rung[] = present.map((entry) => ({
+    key: entry.standard.id, kind: "standard", name: SHORT_STANDARD_NAMES[entry.standard.id] ?? entry.standard.name, color: entry.standard.color,
+    seconds: entry.point.seconds, timeText: entry.point.timeText,
+    met: yourSeconds != null && yourSeconds <= entry.point.seconds,
+  }));
+  if (record) rungs.push({ key: "record", kind: "record", name: "Team Record", seconds: record.seconds, timeText: record.timeText, met: yourSeconds != null && yourSeconds <= record.seconds });
+  rungs.sort((a, b) => b.seconds - a.seconds);
+  if (yourSeconds != null) {
+    const index = rungs.findIndex((rung) => rung.seconds < yourSeconds);
+    const you: Rung = { key: "you", kind: "you", name: "Your time", seconds: yourSeconds, timeText: formatSwimTime(yourSeconds), met: true };
+    rungs.splice(index === -1 ? rungs.length : index, 0, you);
+  }
 
   return (
     <figure className="qt-card">
       <figcaption>{eventLabel(stroke, distance)}</figcaption>
-      <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img" aria-label={`${eventLabel(stroke, distance)} qualifying times by standard${record ? `, with the JTSC team record` : ""}`}>
-        <path d={`M${padding.side},${baselineY} L${padding.side + width},${baselineY} L${padding.side + width + DEPTH_X},${baselineY - DEPTH_Y} L${padding.side + DEPTH_X},${baselineY - DEPTH_Y} Z`} className="qt-floor" />
-        {present.map((entry, index) => {
-          const x = padding.side + index * (barWidth + gap);
-          const barHeight = (entry.point.seconds / maxSeconds) * chartHeight;
-          return <Bar3D key={entry.standard.id} x={x} y={baselineY - barHeight} width={barWidth} height={barHeight}
-            color={entry.standard.color} label={entry.point.timeText} title={`${entry.standard.name}: ${entry.point.timeText}`} />;
-        })}
-        {recordY != null && <g className="qt-record">
-          <title>{`JTSC team record: ${record!.timeText}`}</title>
-          <line x1={padding.side - 4} y1={recordY} x2={padding.side + width + DEPTH_X + 4} y2={recordY} className="qt-record-line" />
-          <text x={svgWidth} y={recordY - 4} textAnchor="end" className="qt-record-label">{record!.timeText}</text>
-        </g>}
-      </svg>
+      <label className="qt-time-field">
+        <span>Your time</span>
+        <input type="text" inputMode="decimal" placeholder="e.g. 31.09" value={enteredTime}
+          className={invalid ? "qt-time-invalid" : ""}
+          onChange={(event) => onEnteredTimeChange(event.target.value)} />
+      </label>
+      {invalid && <p className="qt-time-hint">Use ss.hh or m:ss.hh</p>}
+      <ol className="qt-ladder">
+        {rungs.map((rung) => <li key={rung.key} className={`qt-rung qt-rung-${rung.kind}${rung.met ? " qt-rung-met" : ""}`}>
+          <span className="qt-rung-dot" style={rung.color ? { background: rung.color } : undefined} aria-hidden="true" />
+          <span className="qt-rung-name">{rung.name}</span>
+          <span className="qt-rung-time">{rung.timeText}</span>
+          {rung.met && rung.kind !== "you" && <span className="qt-rung-check" aria-label="Already met">✓</span>}
+        </li>)}
+      </ol>
     </figure>
   );
 }
@@ -86,6 +83,7 @@ export default function StateTimesApp() {
   const [gender, setGender] = useState<Gender>("girls");
   const [stroke, setStroke] = useState("Free");
   const [course, setCourse] = useState("SCY");
+  const [enteredTimes, setEnteredTimes] = useState<Record<string, string>>({});
 
   const series: Series[] = useMemo(() => getQualifyingSeries({ age, gender, stroke, course }), [age, gender, stroke, course]);
   const applicableStandards: Standard[] = useMemo(() => standardsForAge(age), [age]);
@@ -106,7 +104,7 @@ export default function StateTimesApp() {
       <Link className="state-times-back" href="/">← Back to Team Hub</Link>
       <p className="state-times-kicker">JTSC · 2025-2028 OKS Standards</p>
       <h1>State qualifying times</h1>
-      <p className="state-times-lede">Enter an age, gender, and stroke to see every state and regional qualifying standard that applies, side by side.</p>
+      <p className="state-times-lede">Enter an age, gender, and stroke to see every state and regional qualifying standard that applies — then type in a swim time to see exactly which cuts it already meets.</p>
     </header>
 
     <section className="state-times-controls" aria-label="Filter qualifying times">
@@ -151,19 +149,21 @@ export default function StateTimesApp() {
       </li>)}
       {teamRecords.length > 0 && <li>
         <span className="qt-swatch qt-swatch-record" aria-hidden="true" />
-        JTSC Team Record (SCY only)
+        JTSC Team Record ({course})
       </li>}
     </ul>}
 
     {distances.length === 0
       ? <p className="state-times-empty">No {STROKE_LABELS[stroke].toLowerCase()} standards are published for a {age}-year-old in {COURSE_LABELS[course]}. Try a different course — most events qualify from any of the three.</p>
       : <div className="state-times-grid">
-        {distances.map((distance) => <DistanceChart key={distance} distance={distance} stroke={stroke}
+        {distances.map((distance) => <EventLadder key={distance} distance={distance} stroke={stroke}
           record={recordByDistance.get(distance)}
           entries={applicableStandards.map((standard) => ({
             standard,
             point: seriesById.get(standard.id)?.points.find((point) => point.distance === distance),
-          }))} />)}
+          }))}
+          enteredTime={enteredTimes[`${stroke}:${distance}`] ?? ""}
+          onEnteredTimeChange={(value) => setEnteredTimes((current) => ({ ...current, [`${stroke}:${distance}`]: value }))} />)}
       </div>}
 
     {distances.length > 0 && <div className="state-times-table table-scroll">
@@ -190,7 +190,7 @@ export default function StateTimesApp() {
 
     <footer className="state-times-footer">
       <p>Source: Oklahoma Swimming, <em>2025-2028 OKS Qualifying Times</em>, fetched September 2026. Standards can be corrected or amended by OKS after publication — confirm with your coach before entering a meet.</p>
-      {teamRecords.length > 0 && <p>JTSC Team Records are the club&rsquo;s own SCY bests, from the team&rsquo;s 2026 records list.</p>}
+      {teamRecords.length > 0 && <p>JTSC Team Records are the club&rsquo;s own {course} bests, from the team&rsquo;s 2026 records list. No SCM (short course meters) records are tracked.</p>}
       {applicableStandards.length > 0 && <ul>
         {applicableStandards.map((standard) => <li key={standard.id}><a href={standard.sourceUrl} target="_blank" rel="noreferrer noopener">{standard.name} (PDF)</a></li>)}
       </ul>}

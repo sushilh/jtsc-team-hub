@@ -76,11 +76,10 @@ test("a stroke/course combination with no data (e.g. 100 IM in LCM) returns no p
   for (const item of series) assert.ok(item.points.every((point) => point.distance !== 100));
 });
 
-test("team records only exist for SCY and include the 25-yard sprints the OKS standards skip", () => {
+test("SCY team records include the 25-yard sprints the OKS standards skip", () => {
   const scy = getTeamRecords({ age: 8, gender: "boys", stroke: "Free", course: "SCY" });
   assert.deepEqual(scy.map((r) => r.distance), [25, 50, 100, 200, 500]);
   assert.equal(scy[0].timeText, "16.87");
-  assert.deepEqual(getTeamRecords({ age: 8, gender: "boys", stroke: "Free", course: "LCM" }), []);
   assert.deepEqual(getTeamRecords({ age: 8, gender: "boys", stroke: "Free", course: "SCM" }), []);
 });
 
@@ -95,13 +94,32 @@ test("team record age brackets are tight two-year bands, distinct from the wider
 });
 
 test("team records also get faster with age and with distance (catches a transposed row)", () => {
-  for (const gender of ["girls", "boys"]) {
-    for (const stroke of ["Free", "Back", "Breast", "Fly", "IM"]) {
-      const records = getTeamRecords({ age: 17, gender, stroke, course: "SCY" });
-      for (let i = 1; i < records.length; i += 1) {
-        assert.ok(records[i].seconds > records[i - 1].seconds,
-          `${gender} ${stroke}: ${records[i - 1].distance} (${records[i - 1].timeText}) should be faster than ${records[i].distance} (${records[i].timeText})`);
+  for (const course of ["SCY", "LCM"]) {
+    for (const gender of ["girls", "boys"]) {
+      for (const stroke of ["Free", "Back", "Breast", "Fly", "IM"]) {
+        const records = getTeamRecords({ age: 17, gender, stroke, course });
+        for (let i = 1; i < records.length; i += 1) {
+          assert.ok(records[i].seconds > records[i - 1].seconds,
+            `${course} ${gender} ${stroke}: ${records[i - 1].distance} (${records[i - 1].timeText}) should be faster than ${records[i].distance} (${records[i].timeText})`);
+        }
       }
     }
   }
+});
+
+test("LCM team records exist and are distinct from SCY for the same event", () => {
+  const lcm = getTeamRecords({ age: 12, gender: "boys", stroke: "Free", course: "LCM" });
+  const scy = getTeamRecords({ age: 12, gender: "boys", stroke: "Free", course: "SCY" });
+  assert.ok(lcm.length > 0);
+  assert.notDeepEqual(lcm.map((r) => r.timeText), scy.map((r) => r.timeText));
+  assert.equal(lcm.find((r) => r.distance === 50).timeText, "27.72");
+});
+
+test("SCM has no team records on file (only SCY and LCM were provided)", () => {
+  assert.deepEqual(getTeamRecords({ age: 12, gender: "boys", stroke: "Free", course: "SCM" }), []);
+});
+
+test("the implausible source value (Female 6-Under LCM 50 Breast, printed as '1.05') was omitted, not guessed at", () => {
+  const records = getTeamRecords({ age: 6, gender: "girls", stroke: "Breast", course: "LCM" });
+  assert.deepEqual(records.map((r) => r.distance), [100]);
 });

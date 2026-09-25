@@ -28,31 +28,43 @@
 
 .state-times-legend { display: flex; flex-wrap: wrap; gap: 14px 20px; list-style: none; margin: 0 0 22px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--maroon-soft); }
 .state-times-legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
-.qt-swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
-.qt-swatch-record { width: 16px; height: 0; border-top: 2px dashed var(--ink); border-radius: 0; }
+.qt-swatch { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.qt-swatch-record { background: #fff; border: 2px solid var(--ink); }
 
 .state-times-empty { padding: 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
 
-.state-times-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; margin-bottom: 28px; perspective: 900px; }
+.state-times-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
 .qt-card {
-  margin: 0; padding: 16px 10px 12px; border: 1px solid var(--line); border-radius: 12px;
-  background: linear-gradient(180deg, #fff, #fbfaf9); text-align: center;
-  box-shadow: 0 10px 24px -18px rgba(26, 10, 18, .35);
-  transform-style: preserve-3d; transform: rotateX(0deg) rotateY(0deg);
-  transition: transform .35s cubic-bezier(.2,.7,.3,1), box-shadow .35s ease;
+  margin: 0; padding: 14px 16px 16px; border: 1px solid var(--line); border-radius: 12px;
+  background: #fff; box-shadow: 0 8px 20px -18px rgba(26, 10, 18, .35);
+  transition: transform .2s ease, box-shadow .2s ease;
 }
-.qt-card figcaption { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-.qt-card svg { width: 100%; height: auto; overflow: visible; }
-.qt-floor { fill: var(--line); opacity: .55; }
-.qt-bar3d { transition: transform .2s ease; }
-.qt-bar-label { font-size: 9px; font-weight: 700; fill: var(--ink); font-family: var(--font-body), sans-serif; }
-.qt-record-line { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
-.qt-record-label { font-size: 9px; font-weight: 700; fill: var(--ink); font-family: var(--font-body), sans-serif; }
+.qt-card figcaption { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .qt-card:hover { transform: rotateX(8deg) rotateY(-6deg) translateY(-3px); box-shadow: 0 22px 34px -20px rgba(26, 10, 18, .45); }
-  .qt-bar3d:hover { transform: translateY(-3px); }
+  .qt-card:hover { transform: translateY(-2px); box-shadow: 0 14px 26px -18px rgba(26, 10, 18, .45); }
 }
+
+.qt-time-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.qt-time-field span { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.qt-time-field input {
+  width: 92px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 14px; font-weight: 600; color: var(--ink); background: var(--paper); text-align: right;
+}
+.qt-time-field input:focus { outline: 2px solid var(--maroon); outline-offset: 1px; }
+.qt-time-field input.qt-time-invalid { border-color: #b3413f; }
+.qt-time-hint { margin: 0 0 8px; font-size: 11px; color: #b3413f; text-align: right; }
+
+.qt-ladder { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.qt-rung { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.qt-rung-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.qt-rung-record .qt-rung-dot { background: #fff; border: 2px solid var(--ink); }
+.qt-rung-name { flex: 1; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qt-rung-time { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.qt-rung-you { background: var(--maroon-soft); margin: 0 -8px; padding: 7px 8px; border-radius: 8px; border-bottom-color: transparent; }
+.qt-rung-you .qt-rung-name, .qt-rung-you .qt-rung-time { color: var(--maroon); font-weight: 700; }
+.qt-rung-you .qt-rung-dot { background: var(--maroon); }
+.qt-rung-check { color: #2f7a4d; font-weight: 700; font-size: 13px; }
 
 .state-times-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .state-times-table th, .state-times-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
