@@ -6,8 +6,8 @@ import { COURSES, formatSwimTime, getQualifyingSeries, getTeamRecords, parseSwim
 
 type Gender = "girls" | "boys";
 type Point = { distance: number; seconds: number; timeText: string };
-type Series = { id: string; name: string; color: string; sourceUrl: string; ageGroupLabel: string; points: Point[] };
-type Standard = { id: string; name: string; color: string; sourceUrl: string };
+type Series = { id: string; name: string; color: string; sourceUrl?: string; ageGroupLabel: string; points: Point[] };
+type Standard = { id: string; name: string; color: string; sourceUrl?: string };
 type TeamRecord = { distance: number; seconds: number; timeText: string };
 type Rung = { key: string; kind: "standard" | "record" | "you"; name: string; color?: string; seconds: number; timeText: string; met: boolean };
 
@@ -191,8 +191,12 @@ export default function StateTimesApp() {
     <footer className="state-times-footer">
       <p>Source: Oklahoma Swimming, <em>2025-2028 OKS Qualifying Times</em>, fetched September 2026. Standards can be corrected or amended by OKS after publication — confirm with your coach before entering a meet.</p>
       {teamRecords.length > 0 && <p>JTSC Team Records are the club&rsquo;s own {course} bests, from the team&rsquo;s 2026 records list. No SCM (short course meters) records are tracked.</p>}
+      {applicableStandards.some((standard) => standard.id.startsWith("cz-sectionals")) &&
+        <p>Central Zone Region 8 Sectionals cuts are club-provided (2026), no public source page to link, and open to any age. The Bonus standard is deliberately slower/easier than Sectionals — it&rsquo;s for adding a bonus event once a swimmer has already made Sectionals elsewhere, not a harder tier. No SCM data was provided; the mile Free events (800/1000/1500/1650) have no separate Bonus time.</p>}
       {applicableStandards.length > 0 && <ul>
-        {applicableStandards.map((standard) => <li key={standard.id}><a href={standard.sourceUrl} target="_blank" rel="noreferrer noopener">{standard.name} (PDF)</a></li>)}
+        {applicableStandards.map((standard) => standard.sourceUrl
+          ? <li key={standard.id}><a href={standard.sourceUrl} target="_blank" rel="noreferrer noopener">{standard.name} (PDF)</a></li>
+          : <li key={standard.id}>{standard.name} (source not linkable)</li>)}
       </ul>}
     </footer>
   </main>;

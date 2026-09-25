@@ -12,12 +12,12 @@ test("swim time parsing round-trips both mm:ss.hh and ss.hh forms", () => {
 
 test("an 8-year-old sees the 10-Under and 14-Under-family standards, not Regional-15-19 or Senior", () => {
   const ids = standardsForAge(8).map((standard) => standard.id);
-  assert.deepEqual(ids, ["10u-state", "14u-state", "regional"]);
+  assert.deepEqual(ids, ["10u-state", "14u-state", "regional", "cz-sectionals", "cz-sectionals-bonus"]);
 });
 
 test("a 13-year-old sees all four age-group standards that apply, in fixed color order", () => {
   const standards = standardsForAge(13);
-  assert.deepEqual(standards.map((standard) => standard.id), ["14u-state", "regional", "11o-state-lc", "sr-state"]);
+  assert.deepEqual(standards.map((standard) => standard.id), ["14u-state", "regional", "11o-state-lc", "sr-state", "cz-sectionals", "cz-sectionals-bonus"]);
   // Order (and therefore color) must not depend on which standards are present —
   // Regional is always slot 3's color regardless of the age queried.
   assert.equal(standards.find((standard) => standard.id === "regional").color, "#4db6a0");
@@ -26,15 +26,39 @@ test("a 13-year-old sees all four age-group standards that apply, in fixed color
 test("a 6-year-old sees 10-Under, 14-Under (8-Under bracket), and Regional 10-Under, never Senior", () => {
   const ids = standardsForAge(6).map((standard) => standard.id);
   assert.ok(!ids.includes("sr-state"));
-  assert.deepEqual(ids, ["10u-state", "14u-state", "regional"]);
+  assert.deepEqual(ids, ["10u-state", "14u-state", "regional", "cz-sectionals", "cz-sectionals-bonus"]);
 });
 
 test("getQualifyingSeries returns one series per applicable standard, sorted by distance, SCY course", () => {
   const series = getQualifyingSeries({ age: 12, gender: "girls", stroke: "Free", course: "SCY" });
-  assert.deepEqual(series.map((item) => item.id), ["14u-state", "regional", "11o-state-lc", "sr-state"]);
+  assert.deepEqual(series.map((item) => item.id), ["14u-state", "regional", "11o-state-lc", "sr-state", "cz-sectionals", "cz-sectionals-bonus"]);
   const fourteenU = series.find((item) => item.id === "14u-state");
   assert.deepEqual(fourteenU.points.map((point) => point.distance), [50, 100, 200, 500]);
   assert.equal(fourteenU.points[0].timeText, "31.09");
+});
+
+test("CZ Region 8 Sectionals is age-unrestricted — a 6-year-old and a 17-year-old see the same cut", () => {
+  const young = getQualifyingSeries({ age: 6, gender: "boys", stroke: "Free", course: "SCY" }).find((item) => item.id === "cz-sectionals");
+  const old = getQualifyingSeries({ age: 17, gender: "boys", stroke: "Free", course: "SCY" }).find((item) => item.id === "cz-sectionals");
+  assert.equal(young.points.find((point) => point.distance === 50).timeText, "22.09");
+  assert.deepEqual(young.points, old.points);
+});
+
+test("CZ Sectionals has no SCM data, and the Bonus tier is missing for mile Free events", () => {
+  assert.deepEqual(getQualifyingSeries({ age: 12, gender: "girls", stroke: "Free", course: "SCM" }).find((item) => item.id === "cz-sectionals"), undefined);
+  const bonus = getQualifyingSeries({ age: 12, gender: "girls", stroke: "Free", course: "SCY" }).find((item) => item.id === "cz-sectionals-bonus");
+  assert.deepEqual(bonus.points.map((point) => point.distance), [50, 100, 200, 500]);
+});
+
+test("CZ Sectionals Bonus is a more lenient (slower) cut than the base Sectionals standard, for every event", () => {
+  // "Bonus" lets a swimmer who already made Sectionals in one event add a bonus
+  // entry in another without re-hitting the full cut — so it's easier, not harder.
+  const sectionals = getQualifyingSeries({ age: 12, gender: "boys", stroke: "Free", course: "LCM" }).find((item) => item.id === "cz-sectionals");
+  const bonus = getQualifyingSeries({ age: 12, gender: "boys", stroke: "Free", course: "LCM" }).find((item) => item.id === "cz-sectionals-bonus");
+  for (const point of bonus.points) {
+    const base = sectionals.points.find((p) => p.distance === point.distance);
+    assert.ok(point.seconds > base.seconds, `Bonus ${point.distance} (${point.timeText}) should be slower/easier than Sectionals (${base.timeText})`);
+  }
 });
 
 test("times increase monotonically with distance within a stroke/standard/course (catches row transposition)", () => {

@@ -4,6 +4,12 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-09-25 — Add Central Zone Region 8 Sectionals to the state-times ladder
+
+- Added two new standards to `lib/state-qualifying-times.mjs`: `cz-sectionals` and `cz-sectionals-bonus`, from club-provided "CZ Reg8 Sectionals 2026" workbooks (SCY and LCM). Unlike every other standard, these are age-unrestricted ("Open, no limit") and so now show up for every age query. The Bonus tier is deliberately the *more lenient* of the two (it's for adding a bonus event once a swimmer already made Sectionals elsewhere, not a harder cut) — confirmed via a test after an initial wrong assumption the other way. No SCM data was provided, and the mile Free events (800/1000/1500/1650) have no Bonus tier at all in the source.
+- Fixed a real bug this surfaced: the footer's source-link list assumed every standard has a public `sourceUrl` and would have rendered a dead link for these two. It now falls back to plain text ("source not linkable") when there isn't one.
+- Checked: `npm test` (59 passing, 6 new — age-unrestricted behavior, no SCM data, missing Bonus tier for mile events, and the Bonus-is-slower-not-faster direction), `npx tsc --noEmit` (clean), `npm run lint` (clean once the pre-existing `brag-output/**`/`Claude outputs/**` gap is excluded). Not deployed — this is on top of the still-uncommitted state-times ladder work from 2026-09-18/21.
+
 ### 2026-09-25 — Fix Finish Line editor: enlarged photo could trap the name text
 
 - Fixed a bug in the Finish Line card editor (`app/components/CardStudio.tsx`) where enlarging the swimmer photo could leave its own resize handle sitting on top of the name text (or any other built-in text block), after which every click there kept resizing the photo instead of selecting/moving the text underneath — making that text permanently unreachable by direct drag. The click-priority rule now only favors the selected element's handle when that element is also the topmost thing actually under the cursor.
