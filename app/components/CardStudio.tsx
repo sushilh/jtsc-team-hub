@@ -8,7 +8,7 @@ import EventResultsEditor from "./EventResultsEditor";
 import AutoGrowTextarea from "./AutoGrowTextarea";
 import { eventNameMissing, type AchievementEvent } from "../../lib/achievement-events";
 import { drawMultiEventCard } from "../../lib/multi-event-card";
-import { boundFinishRect, defaultPhotoRect, drawFinishLineCard, type FinishLayer, type FinishRect } from "../../lib/finish-line-card";
+import { boundFinishRect, defaultFinishTextColor, defaultPhotoRect, drawFinishLineCard, finishLineTextBlocks, type FinishLayer, type FinishRect, type FinishTextStyle } from "../../lib/finish-line-card";
 import achievementMemberNames from "../../lib/achievement-members.json";
 
 type CardFormat = "portrait" | "square";
@@ -53,6 +53,9 @@ type CardDrawingState = {
   horizontalPosition: number;
   verticalPosition: number;
   photoRect: FinishRect | null;
+  textRects: Record<string, FinishRect>;
+  textStyles: Record<string, FinishTextStyle>;
+  eventIds: string[];
   finishLayers: FinishLayer[];
   layerImages: Record<string, HTMLImageElement>;
 };
@@ -260,7 +263,7 @@ function drawCard(
   canvas.height = height;
 
   if (state.template === "finish") {
-    drawFinishLineCard(ctx, width, height, { ...state, photoRect: state.photoRect, layers: state.finishLayers, layerImages: state.layerImages });
+    drawFinishLineCard(ctx, width, height, { ...state, photoRect: state.photoRect, textRects: state.textRects, textStyles: state.textStyles, eventIds: state.eventIds, layers: state.finishLayers, layerImages: state.layerImages });
     return;
   }
 
@@ -438,6 +441,10 @@ export default function CardStudio() {
   const [subline, setSubline] = useState<string>(initialAchievement.subline);
   const [eventRows, setEventRows] = useState<AchievementEvent[]>([{ id: "first", eventName: "100Y Butterfly", time: "55.42" }]);
   const events = useMemo(() => normalizeCardEvents(eventRows), [eventRows]);
+  const eventIds = useMemo(() => {
+    const visible = eventRows.filter(row => row.eventName.trim() || row.time.trim()).map(row => row.id);
+    return visible.length ? visible : [eventRows[0]?.id ?? "placeholder"];
+  }, [eventRows]);
   const eventName = events[0]?.eventName || "";
   const time = events[0]?.time || "";
   const invalidEvents = eventRows.some(eventNameMissing);
@@ -452,12 +459,14 @@ export default function CardStudio() {
   const [horizontalPosition, setHorizontalPosition] = useState(0);
   const [verticalPosition, setVerticalPosition] = useState(0);
   const [photoRect, setPhotoRect] = useState<FinishRect | null>(null);
+  const [textRects, setTextRects] = useState<Record<string, FinishRect>>({});
+  const [textStyles, setTextStyles] = useState<Record<string, FinishTextStyle>>({});
   const [finishLayers, setFinishLayers] = useState<FinishLayer[]>([]);
   const [layerImages, setLayerImages] = useState<Record<string, HTMLImageElement>>({});
   const [selectedFinishId, setSelectedFinishId] = useState<string | null>("photo");
   const [layerError, setLayerError] = useState("");
   const [layerLoading, setLayerLoading] = useState(false);
-  const [resetSnapshot, setResetSnapshot] = useState<{ photoRect: FinishRect | null; layers: FinishLayer[]; images: Record<string, HTMLImageElement> } | null>(null);
+  const [resetSnapshot, setResetSnapshot] = useState<{ photoRect: FinishRect | null; textRects: Record<string, FinishRect>; textStyles: Record<string, FinishTextStyle>; layers: FinishLayer[]; images: Record<string, HTMLImageElement> } | null>(null);
   const [removedLayer, setRemovedLayer] = useState<{ layer: FinishLayer; index: number; image?: HTMLImageElement } | null>(null);
   const layerFileRef = useRef<HTMLInputElement>(null);
   const layerUploadSequence = useRef(0);
@@ -469,22 +478,60 @@ export default function CardStudio() {
   const [dragOver, setDragOver] = useState(false);
   const [photoName, setPhotoName] = useState("");
   const [celebration, setCelebration] = useState(0);
+  const [visibilityTick, setVisibilityTick] = useState(0);
   const stageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const panel = canvasRef.current?.closest("#panel-studio");
+    if (!panel) return;
+    const observer = new MutationObserver(() => { if (!panel.hasAttribute("hidden")) setVisibilityTick(value => value + 1); });
+    observer.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
     const initial = eventRows.length === 1 && eventRows[0].eventName === "100Y Butterfly" && eventRows[0].time === "55.42";
-    if (initial && !photoRect && finishLayers.length === 0) return;
+    if (initial && !photoRect && Object.keys(textRects).length === 0 && Object.keys(textStyles).length === 0 && finishLayers.length === 0) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [eventRows, photoRect, finishLayers]);
+  }, [eventRows, photoRect, textRects, textStyles, finishLayers]);
   const cardHeight = socialFormats[format].height;
+  const builtInText = finishLineTextBlocks(cardHeight, eventIds);
+  const selectedText = builtInText.find(block => block.id === selectedFinishId);
   const selectedLayer = finishLayers.find(layer => layer.id === selectedFinishId);
-  const selectedRect = selectedFinishId === "photo" ? photoRect ?? defaultPhotoRect(cardHeight) : selectedLayer ?? null;
+  const selectedRect = selectedFinishId === "photo" ? photoRect ?? defaultPhotoRect(cardHeight) : selectedText ? textRects[selectedText.id] ?? selectedText.rect : selectedLayer ?? null;
 
   function updateFinishRect(id: string, next: FinishRect) {
     const bounded = boundFinishRect(next);
     if (id === "photo") setPhotoRect(bounded);
-    else setFinishLayers(current => current.map(layer => layer.id === id ? { ...layer, ...bounded } : layer));
+    else if (id.startsWith("finish-")) setFinishLayers(current => current.map(layer => layer.id === id ? { ...layer, ...bounded } : layer));
+    else setTextRects(current => ({ ...current, [id]: bounded }));
+  }
+
+  function finishTextValue(id: string) {
+    if (id === "headline") return headline;
+    if (id === "name") return name;
+    if (id === "subline") return subline;
+    if (id === "meet") return meetName;
+    if (id === "classYear") return classYear;
+    const [kind, eventId] = id.split(":");
+    const row = eventRows.find(item => item.id === eventId);
+    return kind === "event" ? row?.eventName ?? "" : row?.time ?? "";
+  }
+
+  function setFinishTextValue(id: string, value: string) {
+    if (id === "headline") { setHeadline(value.toUpperCase()); setAchievementIndex(-1); }
+    else if (id === "name") setName(value);
+    else if (id === "subline") setSubline(value);
+    else if (id === "meet") setMeetName(value);
+    else if (id === "classYear") setClassYear(value);
+    else {
+      const [kind, eventId] = id.split(":");
+      setEventRows(current => current.map(row => row.id === eventId ? { ...row, [kind === "event" ? "eventName" : "time"]: value } : row));
+    }
+  }
+
+  function updateFinishTextStyle(id: string, patch: FinishTextStyle) {
+    setTextStyles(current => ({ ...current, [id]: { ...current[id], ...patch } }));
   }
 
   function addFinishLayer(kind: FinishLayer["kind"]) {
@@ -537,9 +584,20 @@ export default function CardStudio() {
     const point = canvasPoint(event);
     const targets = [
       ...finishLayers.filter(layer => !layer.hidden).slice().reverse().map(layer => ({ id: layer.id, rect: layer })),
+      ...builtInText.map(block => ({ id: block.id, rect: textRects[block.id] ?? block.rect })),
       { id: "photo", rect: photoRect ?? defaultPhotoRect(cardHeight) },
     ];
-    const hit = targets.find(({ rect }) => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
+    // The topmost element actually under the cursor, by the same z-order as targets above.
+    const topHit = targets.find(({ rect }) => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
+    // A drag that starts in the selected element's own resize handle keeps resizing it —
+    // but only when nothing else's body is also under the cursor there. Otherwise a large
+    // selected element (e.g. an enlarged photo) can leave its handle sitting on top of a
+    // smaller element like a name or caption, making that other element permanently
+    // unreachable by click since every click there would just keep resizing the big one.
+    const selectedHandle = selectedFinishId && selectedRect && (!topHit || topHit.id === selectedFinishId) &&
+      point.x >= selectedRect.x + selectedRect.w - point.handleX && point.x <= selectedRect.x + selectedRect.w &&
+      point.y >= selectedRect.y + selectedRect.h - point.handleY && point.y <= selectedRect.y + selectedRect.h;
+    const hit = selectedHandle ? { id: selectedFinishId, rect: selectedRect } : topHit;
     setSelectedFinishId(hit?.id ?? null);
     if (!hit) return;
     const resize = point.x >= hit.rect.x + hit.rect.w - point.handleX && point.y >= hit.rect.y + hit.rect.h - point.handleY;
@@ -620,10 +678,10 @@ export default function CardStudio() {
     }
     lastTemplate.current = template;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages });
+    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
     // Edits and motion changes must immediately uncover the current card.
     return () => transition?.cancel();
-  }, [name, classYear, headline, subline, eventName, time, events, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages, motion]);
+  }, [name, classYear, headline, subline, eventName, time, events, eventIds, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages, motion, visibilityTick]);
 
   useEffect(() => () => { uploadSequence.current += 1; }, []);
 
@@ -693,7 +751,7 @@ export default function CardStudio() {
     setExporting(targetTemplate);
     setExportNotice("");
     try {
-    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, finishLayers, layerImages });
+    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
     exportCanvas.toBlob((blob) => {
       if (!blob) { exportLock.current = false; setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");
@@ -780,7 +838,7 @@ export default function CardStudio() {
           <div className="control-section details-section reveal">
             <span className="section-number">03</span>
             <div className="section-heading"><h2>Personalize the card</h2><span>Edits update live</span></div>
-            <label className="studio-field"><span>Swimmer name</span><select aria-label="Swimmer name" value={name} onChange={(e) => setName(e.target.value)}>{achievementMemberNames.map(memberName => <option key={memberName} value={memberName}>{memberName}</option>)}</select></label>
+            <label className="studio-field"><span>Swimmer name</span><select aria-label="Swimmer name" value={name} onChange={(e) => setName(e.target.value)}>{!achievementMemberNames.includes(name) && <option value={name}>{name || "Custom name"}</option>}{achievementMemberNames.map(memberName => <option key={memberName} value={memberName}>{memberName}</option>)}</select></label>
             <label className="studio-field"><span>Achievement name</span><input value={headline.replaceAll("\n", " ")} maxLength={34} onChange={(e) => { setHeadline(e.target.value.toUpperCase()); setAchievementIndex(-1); }} /></label>
             <label className="studio-field"><span>Class / team</span><input value={classYear} maxLength={24} onChange={(e) => setClassYear(e.target.value)} /></label>
             <EventResultsEditor value={eventRows} onChange={setEventRows} />
@@ -806,7 +864,7 @@ export default function CardStudio() {
             ))}
           </div>
           {template === "finish" && <div className="finish-editor" aria-label="Finish Line layout editor">
-            <div className="finish-editor-heading"><div><b>Edit Finish Line</b><span id="finish-edit-help">Drag an element to move it. Drag its lower-right corner to resize. Arrow keys move the selected element; Shift moves it 10 pixels.</span></div><div className="finish-reset-actions">{removedLayer && <button type="button" onClick={() => { const { layer, index, image } = removedLayer; setFinishLayers(current => { const next = [...current]; next.splice(index, 0, layer); return next; }); if (image) setLayerImages(current => ({ ...current, [layer.id]: image })); setSelectedFinishId(layer.id); setRemovedLayer(null); }}>Undo remove</button>}{resetSnapshot && <button type="button" onClick={() => { setPhotoRect(resetSnapshot.photoRect); setFinishLayers(resetSnapshot.layers); setLayerImages(resetSnapshot.images); setResetSnapshot(null); }}>Undo reset</button>}<button type="button" onClick={() => { setResetSnapshot({ photoRect, layers: finishLayers, images: layerImages }); setRemovedLayer(null); layerUploadSequence.current += 1; setLayerLoading(false); setPhotoRect(null); setFinishLayers([]); setLayerImages({}); setSelectedFinishId("photo"); setLayerError(""); }}>Reset layout</button></div></div>
+            <div className="finish-editor-heading"><div><b>Edit Finish Line</b><span id="finish-edit-help">Select the photo or any built-in text, then drag to move it. Drag the lower-right corner to resize. Arrow keys move the selected item; Shift moves it 10 pixels.</span></div><div className="finish-reset-actions">{removedLayer && <button type="button" onClick={() => { const { layer, index, image } = removedLayer; setFinishLayers(current => { const next = [...current]; next.splice(index, 0, layer); return next; }); if (image) setLayerImages(current => ({ ...current, [layer.id]: image })); setSelectedFinishId(layer.id); setRemovedLayer(null); }}>Undo remove</button>}{resetSnapshot && <button type="button" onClick={() => { setPhotoRect(resetSnapshot.photoRect); setTextRects(resetSnapshot.textRects); setTextStyles(resetSnapshot.textStyles); setFinishLayers(resetSnapshot.layers); setLayerImages(resetSnapshot.images); setResetSnapshot(null); }}>Undo reset</button>}<button type="button" onClick={() => { setResetSnapshot({ photoRect, textRects, textStyles, layers: finishLayers, images: layerImages }); setRemovedLayer(null); layerUploadSequence.current += 1; setLayerLoading(false); setPhotoRect(null); setTextRects({}); setTextStyles({}); setFinishLayers([]); setLayerImages({}); setSelectedFinishId("photo"); setLayerError(""); }}>Reset layout</button></div></div>
             <div className="finish-add-row" role="group" aria-label="Add Finish Line elements">
               <button type="button" onClick={() => addFinishLayer("text")}>+ Text</button>
               <button type="button" onClick={() => addFinishLayer("image")}>+ Image</button>
@@ -815,13 +873,24 @@ export default function CardStudio() {
             <input ref={layerFileRef} className="visually-hidden" type="file" tabIndex={-1} accept="image/jpeg,image/png,image/webp" aria-label="Finish Line image" onChange={onLayerFileChange} />
             <div className="finish-element-list" role="group" aria-label="Finish Line elements">
               <button type="button" aria-pressed={selectedFinishId === "photo"} onClick={() => setSelectedFinishId("photo")}>Swimmer photo</button>
+              <span className="finish-list-label">Existing text</span>
+              {builtInText.map(block => <button key={block.id} type="button" aria-pressed={selectedFinishId === block.id} onClick={() => setSelectedFinishId(block.id)}>{block.label}</button>)}
+              {finishLayers.length > 0 && <span className="finish-list-label">Added elements</span>}
               {finishLayers.map((layer, index) => <button key={layer.id} type="button" aria-pressed={selectedFinishId === layer.id} onClick={() => setSelectedFinishId(layer.id)}>{layer.hidden ? "Hidden · " : ""}{layer.kind === "text" ? layer.text || "Text" : layer.kind === "image" ? "Image" : "Color block"} {index + 1}</button>)}
             </div>
-            {selectedRect && selectedFinishId && <div className="finish-inspector" aria-label={`Edit ${selectedFinishId === "photo" ? "swimmer photo" : selectedLayer?.kind ?? "element"}`}>
+            {selectedRect && selectedFinishId && <div className="finish-inspector" aria-label={`Edit ${selectedFinishId === "photo" ? "swimmer photo" : selectedText?.label.toLowerCase() ?? selectedLayer?.kind ?? "element"}`}>
               <div className="finish-position-grid">
                 {(["x", "y", "w", "h"] as const).map((key) => <label key={key}><span>{{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]} (px)</span><input type="number" min={key === "w" || key === "h" ? 1 : 0} max={key === "x" || key === "w" ? 1080 : cardHeight} value={Math.round(selectedRect[key] * (key === "x" || key === "w" ? 1080 : cardHeight))} onChange={event => { const value = Number(event.target.value); if (Number.isFinite(value)) updateFinishRect(selectedFinishId, { ...selectedRect, [key]: value / (key === "x" || key === "w" ? 1080 : cardHeight) }); }} /></label>)}
               </div>
               {selectedFinishId === "photo" && <p>The photo frame can move and change size; the Zoom and focus sliders above adjust the crop inside it.</p>}
+              {selectedText && <>
+                <label className="finish-field"><span>{selectedText.id === "meet" ? "Meet name (blank uses club name)" : `${selectedText.label} text`}</span><input type="text" maxLength={selectedText.id.startsWith("event:") ? 36 : selectedText.id.startsWith("time:") ? 16 : selectedText.id === "headline" ? 34 : selectedText.id === "subline" ? 48 : selectedText.id === "meet" ? 60 : selectedText.id === "classYear" ? 24 : 80} value={finishTextValue(selectedText.id)} onChange={event => setFinishTextValue(selectedText.id, event.target.value)} /></label>
+                {selectedText.id === "meet" && <label className="finish-field"><span>Meet date (optional)</span><input type="date" value={meetDate} min="1900-01-01" max="9999-12-31" onChange={event => setMeetDate(event.target.value)} /></label>}
+                <label className="finish-color"><span>Text color</span><input type="color" value={textStyles[selectedText.id]?.color ?? defaultFinishTextColor(selectedText.id, eventIds.indexOf(selectedText.id.split(":")[1]))} onChange={event => updateFinishTextStyle(selectedText.id, { color: event.target.value })} /></label>
+                <label className="finish-check"><input type="checkbox" checked={Boolean(textStyles[selectedText.id]?.background)} onChange={event => updateFinishTextStyle(selectedText.id, { background: event.target.checked ? "#431326" : undefined })} /><span>Color strip behind text</span></label>
+                {textStyles[selectedText.id]?.background && <label className="finish-color"><span>Strip color</span><input type="color" value={textStyles[selectedText.id].background} onChange={event => updateFinishTextStyle(selectedText.id, { background: event.target.value })} /></label>}
+                <p>Changes here also update the card details and social captions. Resize the box to adjust the text size.</p>
+              </>}
               {selectedLayer && <>
                 {selectedLayer.kind === "text" && <>
                   <label className="finish-field"><span>Text</span><AutoGrowTextarea rows={2} maxLength={120} value={selectedLayer.text} onChange={event => setFinishLayers(current => current.map(layer => layer.id === selectedLayer.id ? { ...layer, text: event.target.value } : layer))} /></label>

@@ -71,6 +71,54 @@ with sync_playwright() as playwright:
             canvas.press("ArrowRight")
             expect(left).to_have_value("71")
 
+            # Built-in words remain live data, not a second sticker laid over them.
+            inspector.get_by_label("Height (px)").fill("900")
+            editor.get_by_role("button", name="Swimmer name", exact=True).click()
+            name_editor = studio.get_by_label("Edit swimmer name")
+            old_top = int(name_editor.get_by_label("Top (px)").input_value())
+            canvas.scroll_into_view_if_needed()
+            name_box = studio.locator(".finish-selection").bounding_box()
+            name_center = (name_box["x"] + name_box["width"] / 2, name_box["y"] + name_box["height"] / 2)
+            page.mouse.move(*name_center)
+            page.mouse.down()
+            page.mouse.move(name_center[0] + 12, name_center[1] + 22, steps=5)
+            page.mouse.up()
+            assert int(name_editor.get_by_label("Top (px)").input_value()) > old_top
+            name_editor.locator('input[type="text"]').fill("Maya Test")
+            name_editor.get_by_label("Width (px)").fill("560")
+            name_editor.get_by_label("Color strip behind text").check()
+            expect(name_editor.get_by_label("Strip color")).to_be_visible()
+            expect(studio.get_by_role("combobox", name="Swimmer name", exact=True)).to_have_value("Maya Test")
+            assert "Maya Test" in studio.get_by_label("Instagram caption").input_value()
+
+            for button, text in [
+                ("Milestone", "ZONE CHAMPION"),
+                ("Supporting line", "NEW PERSONAL BEST"),
+                ("Event 1", "200Y FREE"),
+                ("Time 1", "2:01.00"),
+                ("Meet / club line", "JTSC HOME MEET"),
+                ("Class / team", "Class of 2029"),
+            ]:
+                editor.get_by_role("button", name=button, exact=True).click()
+                studio.locator('.finish-inspector input[type="text"]').fill(text)
+            assert "ZONE CHAMPION" in studio.get_by_label("Instagram caption").input_value()
+            assert "200Y FREE · 2:01.00" in studio.get_by_label("Instagram caption").input_value()
+            editor.get_by_role("button", name="Meet / club line", exact=True).click()
+            studio.locator('.finish-inspector input[type="date"]').fill("2026-09-16")
+            page.get_by_role("tab", name="Parent guide", exact=True).click()
+            page.get_by_role("tab", name="Achievement studio", exact=True).click()
+            expect(studio.get_by_role("combobox", name="Swimmer name", exact=True)).to_have_value("Maya Test")
+            editor.get_by_role("button", name="Swimmer name", exact=True).click()
+            assert int(studio.get_by_label("Edit swimmer name").get_by_label("Top (px)").input_value()) > old_top
+            expect(canvas).to_be_visible()
+            canvas.scroll_into_view_if_needed()
+            page.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+            edited_shot = output / f"finish-text-edited-{viewport['width']}.png"
+            canvas.screenshot(path=str(edited_shot))
+            repaint = Image.open(edited_shot).convert("RGB")
+            canvas_pixel = canvas.evaluate("element => Array.from(element.getContext('2d').getImageData(5, 5, 1, 1).data)")
+            assert canvas_pixel[0] < 160 and canvas_pixel[1] < 100, "Canvas must visibly repaint after returning to the tab"
+
             editor.get_by_role("button", name="+ Text").click()
             expect(studio.locator(".finish-field textarea")).to_be_visible()
             studio.locator(".finish-field textarea").fill("GO TROJANS")
@@ -103,7 +151,13 @@ with sync_playwright() as playwright:
             expect(editor.get_by_role("button", name="Undo reset")).to_be_visible()
             editor.get_by_role("button", name="Undo reset").click()
             expect(editor.get_by_role("button", name="Image 3")).to_be_visible()
+            editor.get_by_role("button", name="Swimmer name", exact=True).click()
+            expect(studio.get_by_label("Edit swimmer name").get_by_label("Color strip behind text")).to_be_checked()
             editor.get_by_role("button", name="Reset layout").click()
+            editor.get_by_role("button", name="Swimmer name", exact=True).click()
+            expect(studio.get_by_label("Edit swimmer name").get_by_label("Top (px)")).to_have_value("590")
+            expect(studio.get_by_label("Edit swimmer name").get_by_label("Color strip behind text")).not_to_be_checked()
+            expect(studio.get_by_role("combobox", name="Swimmer name", exact=True)).to_have_value("Maya Test")
             expect(editor.get_by_role("button", name="+ Text")).to_be_visible()
             assert editor.get_by_role("button", name="Swimmer photo").count() == 1
             assert editor.get_by_role("button", name="Image 3").count() == 0

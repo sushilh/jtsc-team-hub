@@ -92,6 +92,9 @@ export default function ClubHub({ initialTab = "studio" }: { initialTab?: Tab })
     setActive(tab);
     setVisited(current => current.includes(tab) ? current : [...current, tab]);
     window.location.assign(`#${tab}`);
+    // Returning from a long tab must reveal the studio instead of keeping the
+    // prior page's deep scroll position over its sticky canvas preview.
+    if (tab === "studio") requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
   }
 
   return <StudioExperience>

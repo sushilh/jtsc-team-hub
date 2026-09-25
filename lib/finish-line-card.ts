@@ -40,6 +40,9 @@ type FinishLineState = {
   horizontalPosition: number;
   verticalPosition: number;
   photoRect?: FinishRect | null;
+  textRects?: Record<string, FinishRect>;
+  textStyles?: Record<string, FinishTextStyle>;
+  eventIds?: string[];
   layers?: FinishLayer[];
   layerImages?: Record<string, HTMLImageElement>;
 };
@@ -53,6 +56,33 @@ export function finishLineLayout(height: number, eventCount: number) {
   const footerTop = height - 68;
   const rowHeight = Math.min(58, Math.max(38, (footerTop - rowsTop - 14) / Math.max(eventCount, 1)));
   return { photoTop, photoHeight, photoBottom, detailsTop, rowsTop, footerTop, rowHeight };
+}
+
+export type FinishTextBlock = { id: string; label: string; rect: FinishRect };
+export type FinishTextStyle = { color?: string; background?: string };
+
+export function defaultFinishTextColor(id: string, eventIndex = 0) {
+  return id === "subline" || id === "meet" ? "#efc76f" : id.startsWith("event:") && eventIndex > 0 ? "#f4dce5" : "#fffaf3";
+}
+
+export function finishLineTextBlocks(height: number, eventIds: string[]): FinishTextBlock[] {
+  const layout = finishLineLayout(height, eventIds.length);
+  const scaled = (x: number, y: number, w: number, h: number): FinishRect => ({ x: x / 1080, y: y / height, w: w / 1080, h: h / height });
+  const headlineSize = height > 1100 ? 126 : 112;
+  return [
+    { id: "headline", label: "Milestone", rect: scaled(1026 - headlineSize, 42, headlineSize, height - 84) },
+    { id: "name", label: "Swimmer name", rect: scaled(72, layout.detailsTop - 12, 726, 86) },
+    { id: "subline", label: "Supporting line", rect: scaled(74, layout.detailsTop + 72, 726, 42) },
+    ...eventIds.flatMap((eventId, index) => {
+      const rowTop = layout.rowsTop + index * layout.rowHeight;
+      return [
+        { id: `event:${eventId}`, label: `Event ${index + 1}`, rect: scaled(74, rowTop, 505, layout.rowHeight) },
+        { id: `time:${eventId}`, label: `Time ${index + 1}`, rect: scaled(628, rowTop, 174, layout.rowHeight) },
+      ];
+    }),
+    { id: "meet", label: "Meet / club line", rect: scaled(74, height - 66, 520, 44) },
+    { id: "classYear", label: "Class / team", rect: scaled(602, height - 66, 200, 44) },
+  ];
 }
 
 function fitText(
@@ -102,14 +132,27 @@ export function drawFinishLineCard(
   const maroon = "#67243d";
   const deepMaroon = "#431326";
   const cream = "#fffaf3";
-  const paleGold = "#efc76f";
   const photoRect = boundFinishRect(state.photoRect ?? defaultPhotoRect(height));
   const photoX = photoRect.x * width;
   const photoWidth = photoRect.w * width;
   const photoTop = photoRect.y * height;
   const photoHeight = photoRect.h * height;
-  const textRight = 802;
   const layout = finishLineLayout(height, state.events.length);
+  const eventKeys = state.eventIds?.length ? state.eventIds : state.events.length ? state.events.map((_, index) => String(index)) : ["placeholder"];
+  const textBlocks = finishLineTextBlocks(height, eventKeys);
+  const textRect = (id: string) => {
+    const original = textBlocks.find(block => block.id === id)?.rect;
+    return boundFinishRect(state.textRects?.[id] ?? original ?? { x: 0, y: 0, w: .1, h: .1 });
+  };
+  const pixels = (rect: FinishRect) => ({ x: rect.x * width, y: rect.y * height, w: rect.w * width, h: rect.h * height });
+  const textBackground = (id: string) => {
+    const background = state.textStyles?.[id]?.background;
+    if (!background) return;
+    const rect = pixels(textRect(id));
+    ctx.fillStyle = background;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  };
+  const textColor = (id: string, eventIndex = 0) => state.textStyles?.[id]?.color ?? defaultFinishTextColor(id, eventIndex);
 
   ctx.fillStyle = maroon;
   ctx.fillRect(0, 0, width, height);
@@ -165,62 +208,79 @@ export function drawFinishLineCard(
   ctx.restore();
 
   const headline = (state.headline.trim() || "ACHIEVEMENT").toUpperCase();
+  textBackground("headline");
+  const headlineRect = pixels(textRect("headline"));
+  const defaultHeadlineRect = pixels(textBlocks[0].rect);
   ctx.save();
-  ctx.translate(width - 54, 42);
+  ctx.translate(headlineRect.x + headlineRect.w, headlineRect.y);
   ctx.rotate(Math.PI / 2);
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
-  ctx.fillStyle = cream;
-  const headlineSize = fitText(ctx, headline, height - 84, height > 1100 ? 126 : 112, 50);
+  ctx.fillStyle = textColor("headline");
+  const headlineSize = fitText(ctx, headline, headlineRect.h, Math.min(180, (height > 1100 ? 126 : 112) * headlineRect.w / defaultHeadlineRect.w), 20);
   ctx.font = `900 ${headlineSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText(headline, 0, 0);
+  ctx.fillText(headline, 0, 0, headlineRect.h);
   ctx.restore();
 
   const name = (state.name.trim() || "SWIMMER NAME").toUpperCase();
+  textBackground("name");
+  const nameRect = pixels(textRect("name"));
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = cream;
-  const nameSize = fitText(ctx, name, textRight - 76, height > 1100 ? 70 : 62, 34);
+  ctx.fillStyle = textColor("name");
+  const nameSize = fitText(ctx, name, nameRect.w, Math.min(180, (height > 1100 ? 70 : 62) * nameRect.h / 86), 20);
   ctx.font = `900 ${nameSize}px "Arial Narrow", Impact, sans-serif`;
-  ctx.fillText(name, 72, layout.detailsTop + 56, textRight - 76);
+  ctx.fillText(name, nameRect.x, nameRect.y + nameRect.h * 68 / 86, nameRect.w);
 
   const supporting = state.subline.trim().toUpperCase();
   if (supporting) {
-    ctx.fillStyle = paleGold;
-    const supportingSize = fitText(ctx, supporting, textRight - 76, 24, 16, 700);
+    textBackground("subline");
+    const supportingRect = pixels(textRect("subline"));
+    ctx.fillStyle = textColor("subline");
+    const supportingSize = fitText(ctx, supporting, supportingRect.w, Math.min(100, 24 * supportingRect.h / 42), 12, 700);
     ctx.font = `700 ${supportingSize}px "Arial Narrow", Arial, sans-serif`;
-    ctx.fillText(supporting, 74, layout.detailsTop + 94, textRight - 76);
+    ctx.fillText(supporting, supportingRect.x, supportingRect.y + supportingRect.h * 22 / 42, supportingRect.w);
   }
 
   const events = state.events.length ? state.events : [{ eventName: "EVENT", time: "TIME" }];
   events.forEach((event, index) => {
+    const eventId = eventKeys[index] ?? "placeholder";
+    textBackground(`event:${eventId}`);
+    textBackground(`time:${eventId}`);
+    const eventRect = pixels(textRect(`event:${eventId}`));
+    const timeRect = pixels(textRect(`time:${eventId}`));
     const rowTop = layout.rowsTop + index * layout.rowHeight;
     const eventName = (event.eventName || "EVENT").toUpperCase();
     const time = (event.time || "—").toUpperCase();
-    ctx.fillStyle = index === 0 ? cream : "#f4dce5";
-    const eventSize = fitText(ctx, eventName, 505, Math.min(30, layout.rowHeight * .54), 17, 700);
+    ctx.fillStyle = textColor(`event:${eventId}`, index);
+    const eventSize = fitText(ctx, eventName, eventRect.w, Math.min(120, Math.min(30, layout.rowHeight * .54) * eventRect.h / layout.rowHeight), 12, 700);
     ctx.font = `700 ${eventSize}px "Arial Narrow", Arial, sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(eventName, 74, rowTop + layout.rowHeight * .66, 505);
-    ctx.fillStyle = cream;
-    const timeSize = fitText(ctx, time, 174, Math.min(31, layout.rowHeight * .58), 18, 800);
+    ctx.fillText(eventName, eventRect.x, eventRect.y + eventRect.h * .66, eventRect.w);
+    ctx.fillStyle = textColor(`time:${eventId}`);
+    const timeSize = fitText(ctx, time, timeRect.w, Math.min(120, Math.min(31, layout.rowHeight * .58) * timeRect.h / layout.rowHeight), 12, 800);
     ctx.font = `800 ${timeSize}px "Arial Narrow", Arial, sans-serif`;
     ctx.textAlign = "right";
-    ctx.fillText(time, textRight, rowTop + layout.rowHeight * .66, 174);
+    ctx.fillText(time, timeRect.x + timeRect.w, timeRect.y + timeRect.h * .66, timeRect.w);
     if (index < events.length - 1) {
       ctx.fillStyle = "rgba(255,255,255,.22)";
-      ctx.fillRect(74, rowTop + layout.rowHeight - 1, textRight - 74, 1);
+      ctx.fillRect(74, rowTop + layout.rowHeight - 1, 728, 1);
     }
   });
 
   const meet = meetDetails(state.meetName, state.meetDate).toUpperCase();
-  ctx.fillStyle = paleGold;
+  textBackground("meet");
+  textBackground("classYear");
+  const meetRect = pixels(textRect("meet"));
+  const classRect = pixels(textRect("classYear"));
+  ctx.fillStyle = textColor("meet");
   ctx.textAlign = "left";
-  ctx.font = '700 17px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(meet || "JENKS TROJAN SWIM CLUB", 74, height - 34, 520);
+  ctx.font = `700 ${Math.min(64, 17 * meetRect.h / 44)}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(meet || "JENKS TROJAN SWIM CLUB", meetRect.x, meetRect.y + meetRect.h * 32 / 44, meetRect.w);
   ctx.textAlign = "right";
-  ctx.fillStyle = cream;
-  ctx.fillText(state.classYear.toUpperCase(), textRight, height - 34, 200);
+  ctx.fillStyle = textColor("classYear");
+  ctx.font = `700 ${Math.min(64, 17 * classRect.h / 44)}px "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillText(state.classYear.toUpperCase(), classRect.x + classRect.w, classRect.y + classRect.h * 32 / 44, classRect.w);
 
   for (const layer of state.layers ?? []) {
     if (layer.hidden) continue;

@@ -38,6 +38,7 @@ Meet books are parsed heuristically in the browser using PDF.js. Review all dete
 - keyboard-accessible tabs for studio, volunteer check-in, and volunteer admin
 - `.xls`, `.xlsx`, and `.csv` Job Signup imports with one-click check-in/out, persisted per-meet open/close controls, scoped roster clearing, preserved corrections, same-format `.xls` download, imported-job walk-ins, manual walk-in sessions, hour adjustments, and CSV reports
 - Classic, Signature, Race Result, and Finish Line card designs with Instagram 1080×1350 and Facebook 1080×1080 PNG presets
+- Finish Line editor: move/resize the photo and original milestone, swimmer, event/time, supporting, and footer text; edit the original text, color, and optional color strip without duplicating it. Text edits also update the matching card fields and captions.
 - editable, locally generated captions with separate copy buttons for Instagram and Facebook
 
 - state, sectionals, junior nationals, and national team presets

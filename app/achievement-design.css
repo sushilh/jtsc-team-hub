@@ -101,6 +101,7 @@
 .studio-shell .finish-add-row, .studio-shell .finish-element-list, .studio-shell .finish-layer-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
 .studio-shell .finish-add-row button { border-color: #e8b92380; color: var(--gold); }
 .studio-shell .finish-element-list { padding-block: 12px; border-bottom: 1px solid var(--stage-line); }
+.studio-shell .finish-list-label { flex-basis: 100%; margin-top: 5px; color: var(--stage-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .studio-shell .finish-inspector { margin-top: 13px; }
 .studio-shell .finish-position-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
 .studio-shell .finish-position-grid label, .studio-shell .finish-field, .studio-shell .finish-color { display: flex; flex-direction: column; gap: 6px; color: var(--stage-muted); font-size: 12px; }
@@ -109,6 +110,8 @@
 .studio-shell .finish-field textarea { resize: none; min-height: 64px; }
 .studio-shell .finish-color { flex-direction: row; align-items: center; margin-top: 12px; gap: 12px; }
 .studio-shell .finish-color input { width: 52px; height: 38px; border: 1px solid var(--stage-line); background: transparent; cursor: pointer; }
+.studio-shell .finish-check { display: flex; align-items: center; gap: 9px; margin-top: 12px; color: var(--stage-muted); font-size: 12px; cursor: pointer; }
+.studio-shell .finish-check input { width: 18px; height: 18px; accent-color: var(--gold); }
 .studio-shell .finish-inspector p, .studio-shell .finish-error { color: var(--stage-muted); font-size: 12px; line-height: 1.5; margin: 12px 0 0; }
 .studio-shell .finish-error { color: #ffc2cf; }
 .studio-shell .finish-image-button { margin-top: 12px; }

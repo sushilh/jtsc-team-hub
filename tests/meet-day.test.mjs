@@ -13,7 +13,7 @@ async function moduleFrom(entry) {
 const model = await moduleFrom("lib/meet-day.ts");
 const { multiEventLayout, eventNameMissing, MAX_CARD_EVENTS } = await moduleFrom("lib/achievement-events.ts");
 const { drawMultiEventCard } = await moduleFrom("lib/multi-event-card.ts");
-const { drawFinishLineCard, finishLineLayout, defaultPhotoRect, boundFinishRect } = await moduleFrom("lib/finish-line-card.ts");
+const { drawFinishLineCard, finishLineLayout, finishLineTextBlocks, defaultPhotoRect, boundFinishRect } = await moduleFrom("lib/finish-line-card.ts");
 
 test("multi-event captions preserve order, optional times, and legacy single-event input", () => {
   const events = [{ eventName: " 50Y Free ", time: " 24.31 " }, { eventName: "100Y Breast", time: "1:02.35" }, { eventName: "200Y IM", time: "" }, { eventName: " ", time: "" }];
@@ -77,6 +77,29 @@ test("Finish Line photo and extra elements stay within either card format", () =
     assert.ok(calls.some(call => call[0] === "translate" && call[1] === 270 && call[2] === height * .225));
     assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "NEW RECORD"));
     assert.ok(calls.some(call => call[0] === "drawImage" && call[1] === layerImage));
+  }
+});
+
+test("Finish Line built-in text keeps stable event IDs and respects moved text boxes", () => {
+  for (const height of [1080, 1350]) {
+    const blocks = finishLineTextBlocks(height, ["first", "second"]);
+    assert.equal(blocks.length, 9);
+    assert.equal(new Set(blocks.map(block => block.id)).size, blocks.length);
+    for (const block of blocks) {
+      assert.ok(block.rect.x >= 0 && block.rect.x + block.rect.w <= 1);
+      assert.ok(block.rect.y >= 0 && block.rect.y + block.rect.h <= 1);
+    }
+    const calls = [];
+    const ctx = new Proxy({ measureText: value => ({width: value.length * 14}), createLinearGradient: () => ({addColorStop() {}}) }, { get: (o,p) => p in o ? o[p] : (...args) => calls.push([p,...args]), set: (o,p,v) => {o[p]=v;return true;} });
+    drawFinishLineCard(ctx, 1080, height, {
+      name:"New Swimmer", classYear:"Class of 2028", headline:"STATE QUALIFIER", subline:"Sectional meet",
+      events:[{eventName:"50 Free",time:"24.12"},{eventName:"100 Back",time:"1:01.77"}], eventIds:["first","second"],
+      meetName:"Jenks meet",meetDate:"",image:null,brandMark:null,zoom:1,horizontalPosition:0,verticalPosition:0,
+      textRects:{ name:{x:.15,y:.73,w:.5,h:.08}, "event:second":{x:.17,y:.82,w:.3,h:.05} },
+    });
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "NEW SWIMMER" && call[2] === 162));
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "100 BACK" && Math.abs(call[2] - 183.6) < .01));
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "50 FREE" && call[2] === 74));
   }
 });
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");
