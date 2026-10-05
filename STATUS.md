@@ -32,26 +32,29 @@ happening *now* and what is next.
 
 ## Current state
 
-_Last updated: 2026-09-25 by claude_
+_Last updated: 2026-10-05 by codex_
 
 | | |
 | --- | --- |
 | Branch | `main` |
-| HEAD | `88fd0ec` — Add Central Zone Region 8 Sectionals standards to state-times |
-| Pushed to `origin/main` | No — `main` is 1 commit ahead of `origin` (`88fd0ec`, local only) |
-| Last verified production | `30981f5`, tag `stable/2026-09-25`, Worker version `40b063f6-4a47-47ee-91de-2ad916431f06` — `88fd0ec` is not deployed yet |
+| HEAD | `4f0ec99` — Record 2026-10-05 production release |
+| Pushed to `origin/main` | Yes — up to date as of `4f0ec99` |
+| Last verified production | `3552e57`, tag `stable/2026-10-05`, Worker version `eec9f9cc-62cf-4d00-8716-3ffb71105f53` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
 | Test suite | 70 tests (`npm test`) |
 
 ## Work in flight
 
+| Owner | Since | What | Files claimed | State |
+| --- | --- | --- | --- | --- |
 Nothing claimed right now.
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
-| 2026-09-25 | claude | New Admin "Meet Report" tab: upload a meet-results XLS, surface notable performances (new records, standards met) against `lib/state-qualifying-times.mjs`, hand off to Achievement Studio pre-filled. Verified end to end in a local browser against a real meet-results file. Not committed yet. | uncommitted — `lib/meet-report.mjs` (new), `tests/meet-report.test.mjs` (new), `app/components/AdminApp.jsx`, `app/components/CardStudio.tsx`, `app/site-design.css` |
+| 2026-10-05 | codex | Deployed the Central Zone Sectionals standards and Admin Meet Report feature; production route and mobile Admin smoke checks passed | `3552e57` · `stable/2026-10-05` |
+| 2026-09-25 | claude | New Admin "Meet Report" tab: upload a meet-results XLS, surface notable performances (new records, standards met) against `lib/state-qualifying-times.mjs`, hand off to Achievement Studio pre-filled | `3552e57` |
 | 2026-09-25 | claude | Add Central Zone Region 8 Sectionals + Bonus standards to state-times (age-unrestricted, SCY+LCM) | `88fd0ec` |
 | 2026-09-25 | codex + user | Committed, pushed, and deployed everything from the prior handoff (state-times ladder, LCM records, Finish Line fix, doc updates) | `30981f5` · `stable/2026-09-25` |
 | 2026-09-17 | user | Deployed admin export work; recorded in `RELEASES.md` | `b036166` |
