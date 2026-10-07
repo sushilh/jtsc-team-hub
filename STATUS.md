@@ -37,9 +37,9 @@ _Last updated: 2026-10-07 by codex_
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | `558076c` — Rename new team record achievement; `a8d397d` — handoff record; `add2fcc` — pending release note; `364e38c` — record age footer (not pushed) |
-| Pushed to `origin/main` | Yes — up to date through `9acfbd7`; the four 2026-10-07 commits are intentionally local pending a requested release |
-| Last verified production | `3552e57`, tag `stable/2026-10-05`, Worker version `eec9f9cc-62cf-4d00-8716-3ffb71105f53` |
+| Checked-in local work | Release documentation only; the application work is deployed at `59e8f90` |
+| Pushed to `origin/main` | Application work pushed through `59e8f90`; release documentation is pending push |
+| Last verified production | `59e8f90`, tag `stable/2026-10-07`, Worker version `b3d4280c-234f-47d6-93f1-a26884c252b3` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
 | Test suite | 71 tests (`npm test`) |
 
@@ -53,6 +53,7 @@ Nothing claimed right now.
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
+| 2026-10-07 | codex | Pushed and deployed the new JTSC team-record milestone and automatic age/bracket footer; production Achievement Studio smoke passed at desktop and mobile | `59e8f90` · `stable/2026-10-07` |
 | 2026-10-07 | codex | Added editable actual-age and official age-bracket footer blocks to automatic Finish Line new-record cards; regular cards retain class/team text | `364e38c` |
 | 2026-10-07 | codex | Renamed the Finish Line and Admin Meet Report new-record milestone to `NEW JTSC TEAM RECORD`; browser preview/export coverage added | `558076c` |
 | 2026-10-05 | codex | Deployed the Central Zone Sectionals standards and Admin Meet Report feature; production route and mobile Admin smoke checks passed | `3552e57` · `stable/2026-10-05` |
