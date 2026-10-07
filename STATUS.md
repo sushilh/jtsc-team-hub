@@ -37,8 +37,8 @@ _Last updated: 2026-10-07 by codex_
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | Release documentation only; the application work is deployed at `59e8f90` |
-| Pushed to `origin/main` | Application work pushed through `59e8f90`; release documentation is pending push |
+| Checked-in local work | No pending application work; the release documentation follows deployed code on `main` |
+| Pushed to `origin/main` | Application baseline deployed at `59e8f90` (`stable/2026-10-07`); later commits are release documentation only |
 | Last verified production | `59e8f90`, tag `stable/2026-10-07`, Worker version `b3d4280c-234f-47d6-93f1-a26884c252b3` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
 | Test suite | 71 tests (`npm test`) |
