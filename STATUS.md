@@ -32,13 +32,13 @@ happening *now* and what is next.
 
 ## Current state
 
-_Last updated: 2026-10-05 by codex_
+_Last updated: 2026-10-07 by codex_
 
 | | |
 | --- | --- |
 | Branch | `main` |
-| HEAD | `4f0ec99` — Record 2026-10-05 production release |
-| Pushed to `origin/main` | Yes — up to date as of `4f0ec99` |
+| Checked-in local work | `558076c` — Rename new team record achievement; `a8d397d` — handoff record (not pushed) |
+| Pushed to `origin/main` | Yes — up to date through `9acfbd7`; the two 2026-10-07 commits are intentionally local pending a requested release |
 | Last verified production | `3552e57`, tag `stable/2026-10-05`, Worker version `eec9f9cc-62cf-4d00-8716-3ffb71105f53` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
 | Test suite | 70 tests (`npm test`) |
