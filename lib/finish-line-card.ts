@@ -29,6 +29,8 @@ export function boundFinishRect(rect: FinishRect): FinishRect {
 type FinishLineState = {
   name: string;
   classYear: string;
+  recordAge?: string;
+  recordAgeGroup?: string;
   headline: string;
   subline: string;
   events: { eventName: string; time: string }[];
@@ -65,7 +67,11 @@ export function defaultFinishTextColor(id: string, eventIndex = 0) {
   return id === "subline" || id === "meet" ? "#efc76f" : id.startsWith("event:") && eventIndex > 0 ? "#f4dce5" : "#fffaf3";
 }
 
-export function finishLineTextBlocks(height: number, eventIds: string[]): FinishTextBlock[] {
+export function finishLineTextBlocks(
+  height: number,
+  eventIds: string[],
+  { recordAge = "", recordAgeGroup = "" }: Pick<FinishLineState, "recordAge" | "recordAgeGroup"> = {},
+): FinishTextBlock[] {
   const layout = finishLineLayout(height, eventIds.length);
   const scaled = (x: number, y: number, w: number, h: number): FinishRect => ({ x: x / 1080, y: y / height, w: w / 1080, h: h / height });
   const headlineSize = height > 1100 ? 126 : 112;
@@ -81,7 +87,12 @@ export function finishLineTextBlocks(height: number, eventIds: string[]): Finish
       ];
     }),
     { id: "meet", label: "Meet / club line", rect: scaled(74, height - 66, 520, 44) },
-    { id: "classYear", label: "Class / team", rect: scaled(602, height - 66, 200, 44) },
+    ...(recordAge && recordAgeGroup
+      ? [
+        { id: "recordAge", label: "Record age", rect: scaled(602, height - 76, 200, 30) },
+        { id: "recordAgeGroup", label: "Record age group", rect: scaled(602, height - 46, 200, 24) },
+      ]
+      : [{ id: "classYear", label: "Class / team", rect: scaled(602, height - 66, 200, 44) }]),
   ];
 }
 
@@ -139,7 +150,8 @@ export function drawFinishLineCard(
   const photoHeight = photoRect.h * height;
   const layout = finishLineLayout(height, state.events.length);
   const eventKeys = state.eventIds?.length ? state.eventIds : state.events.length ? state.events.map((_, index) => String(index)) : ["placeholder"];
-  const textBlocks = finishLineTextBlocks(height, eventKeys);
+  const showRecordDetails = Boolean(state.recordAge?.trim() && state.recordAgeGroup?.trim());
+  const textBlocks = finishLineTextBlocks(height, eventKeys, state);
   const textRect = (id: string) => {
     const original = textBlocks.find(block => block.id === id)?.rect;
     return boundFinishRect(state.textRects?.[id] ?? original ?? { x: 0, y: 0, w: .1, h: .1 });
@@ -270,17 +282,31 @@ export function drawFinishLineCard(
 
   const meet = meetDetails(state.meetName, state.meetDate).toUpperCase();
   textBackground("meet");
-  textBackground("classYear");
   const meetRect = pixels(textRect("meet"));
-  const classRect = pixels(textRect("classYear"));
   ctx.fillStyle = textColor("meet");
   ctx.textAlign = "left";
   ctx.font = `700 ${Math.min(64, 17 * meetRect.h / 44)}px "Helvetica Neue", Arial, sans-serif`;
   ctx.fillText(meet || "JENKS TROJAN SWIM CLUB", meetRect.x, meetRect.y + meetRect.h * 32 / 44, meetRect.w);
-  ctx.textAlign = "right";
-  ctx.fillStyle = textColor("classYear");
-  ctx.font = `700 ${Math.min(64, 17 * classRect.h / 44)}px "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillText(state.classYear.toUpperCase(), classRect.x + classRect.w, classRect.y + classRect.h * 32 / 44, classRect.w);
+  if (showRecordDetails) {
+    textBackground("recordAge");
+    textBackground("recordAgeGroup");
+    const recordAgeRect = pixels(textRect("recordAge"));
+    const recordAgeGroupRect = pixels(textRect("recordAgeGroup"));
+    ctx.textAlign = "right";
+    ctx.fillStyle = textColor("recordAge");
+    ctx.font = `900 ${Math.min(64, 20 * recordAgeRect.h / 30)}px "Arial Narrow", Impact, sans-serif`;
+    ctx.fillText(state.recordAge!.toUpperCase(), recordAgeRect.x + recordAgeRect.w, recordAgeRect.y + recordAgeRect.h * .77, recordAgeRect.w);
+    ctx.fillStyle = textColor("recordAgeGroup");
+    ctx.font = `800 ${Math.min(64, 14 * recordAgeGroupRect.h / 24)}px "Arial Narrow", Impact, sans-serif`;
+    ctx.fillText(state.recordAgeGroup!.toUpperCase(), recordAgeGroupRect.x + recordAgeGroupRect.w, recordAgeGroupRect.y + recordAgeGroupRect.h * .78, recordAgeGroupRect.w);
+  } else {
+    textBackground("classYear");
+    const classRect = pixels(textRect("classYear"));
+    ctx.textAlign = "right";
+    ctx.fillStyle = textColor("classYear");
+    ctx.font = `700 ${Math.min(64, 17 * classRect.h / 44)}px "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillText(state.classYear.toUpperCase(), classRect.x + classRect.w, classRect.y + classRect.h * 32 / 44, classRect.w);
+  }
 
   for (const layer of state.layers ?? []) {
     if (layer.hidden) continue;

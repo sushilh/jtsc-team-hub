@@ -47,7 +47,7 @@ _Last updated: 2026-10-07 by codex_
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-Nothing claimed right now.
+| codex | 2026-10-07 | Add the swimmer age and official age bracket to automatically generated NEW JTSC TEAM RECORD Finish Line cards | `lib/meet-report.mjs`, `lib/finish-line-card.ts`, `app/components/CardStudio.tsx`, `tests/meet-report.test.mjs`, `tests/meet-day.test.mjs`, `tests/ui/achievement-preview.py`, `UX-CONTRACT.md`, `CHANGELOG.md`, `STATUS.md` | In progress. |
 
 ## Recently finished
 

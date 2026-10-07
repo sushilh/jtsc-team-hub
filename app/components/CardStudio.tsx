@@ -37,6 +37,8 @@ const celebrationParticles = Array.from({ length: 18 }, (_, index) => {
 type CardDrawingState = {
   name: string;
   classYear: string;
+  recordAge: string;
+  recordAgeGroup: string;
   headline: string;
   subline: string;
   eventLine: string;
@@ -436,6 +438,8 @@ export default function CardStudio() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(achievementMemberNames[0] ?? "");
   const [classYear, setClassYear] = useState("Class of 2027");
+  const [recordAge, setRecordAge] = useState("");
+  const [recordAgeGroup, setRecordAgeGroup] = useState("");
   const [achievementIndex, setAchievementIndex] = useState(0);
   const [headline, setHeadline] = useState<string>(initialAchievement.headline);
   const [subline, setSubline] = useState<string>(initialAchievement.subline);
@@ -501,13 +505,15 @@ export default function CardStudio() {
     if (!raw) return;
     try { localStorage.removeItem("jtsc:achievement-prefill"); } catch { /* private browsing */ }
     try {
-      const prefill = JSON.parse(raw) as { name?: string; milestone?: string; eventName?: string; time?: string; meetName?: string; meetDate?: string };
+      const prefill = JSON.parse(raw) as { name?: string; milestone?: string; eventName?: string; time?: string; meetName?: string; meetDate?: string; recordAge?: string; recordAgeGroup?: string };
       if (prefill.name) setName(prefill.name);
       const index = achievements.findIndex(item => item.label === prefill.milestone);
       if (index !== -1) chooseAchievement(index);
       if (prefill.eventName || prefill.time) setEventRows([{ id: "prefill", eventName: prefill.eventName ?? "", time: prefill.time ?? "" }]);
       if (prefill.meetName) setMeetName(prefill.meetName);
       if (prefill.meetDate) setMeetDate(prefill.meetDate);
+      setRecordAge(prefill.recordAge ?? "");
+      setRecordAgeGroup(prefill.recordAgeGroup ?? "");
       /* eslint-enable react-hooks/set-state-in-effect */
       notify(`Loaded ${prefill.name ?? "the swim"} from Meet Report.`);
     } catch { /* malformed prefill, nothing to apply */ }
@@ -520,7 +526,7 @@ export default function CardStudio() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [eventRows, photoRect, textRects, textStyles, finishLayers]);
   const cardHeight = socialFormats[format].height;
-  const builtInText = finishLineTextBlocks(cardHeight, eventIds);
+  const builtInText = finishLineTextBlocks(cardHeight, eventIds, { recordAge, recordAgeGroup });
   const selectedText = builtInText.find(block => block.id === selectedFinishId);
   const selectedLayer = finishLayers.find(layer => layer.id === selectedFinishId);
   const selectedRect = selectedFinishId === "photo" ? photoRect ?? defaultPhotoRect(cardHeight) : selectedText ? textRects[selectedText.id] ?? selectedText.rect : selectedLayer ?? null;
@@ -538,6 +544,8 @@ export default function CardStudio() {
     if (id === "subline") return subline;
     if (id === "meet") return meetName;
     if (id === "classYear") return classYear;
+    if (id === "recordAge") return recordAge;
+    if (id === "recordAgeGroup") return recordAgeGroup;
     const [kind, eventId] = id.split(":");
     const row = eventRows.find(item => item.id === eventId);
     return kind === "event" ? row?.eventName ?? "" : row?.time ?? "";
@@ -549,6 +557,8 @@ export default function CardStudio() {
     else if (id === "subline") setSubline(value);
     else if (id === "meet") setMeetName(value);
     else if (id === "classYear") setClassYear(value);
+    else if (id === "recordAge") setRecordAge(value);
+    else if (id === "recordAgeGroup") setRecordAgeGroup(value);
     else {
       const [kind, eventId] = id.split(":");
       setEventRows(current => current.map(row => row.id === eventId ? { ...row, [kind === "event" ? "eventName" : "time"]: value } : row));
@@ -703,10 +713,10 @@ export default function CardStudio() {
     }
     lastTemplate.current = template;
     const eventLine = [eventName.trim(), time.trim()].filter(Boolean).join(" • ");
-    drawCard(canvasRef.current, { name, classYear, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
+    drawCard(canvasRef.current, { name, classYear, recordAge, recordAgeGroup, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
     // Edits and motion changes must immediately uncover the current card.
     return () => transition?.cancel();
-  }, [name, classYear, headline, subline, eventName, time, events, eventIds, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages, motion, visibilityTick]);
+  }, [name, classYear, recordAge, recordAgeGroup, headline, subline, eventName, time, events, eventIds, meetName, meetDate, format, template, photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages, motion, visibilityTick]);
 
   useEffect(() => () => { uploadSequence.current += 1; }, []);
 
@@ -721,6 +731,10 @@ export default function CardStudio() {
     setAchievementIndex(index);
     setHeadline(next.headline);
     setSubline(next.subline);
+    if (next.label !== "NEW JTSC TEAM RECORD") {
+      setRecordAge("");
+      setRecordAgeGroup("");
+    }
   }
 
   async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
@@ -776,7 +790,7 @@ export default function CardStudio() {
     setExporting(targetTemplate);
     setExportNotice("");
     try {
-    drawCard(exportCanvas, { name, classYear, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
+    drawCard(exportCanvas, { name, classYear, recordAge, recordAgeGroup, headline, subline, eventLine, eventName, time, events, eventIds, meetName, meetDate, format, template: targetTemplate, image: photo, brandMark, zoom, horizontalPosition, verticalPosition, photoRect, textRects, textStyles, finishLayers, layerImages });
     exportCanvas.toBlob((blob) => {
       if (!blob) { exportLock.current = false; setExporting(null); setExportNotice("The image could not be prepared. Please try again."); return; }
       const link = document.createElement("a");

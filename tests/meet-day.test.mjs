@@ -102,6 +102,24 @@ test("Finish Line built-in text keeps stable event IDs and respects moved text b
     assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "50 FREE" && call[2] === 74));
   }
 });
+
+test("Finish Line record cards show the swimmer's age and official age group in place of class year", () => {
+  for (const height of [1080, 1350]) {
+    const blocks = finishLineTextBlocks(height, ["first"], { recordAge: "6 YEAR OLD", recordAgeGroup: "6 AND UNDER" });
+    assert.ok(blocks.some(block => block.id === "recordAge" && block.label === "Record age"));
+    assert.ok(blocks.some(block => block.id === "recordAgeGroup" && block.label === "Record age group"));
+    assert.ok(!blocks.some(block => block.id === "classYear"));
+    const calls = [];
+    const ctx = new Proxy({ measureText: value => ({ width: value.length * 14 }), createLinearGradient: () => ({ addColorStop() {} }) }, { get: (o, p) => p in o ? o[p] : (...args) => calls.push([p, ...args]), set: (o, p, v) => { o[p] = v; return true; } });
+    drawFinishLineCard(ctx, 1080, height, {
+      name: "New Swimmer", classYear: "Class of 2028", recordAge: "6 YEAR OLD", recordAgeGroup: "6 AND UNDER", headline: "NEW JTSC TEAM RECORD", subline: "",
+      events: [{ eventName: "25 Free", time: "18.22" }], meetName: "Jenks meet", meetDate: "", image: null, brandMark: null, zoom: 1, horizontalPosition: 0, verticalPosition: 0,
+    });
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "6 YEAR OLD"));
+    assert.ok(calls.some(call => call[0] === "fillText" && call[1] === "6 AND UNDER"));
+    assert.ok(!calls.some(call => call[0] === "fillText" && call[1] === "CLASS OF 2028"));
+  }
+});
 const { parseMeetBook, readMeetBook } = await moduleFrom("lib/meet-book.ts");
 const { drawMeetPoster } = await moduleFrom("lib/meet-renderer.ts");
 const { createMeetCaptions, meetExportSize, fitMeetPoster } = await moduleFrom("lib/meet-social.ts");

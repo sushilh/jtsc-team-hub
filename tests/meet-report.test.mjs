@@ -54,6 +54,7 @@ test("findNotablePerformances flags a new SCY team record", () => {
   const [performance] = findNotablePerformances(parseMeetResultsRows(rows));
   assert.equal(performance.isNewRecord, true);
   assert.equal(performance.oldRecord, "24.54");
+  assert.equal(performance.recordAgeGroup, "11-12");
   assert.equal(performance.headline, true);
   assert.equal(suggestMilestone(performance), "NEW JTSC TEAM RECORD");
 });
@@ -105,5 +106,7 @@ test("buildCardPrefill assembles everything Achievement Studio needs, matching t
     time: "24.08",
     meetName: "JTSC Fall Intrasquad",
     meetDate: "2026-09-19",
+    recordAge: "12 YEAR OLD",
+    recordAgeGroup: "11-12",
   });
 });

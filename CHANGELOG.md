@@ -4,6 +4,11 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-07 — Put the swimmer's age on new team-record cards
+
+- Admin Meet Report now carries both the swimmer's actual meet-day age and the official JTSC team-record age bracket into an automatically created `NEW JTSC TEAM RECORD` card. On the Finish Line template, those become two separately editable footer blocks: for example, `6 YEAR OLD` followed by `6 AND UNDER`. This replaces the class/team footer only for an automatic new-record handoff; regular achievement cards keep their existing class/team text.
+- Checked: `npm test` (71 passing), `npx tsc --noEmit` (clean), `npm run lint` (clean with the repository's ignored generated-output paths), strict premium UI audit (0 findings), and `DESIGN.md` lint (0 errors). The Achievement Studio browser workflow passed at desktop and 390px mobile widths, with reduced motion, live Meet Report record handoff, editable age/footer blocks, and preview/export parity. The managed browser-server helper could not reach this local Vite instance because it bound only IPv6; the same browser workflow then passed against `http://localhost:3014`.
+
 ### 2026-10-07 — Name new records consistently across Achievement Studio
 
 - Replaced the generic "Broke Team Record" achievement milestone with the club-specific `NEW JTSC TEAM RECORD` wording. The Finish Line preset and Admin Meet Report handoff now use the same exact label, so a newly detected team record carries the intended headline directly into the card editor and export.

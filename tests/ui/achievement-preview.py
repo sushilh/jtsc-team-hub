@@ -129,6 +129,26 @@ with sync_playwright() as playwright:
             page.get_by_role("tab", name="Achievement studio", exact=True).click()
             expect(swimmer).to_have_value("Hatkar, Reya")
             check_visible_card("return-to-studio")
+
+            # A Meet Report new-record handoff carries the swimmer's actual age
+            # and official record bracket into the editable Finish Line card.
+            page.evaluate("""localStorage.setItem('jtsc:achievement-prefill', JSON.stringify({
+                name: 'Asakevich, Graham', milestone: 'NEW JTSC TEAM RECORD',
+                eventName: '25Y Freestyle', time: '18.22', meetName: 'JTSC Fall Intrasquad',
+                meetDate: '2026-09-19', recordAge: '6 YEAR OLD', recordAgeGroup: '6 AND UNDER'
+            }))""")
+            page.get_by_role("tab", name="Parent guide", exact=True).click()
+            page.get_by_role("tab", name="Achievement studio", exact=True).click()
+            studio.get_by_role("group", name="Card template").get_by_role("button", name="Finish Line", exact=False).click()
+            expect(swimmer).to_have_value("Asakevich, Graham")
+            page.wait_for_function("window.previewText.includes('6 YEAR OLD') && window.previewText.includes('6 AND UNDER')")
+            expect(studio.get_by_role("button", name="Record age", exact=True)).to_be_visible()
+            expect(studio.get_by_role("button", name="Record age group", exact=True)).to_be_visible()
+            check_visible_card("record-age-handoff")
+            page.set_viewport_size({"width": 390, "height": 844})
+            expect(canvas).to_be_visible()
+            mobile_record = frame.screenshot(path=str(output / f"{motion}-record-age-handoff-mobile.png"), animations="disabled")
+            assert Image.open(BytesIO(mobile_record)).size[0] > 0
             assert not errors, errors
             context.close()
         print(f"PASS: selected names render visibly, all four designs and both PNG sizes match, motion/reduced motion/pause/tab return work. Screenshots: {output}")
