@@ -37,22 +37,23 @@ _Last updated: 2026-10-07 by codex_
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | `558076c` — Rename new team record achievement; `a8d397d` — handoff record (not pushed) |
-| Pushed to `origin/main` | Yes — up to date through `9acfbd7`; the two 2026-10-07 commits are intentionally local pending a requested release |
+| Checked-in local work | `558076c` — Rename new team record achievement; `a8d397d` — handoff record; `add2fcc` — pending release note; `364e38c` — record age footer (not pushed) |
+| Pushed to `origin/main` | Yes — up to date through `9acfbd7`; the four 2026-10-07 commits are intentionally local pending a requested release |
 | Last verified production | `3552e57`, tag `stable/2026-10-05`, Worker version `eec9f9cc-62cf-4d00-8716-3ffb71105f53` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
-| Test suite | 70 tests (`npm test`) |
+| Test suite | 71 tests (`npm test`) |
 
 ## Work in flight
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-| codex | 2026-10-07 | Add the swimmer age and official age bracket to automatically generated NEW JTSC TEAM RECORD Finish Line cards | `lib/meet-report.mjs`, `lib/finish-line-card.ts`, `app/components/CardStudio.tsx`, `tests/meet-report.test.mjs`, `tests/meet-day.test.mjs`, `tests/ui/achievement-preview.py`, `UX-CONTRACT.md`, `CHANGELOG.md`, `STATUS.md` | In progress. |
+Nothing claimed right now.
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
+| 2026-10-07 | codex | Added editable actual-age and official age-bracket footer blocks to automatic Finish Line new-record cards; regular cards retain class/team text | `364e38c` |
 | 2026-10-07 | codex | Renamed the Finish Line and Admin Meet Report new-record milestone to `NEW JTSC TEAM RECORD`; browser preview/export coverage added | `558076c` |
 | 2026-10-05 | codex | Deployed the Central Zone Sectionals standards and Admin Meet Report feature; production route and mobile Admin smoke checks passed | `3552e57` · `stable/2026-10-05` |
 | 2026-09-25 | claude | New Admin "Meet Report" tab: upload a meet-results XLS, surface notable performances (new records, standards met) against `lib/state-qualifying-times.mjs`, hand off to Achievement Studio pre-filled | `3552e57` |
