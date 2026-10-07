@@ -53,6 +53,7 @@ Nothing claimed right now.
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
+| 2026-10-07 | codex | Renamed the Finish Line and Admin Meet Report new-record milestone to `NEW JTSC TEAM RECORD`; browser preview/export coverage added | `558076c` |
 | 2026-10-05 | codex | Deployed the Central Zone Sectionals standards and Admin Meet Report feature; production route and mobile Admin smoke checks passed | `3552e57` · `stable/2026-10-05` |
 | 2026-09-25 | claude | New Admin "Meet Report" tab: upload a meet-results XLS, surface notable performances (new records, standards met) against `lib/state-qualifying-times.mjs`, hand off to Achievement Studio pre-filled | `3552e57` |
 | 2026-09-25 | claude | Add Central Zone Region 8 Sectionals + Bonus standards to state-times (age-unrestricted, SCY+LCM) | `88fd0ec` |
