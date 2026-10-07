@@ -68,7 +68,7 @@ const achievements = [
   { label: "Junior Nationals", headline: "JUNIOR NATIONAL QUALIFIER", subline: "USA SWIMMING JUNIOR NATIONALS" },
   { label: "National Team", headline: "NATIONAL TEAM", subline: "SELECTED • TEAM USA PATHWAY" },
   { label: "Season Best", headline: "SEASON BEST", subline: "" },
-  { label: "Broke Team Record", headline: "BROKE TEAM RECORD", subline: "" },
+  { label: "NEW JTSC TEAM RECORD", headline: "NEW JTSC TEAM RECORD", subline: "" },
 ] as const;
 
 const initialAchievement = achievements[0];

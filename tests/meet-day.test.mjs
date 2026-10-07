@@ -50,7 +50,7 @@ test("Finish Line template keeps one to six results inside both export sizes", (
     const calls = [];
     const ctx = new Proxy({ measureText: value => ({ width: value.length * 14 }), createLinearGradient: () => ({ addColorStop() {} }) }, { get: (o,p) => p in o ? o[p] : (...args) => calls.push([p,...args]), set: (o,p,v) => {o[p]=v;return true;} });
     const events = Array.from({length:count},(_,i) => ({eventName:`EVENT ${i+1}`,time:`1:0${i}.35`}));
-    drawFinishLineCard(ctx,1080,height,{name:"Avery Thompson",classYear:"Class of 2027",headline:"BROKE TEAM RECORD",subline:"OKLAHOMA STATE CHAMPIONSHIPS",meetName:"Winter Meet",meetDate:"2026-12-12",events,image:null,brandMark:null,zoom:1,horizontalPosition:0,verticalPosition:0});
+    drawFinishLineCard(ctx,1080,height,{name:"Avery Thompson",classYear:"Class of 2027",headline:"NEW JTSC TEAM RECORD",subline:"OKLAHOMA STATE CHAMPIONSHIPS",meetName:"Winter Meet",meetDate:"2026-12-12",events,image:null,brandMark:null,zoom:1,horizontalPosition:0,verticalPosition:0});
     for (const event of events) for (const text of [event.eventName,event.time]) assert.equal(calls.filter(c=>c[0]==="fillText"&&c[1]===text).length,1);
     for (const call of calls.filter(c=>c[0]==="fillText")) assert.ok(call[3] > -1 && call[3] < height);
   }

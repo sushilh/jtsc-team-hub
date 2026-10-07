@@ -90,6 +90,12 @@ with sync_playwright() as playwright:
             change_swimmer("Asakevich, Graham")
             check_visible_card("initial-name-change")
 
+            record_milestone = "NEW JTSC TEAM RECORD"
+            studio.get_by_role("button", name=record_milestone, exact=True).click()
+            expect(studio.get_by_label("Achievement name", exact=True)).to_have_value(record_milestone)
+            page.wait_for_function("text => window.previewText.includes(text)", arg=record_milestone)
+            check_visible_card("new-team-record-milestone")
+
             templates = [
                 ("Classic Zone", "Classic PNG", "classic", "Hatkar, Reya"),
                 ("Race Result", "Race Result PNG", "race", "Hatkar, Saisha"),

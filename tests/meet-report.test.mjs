@@ -55,7 +55,7 @@ test("findNotablePerformances flags a new SCY team record", () => {
   assert.equal(performance.isNewRecord, true);
   assert.equal(performance.oldRecord, "24.54");
   assert.equal(performance.headline, true);
-  assert.equal(suggestMilestone(performance), "Broke Team Record");
+  assert.equal(suggestMilestone(performance), "NEW JTSC TEAM RECORD");
 });
 
 test("findNotablePerformances flags a Zone Sectionals cut as headline-worthy even without a new record", () => {
@@ -100,7 +100,7 @@ test("buildCardPrefill assembles everything Achievement Studio needs, matching t
   const prefill = buildCardPrefill(performance, { roster: ["Archer, Jonathan"], meetName: "JTSC Fall Intrasquad" });
   assert.deepEqual(prefill, {
     name: "Archer, Jonathan",
-    milestone: "Broke Team Record",
+    milestone: "NEW JTSC TEAM RECORD",
     eventName: "50Y Freestyle",
     time: "24.08",
     meetName: "JTSC Fall Intrasquad",

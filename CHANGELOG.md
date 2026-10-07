@@ -4,6 +4,11 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-07 — Name new records consistently across Achievement Studio
+
+- Replaced the generic "Broke Team Record" achievement milestone with the club-specific `NEW JTSC TEAM RECORD` wording. The Finish Line preset and Admin Meet Report handoff now use the same exact label, so a newly detected team record carries the intended headline directly into the card editor and export.
+- Checked: `npm test` (70 passing), `npx tsc --noEmit` (clean), `npm run lint` (clean with the repository's ignored generated-output paths), strict premium UI audit (0 findings), `DESIGN.md` lint (0 errors), and the Achievement Studio browser workflow at desktop and reduced motion, including the record preset's live preview and PNG exports at both supported sizes.
+
 ### 2026-09-25 — Add an Admin "Meet Report" tab: upload results, get notable performances, prefill a card
 
 - Added a fifth Admin sidebar tab, "Meet Report" (`app/components/AdminApp.jsx`), that uploads a Hy-Tek/GoMotion "Individual Events" meet-results export (.xls/.xlsx) and cross-references every swim against `lib/state-qualifying-times.mjs` to find new team records and qualifying standards met, entirely client-side — no D1 table, no new persistence. New logic lives in `lib/meet-report.mjs`: header-row auto-detection (exports carry a variable number of title rows first), per-swim course detection from the time-string suffix, and — critically — the same `Event Age`-over-`Age` preference already learned the hard way earlier this week, since a walk-in results file has the identical two-column drift.

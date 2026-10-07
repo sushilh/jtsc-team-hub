@@ -14,7 +14,7 @@ test("build includes the JTSC achievement card studio", async () => {
   assert.match(studio, /Choose a photo/);
   assert.match(studio, /Futures/);
   assert.match(studio, /Zones/);
-  assert.match(studio, /label: "Season Best"[^\n]*\n\s*\{ label: "Broke Team Record", headline: "BROKE TEAM RECORD", subline: "" \}/);
+  assert.match(studio, /label: "Season Best"[^\n]*\n\s*\{ label: "NEW JTSC TEAM RECORD", headline: "NEW JTSC TEAM RECORD", subline: "" \}/);
   assert.match(studio, /\{achievements.length\} team presets/);
   assert.match(studio, /Achievement name/);
   assert.match(studio, /EventResultsEditor value=\{eventRows\}/);
