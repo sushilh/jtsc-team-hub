@@ -37,22 +37,23 @@ _Last updated: 2026-10-07 by codex_
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | No pending application work; the release documentation follows deployed code on `main` |
-| Pushed to `origin/main` | Application baseline deployed at `59e8f90` (`stable/2026-10-07`); later commits are release documentation only |
-| Last verified production | `59e8f90`, tag `stable/2026-10-07`, Worker version `b3d4280c-234f-47d6-93f1-a26884c252b3` |
+| Checked-in local work | No pending application work; release documentation follows deployed code on `main` |
+| Pushed to `origin/main` | Application baseline deployed at `8ca758b` (`stable/2026-10-21`) |
+| Last verified production | `8ca758b`, tag `stable/2026-10-21`, Worker version `99beec8c-80f0-4ec0-9efc-b906090a3e0b` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
-| Test suite | 71 tests (`npm test`) |
+| Test suite | 76 tests (`npm test`) |
 
 ## Work in flight
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-| codex | 2026-10-21 | Add USA Swimming motivational standards to qualifying times and release | `scripts/extract-motivational-times.mjs`, `lib/motivational-times.mjs`, `lib/motivational-times-data.json`, `app/components/StateTimesApp.tsx`, `app/site-design.css`, `tests/motivational-times.test.mjs`, `tests/ui/state-times.py`, `CHANGELOG.md`, `STATUS.md`, `RELEASES.md` | In progress. |
+| — | — | No active claims | — | — |
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
+| 2026-10-21 | codex | Added separate USA Swimming motivational levels; deployed and verified State Times and Parent Guide at desktop and mobile | `8ca758b` · `stable/2026-10-21` |
 | 2026-10-07 | codex | Pushed and deployed the new JTSC team-record milestone and automatic age/bracket footer; production Achievement Studio smoke passed at desktop and mobile | `59e8f90` · `stable/2026-10-07` |
 | 2026-10-07 | codex | Added editable actual-age and official age-bracket footer blocks to automatic Finish Line new-record cards; regular cards retain class/team text | `364e38c` |
 | 2026-10-07 | codex | Renamed the Finish Line and Admin Meet Report new-record milestone to `NEW JTSC TEAM RECORD`; browser preview/export coverage added | `558076c` |
