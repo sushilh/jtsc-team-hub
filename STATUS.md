@@ -47,7 +47,7 @@ _Last updated: 2026-10-07 by codex_
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-Nothing claimed right now.
+| codex | 2026-10-21 | Add USA Swimming motivational standards to qualifying times and release | `scripts/extract-motivational-times.mjs`, `lib/motivational-times.mjs`, `lib/motivational-times-data.json`, `app/components/StateTimesApp.tsx`, `app/site-design.css`, `tests/motivational-times.test.mjs`, `tests/ui/state-times.py`, `CHANGELOG.md`, `STATUS.md`, `RELEASES.md` | In progress. |
 
 ## Recently finished
 

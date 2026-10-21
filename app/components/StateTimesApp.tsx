@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { COURSES, formatSwimTime, getQualifyingSeries, getTeamRecords, parseSwimTime, standardsForAge, STROKES } from "../../lib/state-qualifying-times.mjs";
+import { getMotivationalSeries, motivationalAgeGroup, MOTIVATIONAL_LEVELS, MOTIVATIONAL_SOURCE } from "../../lib/motivational-times.mjs";
 
 type Gender = "girls" | "boys";
 type Point = { distance: number; seconds: number; timeText: string };
@@ -83,11 +84,12 @@ export default function StateTimesApp() {
   const [gender, setGender] = useState<Gender>("girls");
   const [stroke, setStroke] = useState("Free");
   const [course, setCourse] = useState("SCY");
+  const [view, setView] = useState<"qualifying" | "motivational">("qualifying");
   const [enteredTimes, setEnteredTimes] = useState<Record<string, string>>({});
 
-  const series: Series[] = useMemo(() => getQualifyingSeries({ age, gender, stroke, course }), [age, gender, stroke, course]);
-  const applicableStandards: Standard[] = useMemo(() => standardsForAge(age), [age]);
-  const teamRecords: TeamRecord[] = useMemo(() => getTeamRecords({ age, gender, stroke, course }), [age, gender, stroke, course]);
+  const series: Series[] = useMemo(() => view === "motivational" ? getMotivationalSeries({ age, gender, stroke, course }) : getQualifyingSeries({ age, gender, stroke, course }), [view, age, gender, stroke, course]);
+  const applicableStandards: Standard[] = useMemo(() => view === "motivational" ? MOTIVATIONAL_LEVELS : standardsForAge(age), [view, age]);
+  const teamRecords: TeamRecord[] = useMemo(() => view === "motivational" ? [] : getTeamRecords({ age, gender, stroke, course }), [view, age, gender, stroke, course]);
 
   const distances = useMemo(() => {
     const set = new Set<number>();
@@ -102,12 +104,19 @@ export default function StateTimesApp() {
   return <main className="state-times">
     <header className="state-times-hero">
       <Link className="state-times-back" href="/">← Back to Team Hub</Link>
-      <p className="state-times-kicker">JTSC · 2025-2028 OKS Standards</p>
+      <p className="state-times-kicker">JTSC · Swim time standards</p>
       <h1>State qualifying times</h1>
-      <p className="state-times-lede">Enter an age, gender, and stroke to see every state and regional qualifying standard that applies — then type in a swim time to see exactly which cuts it already meets.</p>
+      <p className="state-times-lede">Explore meet qualifying cuts or USA Swimming motivational levels. Enter a swim time to see which standards it meets.</p>
     </header>
 
     <section className="state-times-controls" aria-label="Filter qualifying times">
+      <div className="state-times-field">
+        <span>Standards</span>
+        <div className="state-times-toggle" role="group" aria-label="Standards">
+          <button type="button" className={view === "qualifying" ? "active" : ""} aria-pressed={view === "qualifying"} onClick={() => setView("qualifying")}>Meet qualifying times</button>
+          <button type="button" className={view === "motivational" ? "active" : ""} aria-pressed={view === "motivational"} onClick={() => setView("motivational")}>Motivational levels</button>
+        </div>
+      </div>
       <label className="state-times-field">
         <span>Age</span>
         <input type="number" min={5} max={18} value={age}
@@ -142,6 +151,8 @@ export default function StateTimesApp() {
       </div>
     </section>
 
+    {view === "motivational" && <p className="state-times-lede">USA Swimming 2024–2028 · {motivationalAgeGroup(age)} · B through AAAA. These are individual progress benchmarks, not meet qualification requirements.</p>}
+
     {(applicableStandards.length > 0 || teamRecords.length > 0) && <ul className="state-times-legend" aria-label="Qualifying standards for this age">
       {applicableStandards.map((standard) => <li key={standard.id}>
         <span className="qt-swatch" style={{ background: standard.color }} aria-hidden="true" />
@@ -154,7 +165,7 @@ export default function StateTimesApp() {
     </ul>}
 
     {distances.length === 0
-      ? <p className="state-times-empty">No {STROKE_LABELS[stroke].toLowerCase()} standards are published for a {age}-year-old in {COURSE_LABELS[course]}. Try a different course — most events qualify from any of the three.</p>
+      ? <p className="state-times-empty">No {STROKE_LABELS[stroke].toLowerCase()} standards are published for a {age}-year-old in {COURSE_LABELS[course]}. Try a different course.</p>
       : <div className="state-times-grid">
         {distances.map((distance) => <EventLadder key={distance} distance={distance} stroke={stroke}
           record={recordByDistance.get(distance)}
@@ -189,6 +200,7 @@ export default function StateTimesApp() {
     </div>}
 
     <footer className="state-times-footer">
+      {view === "motivational" ? <p>Source: <a href={MOTIVATIONAL_SOURCE} target="_blank" rel="noreferrer noopener">USA Swimming 2024–2028 Age Group Motivational Standards (PDF)</a>, dated October 10, 2025. Individual events only; consult the source for relays and updates. Confirm meet eligibility with your coach.</p> : <>
       <p>Source: Oklahoma Swimming, <em>2025-2028 OKS Qualifying Times</em>, fetched September 2026. Standards can be corrected or amended by OKS after publication — confirm with your coach before entering a meet.</p>
       {teamRecords.length > 0 && <p>JTSC Team Records are the club&rsquo;s own {course} bests, from the team&rsquo;s 2026 records list. No SCM (short course meters) records are tracked.</p>}
       {applicableStandards.some((standard) => standard.id.startsWith("cz-sectionals")) &&
@@ -198,6 +210,7 @@ export default function StateTimesApp() {
           ? <li key={standard.id}><a href={standard.sourceUrl} target="_blank" rel="noreferrer noopener">{standard.name} (PDF)</a></li>
           : <li key={standard.id}>{standard.name} (source not linkable)</li>)}
       </ul>}
+      </>}
     </footer>
   </main>;
 }

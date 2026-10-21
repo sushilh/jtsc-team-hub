@@ -4,6 +4,11 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-21 — Add USA Swimming motivational time levels
+
+- Added a separate Motivational levels view to State Times, using the linked USA Swimming 2024–2028 age-group PDF dated October 10, 2025. B, BB, A, AA, AAA, and AAAA individual-event benchmarks are available for the published age groups, girls and boys, and SCY, SCM, and LCM. Entered times are compared with each level; meet cuts, Sectionals, and JTSC records remain independent and unchanged. Relay standards remain in the linked PDF.
+- Added a reproducible extraction script with event-count and column validation, plus tests covering all 241 source rows and both genders. Checked: `npm test` (76 passing including build), `npx tsc --noEmit`, lint excluding the existing generated-output directories, strict UI audit (0 findings), and `tests/ui/state-times.py` against local development at desktop and 390px, including the nearby Parent Guide. Build emitted its existing large-chunk advisory.
+
 ### 2026-10-07 — Put the swimmer's age on new team-record cards
 
 - Admin Meet Report now carries both the swimmer's actual meet-day age and the official JTSC team-record age bracket into an automatically created `NEW JTSC TEAM RECORD` card. On the Finish Line template, those become two separately editable footer blocks: for example, `6 YEAR OLD` followed by `6 AND UNDER`. This replaces the class/team footer only for an automatic new-record handoff; regular achievement cards keep their existing class/team text.
