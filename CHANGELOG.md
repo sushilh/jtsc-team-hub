@@ -4,6 +4,10 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-21 — Deploy session check-in controls
+
+- Pushed and deployed commit `123ccf5` (Worker version `bbb7f6f3-5412-4df9-a2d3-ea59356b38e1`). Live read-only mobile smoke verified the public session data, volunteer selector, admin login screen and Parent Guide. An authenticated admin smoke attempt did not reach the overview, so live admin controls remain unverified and no stable tag was created. Production volunteer records and check-in settings were not changed.
+
 ### 2026-10-21 — Control imported check-in by session
 
 - Admin controls now list each inferred AM, PM, or unrecognized-time session and independently persist its open/closed/scheduled status. The volunteer desk and server enforce the same session for signed-up volunteers and imported walk-ins; existing date-wide overrides remain a fallback, and closing does not prevent checkout. The schedule still opens all sessions on their meet date. No signup rows or spreadsheet exports are changed.

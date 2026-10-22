@@ -37,9 +37,9 @@ _Last updated: 2026-10-21 by codex_
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | Session-selector changes committed and deployed; release documentation follows the deployed code |
-| Pushed to `origin/main` | Application baseline deployed at `a6487ad` (`stable/2026-10-21-2`) |
-| Last verified production | `a6487ad`, tag `stable/2026-10-21-2`, Worker version `246696d8-6983-44fd-b881-86d338f7abee` |
+| Checked-in local work | Session check-in controls deployed at `123ccf5`; release documentation follows |
+| Pushed to `origin/main` | Application baseline deployed at `123ccf5` |
+| Last verified production | `a6487ad`, tag `stable/2026-10-21-2`; new version `bbb7f6f3-5412-4df9-a2d3-ea59356b38e1` has incomplete authenticated admin smoke |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
 | Test suite | 77 tests (`npm test`) |
 
@@ -47,13 +47,13 @@ _Last updated: 2026-10-21 by codex_
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-| codex | 2026-10-21 | Commit and deploy independent session check-in controls | `STATUS.md`, `RELEASES.md`, `CHANGELOG.md` | Preparing release and production smoke check |
+| — | — | No active claims | — | — |
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
-| 2026-10-21 | codex | Independent imported session check-in controls; local tests passed, awaiting user review | Uncommitted; not deployed |
+| 2026-10-21 | codex | Independent imported session check-in controls; deployed, live authenticated admin smoke incomplete | `123ccf5`; no stable tag |
 | 2026-10-21 | codex | Session selector separated into AM and PM options; local repeat-import and live mobile checks passed | `a6487ad` · `stable/2026-10-21-2` |
 | 2026-10-21 | codex | Added separate USA Swimming motivational levels; deployed and verified State Times and Parent Guide at desktop and mobile | `8ca758b` · `stable/2026-10-21` |
 | 2026-10-07 | codex | Pushed and deployed the new JTSC team-record milestone and automatic age/bracket footer; production Achievement Studio smoke passed at desktop and mobile | `59e8f90` · `stable/2026-10-07` |
@@ -85,7 +85,7 @@ done or dropped.
 
 ## Needs the user
 
-- **Session controls:** Review the local admin page and request deployment when ready. The local database is separate from production and currently has no imported roster.
+- **Session controls:** Verify the live admin controls with a working admin login; the authenticated production smoke attempt did not reach the overview. Create a stable checkpoint only after successful verification.
 
 - **Reset button on production.** The user asked to keep "Clear all data"
   visible on the deployed site. Commit `349a3a4` later reverted it to opt-in
