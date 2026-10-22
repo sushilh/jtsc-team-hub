@@ -32,28 +32,28 @@ happening *now* and what is next.
 
 ## Current state
 
-_Last updated: 2026-10-07 by codex_
+_Last updated: 2026-10-21 by codex_
 
 | | |
 | --- | --- |
 | Branch | `main` |
-| Checked-in local work | Session-selector changes are uncommitted and available for local testing; not pushed or deployed |
-| Pushed to `origin/main` | Application baseline deployed at `8ca758b` (`stable/2026-10-21`) |
-| Last verified production | `8ca758b`, tag `stable/2026-10-21`, Worker version `99beec8c-80f0-4ec0-9efc-b906090a3e0b` |
+| Checked-in local work | Session-selector changes committed and deployed; release documentation follows the deployed code |
+| Pushed to `origin/main` | Application baseline deployed at `a6487ad` (`stable/2026-10-21-2`) |
+| Last verified production | `a6487ad`, tag `stable/2026-10-21-2`, Worker version `246696d8-6983-44fd-b881-86d338f7abee` |
 | Live URL | https://jtsc-team-hub.sushilh.workers.dev/ |
-| Test suite | 76 tests (`npm test`) |
+| Test suite | 77 tests (`npm test`) |
 
 ## Work in flight
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-| codex | 2026-10-21 | Verify and release AM/PM volunteer sessions | `tests/ui/signup-sessions.py`, `CHANGELOG.md`, `STATUS.md`, `RELEASES.md` | Checking repeat upload locally before release. |
+| — | — | No active claims | — | — |
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
-| 2026-10-21 | codex | Session selector separated into AM and PM options; local workbook and volunteer-flow tests passed; awaiting user review | Uncommitted |
+| 2026-10-21 | codex | Session selector separated into AM and PM options; local repeat-import and live mobile checks passed | `a6487ad` · `stable/2026-10-21-2` |
 | 2026-10-21 | codex | Added separate USA Swimming motivational levels; deployed and verified State Times and Parent Guide at desktop and mobile | `8ca758b` · `stable/2026-10-21` |
 | 2026-10-07 | codex | Pushed and deployed the new JTSC team-record milestone and automatic age/bracket footer; production Achievement Studio smoke passed at desktop and mobile | `59e8f90` · `stable/2026-10-07` |
 | 2026-10-07 | codex | Added editable actual-age and official age-bracket footer blocks to automatic Finish Line new-record cards; regular cards retain class/team text | `364e38c` |
