@@ -47,12 +47,13 @@ _Last updated: 2026-10-21 by codex_
 
 | Owner | Since | What | Files claimed | State |
 | --- | --- | --- | --- | --- |
-| — | — | No active claims | — | — |
+| codex | 2026-10-21 | Commit and deploy independent session check-in controls | `STATUS.md`, `RELEASES.md`, `CHANGELOG.md` | Preparing release and production smoke check |
 
 ## Recently finished
 
 | Date | Owner | What | Commit |
 | --- | --- | --- | --- |
+| 2026-10-21 | codex | Independent imported session check-in controls; local tests passed, awaiting user review | Uncommitted; not deployed |
 | 2026-10-21 | codex | Session selector separated into AM and PM options; local repeat-import and live mobile checks passed | `a6487ad` · `stable/2026-10-21-2` |
 | 2026-10-21 | codex | Added separate USA Swimming motivational levels; deployed and verified State Times and Parent Guide at desktop and mobile | `8ca758b` · `stable/2026-10-21` |
 | 2026-10-07 | codex | Pushed and deployed the new JTSC team-record milestone and automatic age/bracket footer; production Achievement Studio smoke passed at desktop and mobile | `59e8f90` · `stable/2026-10-07` |
@@ -83,6 +84,8 @@ done or dropped.
 | — | _(empty)_ | | |
 
 ## Needs the user
+
+- **Session controls:** Review the local admin page and request deployment when ready. The local database is separate from production and currently has no imported roster.
 
 - **Reset button on production.** The user asked to keep "Clear all data"
   visible on the deployed site. Commit `349a3a4` later reverted it to opt-in

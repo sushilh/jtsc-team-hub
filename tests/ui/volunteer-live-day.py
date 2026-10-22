@@ -87,11 +87,11 @@ def upload_from_admin(page, path):
     page.locator(".admin-notice.success").wait_for()
 
 
-def set_meet_checkin(page, event_date, event_title, verb):
+def set_meet_checkin(page, event_date, event_title, verb, period="morning"):
     open_admin(page)
     page.get_by_role("button", name="Sessions & jobs").click()
     shown_date = datetime.fromisoformat(event_date).strftime("%b %d, %Y").replace(" 0", " ")
-    label = f"{verb} check-in for {event_title} on {shown_date}"
+    label = f"{verb} check-in for {event_title} on {shown_date} { {'morning': 'AM', 'later': 'PM', 'unknown': 'Time not recognized'}[period] }"
     page.get_by_role("button", name=label, exact=True).click()
     page.locator(".admin-notice.success").wait_for()
 
@@ -151,20 +151,20 @@ with sync_playwright() as playwright:
         wait_ready(page)
         page.get_by_role("button", name="Not open").first.wait_for()
         assert page.get_by_role("button", name="Not open").first.is_disabled()
-        selected_date, selected_title, _period = page.locator(".signup-toolbar select").input_value().split("|||", 2)
-        set_meet_checkin(page, selected_date, selected_title, "Open")
+        selected_date, selected_title, period = page.locator(".signup-toolbar select").input_value().split("|||", 2)
+        set_meet_checkin(page, selected_date, selected_title, "Open", period)
         opened = page.request.get(f"{BASE_URL}/api/public").json()
-        opened_meet = next(item for item in opened["signupDates"]
-                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title)
+        opened_meet = next(item for item in opened["signupSessions"]
+                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title and item["period"] == period)
         assert opened_meet["checkinMode"] == "open" and opened_meet["checkinOpen"] is True
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)
         assert page.get_by_role("button", name="Check in").first.is_enabled()
-        set_meet_checkin(page, selected_date, selected_title, "Close")
+        set_meet_checkin(page, selected_date, selected_title, "Close", period)
         page.screenshot(path="/tmp/jtsc-admin-meet-controls.png", full_page=True)
         closed = page.request.get(f"{BASE_URL}/api/public").json()
-        closed_meet = next(item for item in closed["signupDates"]
-                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title)
+        closed_meet = next(item for item in closed["signupSessions"]
+                           if item["eventDate"] == selected_date and item["eventTitle"] == selected_title and item["period"] == period)
         assert closed_meet["checkinMode"] == "closed" and closed_meet["checkinOpen"] is False
         page.goto(f"{BASE_URL}/volunteers")
         wait_ready(page)

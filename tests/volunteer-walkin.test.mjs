@@ -75,6 +75,15 @@ test("new parents and swimmers can walk in without changing existing signups or 
     assert.equal(desk.signupJobs.length, 3, "same job at different times remains distinct");
     assert.equal(desk.swimmers.length, 0, "walk-ins need no preloaded swimmer directory");
     const expectedId = desk.signupRows.find((row) => row.volunteerName === "Existing Parent").id;
+    const afternoonId = desk.signupRows.find((row) => row.volunteerName === "Another Parent").id;
+    await post("/api/admin", { action: "set_signup_session_checkin", ...scope, period: "morning", checkinMode: "closed" });
+    desk = await (await request("/api/public")).json();
+    assert.equal(desk.signupSessions.find((session) => session.period === "morning").checkinOpen, false);
+    assert.equal(desk.signupSessions.find((session) => session.period === "later").checkinOpen, true);
+    await post("/api/checkins", { action: "signup_checkin", id: expectedId, creditedHours: 5 }, 409);
+    await post("/api/checkins", { action: "signup_checkin", id: afternoonId, creditedHours: 3 });
+    await post("/api/checkins", { action: "signup_undo", id: afternoonId });
+    await post("/api/admin", { action: "set_signup_session_checkin", ...scope, period: "morning", checkinMode: "scheduled" });
     await post("/api/checkins", { action: "signup_checkin", id: expectedId, creditedHours: 4.5 });
     const existingBefore = (await (await request("/api/public")).json()).signupRows;
     const job = desk.signupJobs.find((job) => job.jobName === "Timer" && job.creditPossible === 3);
@@ -84,6 +93,9 @@ test("new parents and swimmers can walk in without changing existing signups or 
     };
     await post("/api/checkins", { ...walkin, swimmerName: "   " }, 400);
     await post("/api/checkins", { ...walkin, creditedHours: 25 }, 400);
+    await post("/api/admin", { action: "set_signup_session_checkin", ...scope, period: "later", checkinMode: "closed" });
+    await post("/api/checkins", walkin, 409);
+    await post("/api/admin", { action: "set_signup_session_checkin", ...scope, period: "later", checkinMode: "scheduled" });
     await post("/api/admin", { action: "set_signup_meet_checkin", ...scope, checkinMode: "closed" });
     await post("/api/checkins", walkin, 409);
     await post("/api/admin", { action: "set_signup_meet_checkin", ...scope, checkinMode: "open" });
@@ -109,6 +121,7 @@ test("new parents and swimmers can walk in without changing existing signups or 
     assert.equal((await upload(rows)).duplicate, true);
     assert.deepEqual((await (await request("/api/public")).json()).signupRows, beforeRepeat);
 
+    await post("/api/admin", { action: "set_signup_session_checkin", ...scope, period: "later", checkinMode: "closed" });
     await post("/api/checkins", { action: "signup_checkout", id: added.id });
     const workbook = await (await request(`/api/admin/signup-export?importId=${imported.import.id}`)).arrayBuffer();
     const exported = parseSignupWorkbook(workbook);

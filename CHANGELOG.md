@@ -4,6 +4,11 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-21 — Control imported check-in by session
+
+- Admin controls now list each inferred AM, PM, or unrecognized-time session and independently persist its open/closed/scheduled status. The volunteer desk and server enforce the same session for signed-up volunteers and imported walk-ins; existing date-wide overrides remain a fallback, and closing does not prevent checkout. The schedule still opens all sessions on their meet date. No signup rows or spreadsheet exports are changed.
+- Checked: `npm test` (77 passing, including build), `npx tsc --noEmit`, lint with generated and unrelated folders excluded, strict UI audit (0 findings), and isolated local browser tests of the supplied workbook and the volunteer live-day workflow at mobile width. The first live-day browser run failed because its old selector lacked the new AM label; the test was updated and passed. Build retained its large-chunk advisory. Not pushed or deployed.
+
 ### 2026-10-21 — Separate signup sessions in the volunteer desk
 
 - The meet selector now lists AM and PM shifts separately on dates with both, using each imported job's start time (before noon versus noon or later). The selected session filters the roster, counters, and imported walk-in jobs; On deck remains visible across sessions, and admin open/close remains per date and event. Unrecognized times get their own option. Existing saved data and spreadsheet export are unchanged.

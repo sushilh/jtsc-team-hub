@@ -24,6 +24,30 @@ with sync_playwright() as playwright:
     page.locator(".admin-notice.success").wait_for()
     public = page.request.get(f"{base}/api/public").json()
     assert len(public["signupDates"]) == 3
+    controls = page.locator(".meet-checkin-row")
+    assert controls.count() == 5
+    saturday_am = controls.filter(has_text="Oct 24, 2026 · AM")
+    saturday_pm = controls.filter(has_text="Oct 24, 2026 · PM")
+    assert saturday_am.count() == saturday_pm.count() == 1
+    saturday_am.get_by_role("button", name="Open check-in").click()
+    saturday_am.get_by_text("Manually open").wait_for()
+    assert saturday_pm.get_by_text("Follows schedule").count() == 1
+    state = page.request.get(f"{base}/api/public").json()
+    assert next(s for s in state["signupSessions"] if s["eventDate"] == "2026-10-24" and s["period"] == "morning")["checkinOpen"]
+    assert not next(s for s in state["signupSessions"] if s["eventDate"] == "2026-10-24" and s["period"] == "later")["checkinOpen"]
+    meet = next(s for s in state["signupDates"] if s["eventDate"] == "2026-10-24")
+    page.goto(f"{base}/volunteers", wait_until="domcontentloaded")
+    selector = page.get_by_label("Meet date and session")
+    selector.wait_for()
+    selector.select_option(value=f'{meet["eventDate"]}|||{meet["eventTitle"]}|||morning')
+    assert page.locator("article.signup-person button").first.is_enabled()
+    selector.select_option(value=f'{meet["eventDate"]}|||{meet["eventTitle"]}|||later')
+    assert page.locator("article.signup-person button").first.is_disabled()
+    page.goto(f"{base}/admin", wait_until="domcontentloaded")
+    page.get_by_role("button", name="Sessions & jobs").click()
+    saturday_am = page.locator(".meet-checkin-row").filter(has_text="Oct 24, 2026 · AM")
+    saturday_am.get_by_role("button", name="Use scheduled check-in").click()
+    saturday_am.get_by_text("Follows schedule").wait_for()
     page.goto(f"{base}/volunteers", wait_until="domcontentloaded")
     date = page.get_by_label("Meet date and session")
     date.wait_for()
@@ -47,8 +71,9 @@ with sync_playwright() as playwright:
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     # A repeat upload of the exact file must not erase a desk check-in or change
     # the assignments/session options. This runs only against an isolated DB.
-    opened = page.request.post(f"{base}/api/admin", data={"action": "set_signup_meet_checkin", "eventDate": saturday["eventDate"], "eventTitle": saturday["eventTitle"], "checkinMode": "open"}, headers={"Origin": base})
-    assert opened.ok
+    for period in ("morning", "later"):
+        opened = page.request.post(f"{base}/api/admin", data={"action": "set_signup_session_checkin", "eventDate": saturday["eventDate"], "eventTitle": saturday["eventTitle"], "period": period, "checkinMode": "open"}, headers={"Origin": base})
+        assert opened.ok
     row = next(item for item in public["signupRows"] if item["eventDate"] == saturday["eventDate"] and not item["completed"])
     checked = page.request.post(f"{base}/api/checkins", data={"action": "signup_checkin", "id": row["id"], "creditedHours": row["creditPossible"]}, headers={"Origin": base})
     assert checked.ok

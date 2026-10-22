@@ -7,6 +7,7 @@ import { volunteerJobCatalog, volunteerJobNames, defaultJobHours } from "../../l
 import { buildLedgerExport } from "../../lib/ledger-export.mjs";
 import { buildCardPrefill, findNotablePerformances, formatEventName, parseMeetResultsWorkbook } from "../../lib/meet-report.mjs";
 import achievementMemberNames from "../../lib/achievement-members.json";
+import { SIGNUP_SESSION_LABELS } from "../../lib/signup-sessions.mjs";
 
 function today() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -602,7 +603,7 @@ function AdminApp() {
           sessions: sessions2,
           jobs: jobs2,
           signupImports: data?.signupImports ?? [],
-          signupDates: data?.signupDates ?? [],
+          signupSessions: data?.signupSessions ?? [],
           busy,
           mutate,
           bulkAddJobs,
@@ -853,7 +854,7 @@ function PanelEmpty({ text: text2 }) {
     children: [jsx("span", { children: "\u3030" }), text2]
   });
 }
-function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mutate, resetAllowed }) {
+function SignupImportPanel({ signupImports, signupSessions, busy, importSignup, mutate, resetAllowed }) {
   const [file, setFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
   const [resetOpen, setResetOpen] = useState(false);
@@ -877,16 +878,17 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
     }
   }
   async function setMeetCheckin(meet, checkinMode) {
-    const key = `${meet.eventDate}|||${meet.eventTitle}`;
+    const key = `${meet.eventDate}|||${meet.eventTitle}|||${meet.period}`;
     setControlBusy(key);
     const verb = checkinMode === "open" ? "opened" : checkinMode === "closed" ? "closed" : "returned to its schedule";
     try {
       if (await mutate({
-        action: "set_signup_meet_checkin",
+        action: "set_signup_session_checkin",
         eventDate: meet.eventDate,
         eventTitle: meet.eventTitle,
+        period: meet.period,
         checkinMode
-      }, `${meet.eventTitle} check-in was ${verb}.`)) {
+      }, `${meet.eventTitle} ${SIGNUP_SESSION_LABELS[meet.period]} check-in was ${verb}.`)) {
         window.dispatchEvent(new Event("jtsc:refresh-volunteers"));
       }
     } finally {
@@ -919,11 +921,11 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
     </form>
     <div className="meet-checkin-controls">
       <div className="meet-checkin-head">
-        <div><strong>Check-in controls</strong><span>Override the meet date when the desk needs to open early or close.</span></div>
-        <span>{signupDates.length}</span>
+        <div><strong>Check-in controls</strong><span>Open or close each imported session independently. AM and PM are based on job start times.</span></div>
+        <span>{signupSessions.length}</span>
       </div>
-      {signupDates.length ? signupDates.map((meet) => {
-        const key = `${meet.eventDate}|||${meet.eventTitle}`;
+      {signupSessions.length ? signupSessions.map((meet) => {
+        const key = `${meet.eventDate}|||${meet.eventTitle}|||${meet.period}`;
         const isPending = controlBusy === key;
         const status = meet.checkinMode === "open"
           ? "Manually open"
@@ -933,23 +935,23 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
         return <div className="meet-checkin-row" key={key}>
           <div className="meet-checkin-copy">
             <strong>{meet.eventTitle}</strong>
-            <span>{dateLabel(meet.eventDate)} · {meet.assignedCount} assigned</span>
+            <span>{dateLabel(meet.eventDate)} · {SIGNUP_SESSION_LABELS[meet.period]} · {meet.assignedCount} assigned</span>
           </div>
           <span className={`meet-checkin-status ${meet.checkinOpen ? "is-open" : "is-closed"}`}>{status}</span>
           <div className="meet-checkin-actions">
             <button type="button" className={meet.checkinOpen ? "checkin-close" : "admin-primary"}
               disabled={busy} aria-busy={isPending}
-              aria-label={`${meet.checkinOpen ? "Close" : "Open"} check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)}`}
+              aria-label={`${meet.checkinOpen ? "Close" : "Open"} check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)} ${SIGNUP_SESSION_LABELS[meet.period]}`}
               onClick={() => void setMeetCheckin(meet, meet.checkinOpen ? "closed" : "open")}>
               {isPending ? "Saving…" : meet.checkinOpen ? "Close check-in" : "Open check-in"}
             </button>
             {meet.checkinMode !== "scheduled" && <button type="button" className="schedule-link" disabled={busy}
-              aria-label={`Use scheduled check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)}`}
+              aria-label={`Use scheduled check-in for ${meet.eventTitle} on ${dateLabel(meet.eventDate)} ${SIGNUP_SESSION_LABELS[meet.period]}`}
               onClick={() => void setMeetCheckin(meet, "scheduled")}>Use schedule</button>}
           </div>
         </div>;
       }) : <div className="panel-empty compact"><span>〰</span>Import a signup file to control meet check-in.</div>}
-      <p className="meet-checkin-note">Closing blocks new check-ins. Volunteers already on deck can still check out.</p>
+      <p className="meet-checkin-note">On schedule, all sessions open on the meet date. Closing a session blocks new check-ins for that session; volunteers already on deck can still check out.</p>
     </div>
     <div className="import-history">
       <div className="import-history-head"><strong>Recent imports</strong><span>{signupImports.length}</span></div>
@@ -1010,7 +1012,7 @@ function SignupImportPanel({ signupImports, signupDates, busy, importSignup, mut
     </div>}
   </section>;
 }
-function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, signupDates, busy, mutate, bulkAddJobs, importSignup, resetAllowed }) {
+function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, signupSessions, busy, mutate, bulkAddJobs, importSignup, resetAllowed }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [startTime, setStartTime] = useState("07:00");
@@ -1075,7 +1077,7 @@ function SessionsPanel({ sessions: sessions2, jobs: jobs2, signupImports, signup
   }
   return jsxs("div", {
     className: "manage-grid",
-    children: [jsx(SignupImportPanel, { signupImports, signupDates, busy, importSignup, mutate, resetAllowed }), jsxs("div", { children: [jsxs("section", {
+    children: [jsx(SignupImportPanel, { signupImports, signupSessions, busy, importSignup, mutate, resetAllowed }), jsxs("div", { children: [jsxs("section", {
       className: "panel form-panel",
       children: [jsx("div", {
         className: "panel-head",

@@ -174,6 +174,9 @@ function VolunteerApp() {
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
   );
+  const selectedSession = (data?.signupSessions ?? []).find(
+    (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle && item.period === activePeriod,
+  );
   const displayProgress = activePeriod === "all" ? selectedProgress : {
     assignedCount: meetRows.length,
     checkedInCount: meetRows.filter((row) => row.checkedInAt && !row.completed).length,
@@ -181,9 +184,9 @@ function VolunteerApp() {
   };
   const importedActive = (data?.signupRows ?? []).filter((row) => row.checkedInAt && !row.completed);
   const manualActive = (data?.activeEntries ?? []).filter((entry) => entry.sessionId === Number(sessionId));
-  const canCheckInSelectedMeet = Boolean(selectedProgress?.checkinOpen);
-  const selectedMeetClosed = selectedProgress?.checkinMode === "closed";
-  const selectedMeetManuallyOpen = selectedProgress?.checkinMode === "open";
+  const canCheckInSelectedMeet = Boolean(selectedSession?.checkinOpen);
+  const selectedMeetClosed = selectedSession?.checkinMode === "closed";
+  const selectedMeetManuallyOpen = selectedSession?.checkinMode === "open";
   const sessionIsToday = session?.sessionDate === clubToday;
   const ready = Boolean(volunteerName.trim() && swimmerId && selectedJob && Number(hours) > 0 && sessionIsToday);
   const signupWalkinReady = Boolean(selectedProgress && canCheckInSelectedMeet && signupWalkinName.trim()
