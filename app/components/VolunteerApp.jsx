@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { jobHourOptions } from "../../lib/volunteer-jobs.mjs";
+import { signupSessionPeriod, SIGNUP_SESSION_LABELS } from "../../lib/signup-sessions.mjs";
 
 function localIsoDate() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -54,6 +55,7 @@ function VolunteerApp() {
   const [signupWalkinJob, setSignupWalkinJob] = useState("");
   const [signupWalkinHours, setSignupWalkinHours] = useState("");
   const [signupDate, setSignupDate] = useState("");
+  const [signupPeriod, setSignupPeriod] = useState("all");
   const [showPastMeets, setShowPastMeets] = useState(false);
   const [swimmerPick, setSwimmerPick] = useState("");
   const [volunteerPick, setVolunteerPick] = useState("");
@@ -113,9 +115,18 @@ function VolunteerApp() {
 
   const [selectedEventDate, selectedEventTitle] = signupDate.split("|||");
   const clubToday = localIsoDate();
-  const meetRows = useMemo(() => (data?.signupRows ?? []).filter(
+  const dateRows = useMemo(() => (data?.signupRows ?? []).filter(
     (row) => row.eventDate === selectedEventDate && row.eventTitle === selectedEventTitle,
   ), [data, selectedEventDate, selectedEventTitle]);
+  const dateJobs = useMemo(() => (data?.signupJobs ?? []).filter(
+    (job) => job.eventDate === selectedEventDate && job.eventTitle === selectedEventTitle,
+  ), [data, selectedEventDate, selectedEventTitle]);
+  const periods = useMemo(() => {
+    const present = new Set([...dateRows, ...dateJobs].map((item) => signupSessionPeriod(item.eventStart)));
+    return ["morning", "later", "unknown"].filter((period) => present.has(period));
+  }, [dateRows, dateJobs]);
+  const activePeriod = periods.includes(signupPeriod) ? signupPeriod : (periods[0] ?? "all");
+  const meetRows = useMemo(() => dateRows.filter((row) => activePeriod === "all" || signupSessionPeriod(row.eventStart) === activePeriod), [dateRows, activePeriod]);
 
   const byName = (a, b) => a.localeCompare(b, "en", { sensitivity: "base" });
   // Pick a family first and the volunteer list narrows to the people on that account.
@@ -124,9 +135,9 @@ function VolunteerApp() {
     [meetRows],
   );
   const importedWalkinJobs = useMemo(
-    () => (data?.signupJobs ?? []).filter((job) => job.eventDate === selectedEventDate && job.eventTitle === selectedEventTitle)
+    () => dateJobs.filter((job) => activePeriod === "all" || signupSessionPeriod(job.eventStart) === activePeriod)
       .sort((a, b) => a.jobName.localeCompare(b.jobName, "en", { sensitivity: "base" }) || String(a.eventStart).localeCompare(String(b.eventStart))),
-    [data, selectedEventDate, selectedEventTitle],
+    [dateJobs, activePeriod],
   );
   const selectedImportedJob = importedWalkinJobs.find((job) => String(job.sourceId) === signupWalkinJob);
   const volunteerOptions = useMemo(
@@ -153,9 +164,21 @@ function VolunteerApp() {
   const currentMeets = (data?.signupDates ?? []).filter((item) => item.checkinOpen || item.eventDate >= clubToday);
   const pastMeets = (data?.signupDates ?? []).filter((item) => !item.checkinOpen && item.eventDate < clubToday);
   const visibleMeets = showPastMeets ? [...currentMeets, ...pastMeets] : currentMeets;
+  const sessionChoices = [...visibleMeets].sort((a, b) => a.eventDate.localeCompare(b.eventDate) || a.eventTitle.localeCompare(b.eventTitle)).flatMap((item) => {
+    const matching = [...(data?.signupRows ?? []), ...(data?.signupJobs ?? [])]
+      .filter((row) => row.eventDate === item.eventDate && row.eventTitle === item.eventTitle);
+    const present = new Set(matching.map((row) => signupSessionPeriod(row.eventStart)));
+    const options = ["morning", "later", "unknown"].filter((period) => present.has(period));
+    return (options.length ? options : ["all"]).map((period) => ({ ...item, period }));
+  });
   const selectedProgress = (data?.signupDates ?? []).find(
     (item) => item.eventDate === selectedEventDate && item.eventTitle === selectedEventTitle,
   );
+  const displayProgress = activePeriod === "all" ? selectedProgress : {
+    assignedCount: meetRows.length,
+    checkedInCount: meetRows.filter((row) => row.checkedInAt && !row.completed).length,
+    completedCount: meetRows.filter((row) => row.completed).length,
+  };
   const importedActive = (data?.signupRows ?? []).filter((row) => row.checkedInAt && !row.completed);
   const manualActive = (data?.activeEntries ?? []).filter((entry) => entry.sessionId === Number(sessionId));
   const canCheckInSelectedMeet = Boolean(selectedProgress?.checkinOpen);
@@ -325,14 +348,16 @@ function VolunteerApp() {
           : visibleMeets.length ? <>
             <div className="signup-toolbar">
               <label className="field">
-                <span>Meet date and event</span>
-                <select value={signupDate} onChange={(event) => {
-                  setSignupDate(event.target.value);
+                <span>Meet date and session</span>
+                <select value={`${signupDate}|||${activePeriod}`} onChange={(event) => {
+                  const [date, title, period] = event.target.value.split("|||");
+                  setSignupDate(`${date}|||${title}`);
+                  setSignupPeriod(period);
                   setQuery(""); setSwimmerPick(""); setVolunteerPick("");
                   setSignupWalkinSwimmer(""); setSignupWalkinJob(""); setSignupWalkinHours("");
                 }}>
-                  {visibleMeets.map((item) => <option key={`${item.eventDate}-${item.eventTitle}`} value={`${item.eventDate}|||${item.eventTitle}`}>
-                    {displayDate(item.eventDate)} · {item.eventTitle}{item.eventDate < localIsoDate() ? " (past)" : ""}
+                  {sessionChoices.map((item) => <option key={`${item.eventDate}-${item.eventTitle}-${item.period}`} value={`${item.eventDate}|||${item.eventTitle}|||${item.period}`}>
+                    {displayDate(item.eventDate)} · {SIGNUP_SESSION_LABELS[item.period] ?? "Session"} · {item.eventTitle}{item.eventDate < localIsoDate() ? " (past)" : ""}
                   </option>)}
                 </select>
               </label>
@@ -373,12 +398,12 @@ function VolunteerApp() {
 
             <div className="signup-result-head" aria-live="polite">
               <span><strong>{signupRows.length}</strong> matching {signupRows.length === 1 ? "assignment" : "assignments"}</span>
-              {selectedProgress && <span className="signup-progress">
-                <b className="progress-on-deck">{selectedProgress.checkedInCount}</b> on deck
+              {displayProgress && <span className="signup-progress">
+                <b className="progress-on-deck">{displayProgress.checkedInCount}</b> on deck
                 <i aria-hidden="true">·</i>
-                <b className="progress-done">{selectedProgress.completedCount}</b> completed
+                <b className="progress-done">{displayProgress.completedCount}</b> completed
                 <i aria-hidden="true">·</i>
-                <b>{selectedProgress.assignedCount}</b> expected
+                <b>{displayProgress.assignedCount}</b> expected
               </span>}
               <small>{selectedMeetClosed
                 ? "Check-in is closed by an admin. Volunteers already on deck can still check out."

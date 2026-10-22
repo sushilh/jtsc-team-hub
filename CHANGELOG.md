@@ -4,6 +4,11 @@ This log starts on September 16, 2026. Earlier work remains traceable through `g
 
 ## Unreleased
 
+### 2026-10-21 — Separate signup sessions in the volunteer desk
+
+- The meet selector now lists AM and PM shifts separately on dates with both, using each imported job's start time (before noon versus noon or later). The selected session filters the roster, counters, and imported walk-in jobs; On deck remains visible across sessions, and admin open/close remains per date and event. Unrecognized times get their own option. Existing saved data and spreadsheet export are unchanged.
+- Checked: `npm test` (77 passing, including build), `npx tsc --noEmit`, lint excluding generated-output directories, strict UI audit (0 findings), the volunteer live-day browser regression on an isolated local database, and a separate 390px browser import of the supplied 204-row workbook verifying all five choices, Saturday/Sunday roster counts, and a preserved check-in after the exact same file is reuploaded. A first browser attempt timed out waiting for network idle and a second attempted to count options before loading; both test-harness timing issues were corrected, and the local workflow passed. Build retained its large-chunk advisory. See `RELEASES.md` for deployment status.
+
 ### 2026-10-21 — Add USA Swimming motivational time levels
 
 - Added a separate Motivational levels view to State Times, using the linked USA Swimming 2024–2028 age-group PDF dated October 10, 2025. B, BB, A, AA, AAA, and AAAA individual-event benchmarks are available for the published age groups, girls and boys, and SCY, SCM, and LCM. Entered times are compared with each level; meet cuts, Sectionals, and JTSC records remain independent and unchanged. Relay standards remain in the linked PDF.

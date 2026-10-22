@@ -151,7 +151,7 @@ with sync_playwright() as playwright:
         wait_ready(page)
         page.get_by_role("button", name="Not open").first.wait_for()
         assert page.get_by_role("button", name="Not open").first.is_disabled()
-        selected_date, selected_title = page.locator(".signup-toolbar select").input_value().split("|||", 1)
+        selected_date, selected_title, _period = page.locator(".signup-toolbar select").input_value().split("|||", 2)
         set_meet_checkin(page, selected_date, selected_title, "Open")
         opened = page.request.get(f"{BASE_URL}/api/public").json()
         opened_meet = next(item for item in opened["signupDates"]
